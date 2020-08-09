@@ -11,3 +11,34 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+html, body, #root {
+  height: 100%;
+}
+
+.unauthorized {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.page-container {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.header {
+  height: 60px;
+  background-color: #b5152e !important;
+  z-index: 1201 !important;
+}
+
+.header.enabled {
+  background-color: #539e3e !important;
+}
+
+.main {
+  flex: 1 1 0;
+}

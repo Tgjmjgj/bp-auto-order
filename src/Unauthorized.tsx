@@ -2,6 +2,8 @@ import React from 'react';
 import Firebase from 'firebase';
 import Button from '@material-ui/core/Button';
 
+import {ReactComponent as GoogleSvgIcon} from './icons8-google.svg';
+
 export const Unauthorized: React.FC = () => {
 
     const onLoginClick = () => {
@@ -18,12 +20,15 @@ export const Unauthorized: React.FC = () => {
     };
 
     return (
-        <Button
-            variant="contained"
-            color="primary"
-            onClick={onLoginClick}
-        >
-            Login
-        </Button>
+        <div className="unauthorized">
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={onLoginClick}
+                startIcon={<GoogleSvgIcon />}
+            >
+                Sign in with Google
+            </Button>
+        </div>
     );
 }

@@ -7,13 +7,16 @@
   "private": true,
   "dependencies": {
     "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.9.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
+    "@types/classnames": "^2.2.10",
     "@types/jest": "^24.9.1",
     "@types/node": "^12.12.54",
     "@types/react": "^16.9.45",
     "@types/react-dom": "^16.9.8",
+    "classnames": "^2.2.6",
     "firebase": "^7.17.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -23,7 +26,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "deploy": "firebase deploy --only hosting:bp-auto-order"
+    "deploy": "firebase deploy --only hosting:bp-auto-order",
+    "d": "npm run build & npm run deploy"
   },
   "eslintConfig": {
     "extends": "react-app"
