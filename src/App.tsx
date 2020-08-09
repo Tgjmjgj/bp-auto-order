@@ -1,13 +1,14 @@
 import React from 'react';
+import { ConfigStateProvider } from './ConfigStateProvider';
 import { AuthAuthProvider } from './AutoAuthProvider';
 import { Main } from './Main';
 
-function App() {
+export const App: React.FC = () => {
     return (
         <AuthAuthProvider>
-            <Main />
+            <ConfigStateProvider>
+                <Main />
+            </ConfigStateProvider>
         </AuthAuthProvider>
     );
-}
-
-export default App;
+};

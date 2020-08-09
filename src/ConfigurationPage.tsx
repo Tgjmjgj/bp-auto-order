@@ -16,6 +16,10 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Hidden from '@material-ui/core/Hidden';
 import Drawer from '@material-ui/core/Drawer';
 import IconButton from '@material-ui/core/IconButton';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
+
+import {ConfigStateContext} from './ConfigStateProvider';
 
 
 const drawerWidth = 240;
@@ -65,11 +69,20 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export const ConfigurationPage: React.FC = () => {
 
-    const [enabled, setEnabled] = React.useState(false);
     const [mobileOpen, setMobileOpen] = React.useState(false);
+    const [saveMessageShows, setSaveMessageShows] = React.useState(false);
+    const configState = React.useContext(ConfigStateContext);
+    const enabled = configState.state.enabled;
     const classes = useStyles();
 
+    const toggleEnabled = () => {
+        console.log('toggle enabled');
+        configState.updateState({enabled: !enabled});
+    };
     const toggleMenuOnMobile = () => setMobileOpen(!mobileOpen);
+    const closeSaveMessage = () => setSaveMessageShows(false);
+
+    React.useEffect(() => void (configState.saved > 0 && setSaveMessageShows(true)), [configState.saved]);
 
     const menu = (
         <div>
@@ -103,7 +116,7 @@ export const ConfigurationPage: React.FC = () => {
                     <Typography variant="h6">
                         Auto order enabled:
                     </Typography>
-                    <Switch checked={enabled} onChange={() => setEnabled(!enabled)} size="medium" color="primary" />
+                    <Switch checked={enabled} onChange={toggleEnabled} size="medium" color="primary" />
                 </Toolbar>
             </AppBar>
             <div className="page-layout">
@@ -136,6 +149,20 @@ export const ConfigurationPage: React.FC = () => {
                         </Drawer>
                     </Hidden>
                 </nav>
+
+                <Snackbar
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                    }}
+                    open={saveMessageShows}
+                    autoHideDuration={3000}
+                    onClose={closeSaveMessage}
+                >
+                    <MuiAlert elevation={6} variant="filled" onClose={closeSaveMessage} severity="success">
+                        Configuration successfully saved
+                    </MuiAlert>
+                </Snackbar>
             </div>
         </div>
     );
