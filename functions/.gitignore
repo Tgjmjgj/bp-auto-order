@@ -6,3 +6,7 @@
 typings/
 
 node_modules/
+
+*-debug.log
+
+src/brightpattern-*.json

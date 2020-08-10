@@ -1,7 +1,7 @@
 {
   "name": "bp-auto-order",
   "version": "0.1.0",
-  "description": "Product for scheduling automatic orders from Ku-Mir menu for internal company' spreadsheet",
+  "description": "Product for automatic scheduling orders from Food delivery services into internal company' spreadsheet",
   "author": "Pavel Karpovich",
   "license": "MIT",
   "private": true,
