@@ -7,13 +7,14 @@ import chunk from 'lodash/chunk';
 import uniq from 'lodash/uniq';
 import get from 'lodash/get';
 
-const spreadsheetId = '1S-gWGUUqDzfBUUZNRo2UjlHR8kw9LrKQ-I_PvH7nXB4'; // tmp
+// const spreadsheetId = '1S-gWGUUqDzfBUUZNRo2UjlHR8kw9LrKQ-I_PvH7nXB4'; // tmp
 
 FirebaseAdmin.initializeApp();
 
 type StaticTarget = 'kumir' | 'chanakhi';
 
 type ExpectedRequestData = {
+    spreadsheetId?: string
     target?: StaticTarget
     systemName?: string
     customName?: string
@@ -26,7 +27,7 @@ const targetDisplayNames: Record<StaticTarget, string> = {
     'chanakhi': 'Чанахи',
 };
 
-const getLastFilledRow = async (api: sheets_v4.Sheets) => {
+const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string) => {
     const bulkSize = 300;
     let iteration = 0, foundRow = 0, possiblyFoundRow = 0, checkIter = 0;
     const sheetData = await api.spreadsheets.get({ spreadsheetId });
@@ -108,7 +109,7 @@ const getLastFilledRow = async (api: sheets_v4.Sheets) => {
     return foundRow;
 };
 
-const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumber: number) => {
+const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumber: number, spreadsheetId: string) => {
     const {data} = await api.spreadsheets.get({
         spreadsheetId,
         includeGridData: true,
@@ -183,7 +184,7 @@ const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData
 
         const range = `B${rowNumber}:M${rowNumber + rows.length - 1}`;
         const res = await api.spreadsheets.values.update({
-            spreadsheetId,
+            spreadsheetId: order.spreadsheetId,
             range,
             valueInputOption: 'USER_ENTERED',
             requestBody: {
@@ -210,10 +211,15 @@ export const placeOrders = functions.https.onRequest(async (request, response) =
     const data = request.body as ExpectedRequestData;
     functions.logger.info(data, {structuredData: true});
     try {
+        const spreadsheetId = data.spreadsheetId;
+        if (!spreadsheetId) {
+            throw Error('No spreadsheetId in the request');
+        }
         const auth = await google.auth.getClient({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
         const api = google.sheets({ version: 'v4', auth });
-        const lastRow = await getLastFilledRow(api);
-        const isOrderAlreadyThere = await checkExistedOrder(api, [data.systemName || '', data.customName || ''], lastRow);
+        const lastRow = await getLastFilledRow(api, spreadsheetId);
+        const names = [data.systemName || '', data.customName || ''];
+        const isOrderAlreadyThere = await checkExistedOrder(api, names, lastRow, spreadsheetId);
         if (!isOrderAlreadyThere) {
             await writeOrderToRow(api, data, lastRow);
             response.status(200).send({

@@ -3,13 +3,13 @@ import * as Firebase from 'firebase';
 import pickBy from 'lodash/pickBy';
 import eq from 'fast-deep-equal';
 
-
 import { AutoAuthContext } from './AutoAuthProvider';
 
 
 export type ConfigState = {
     enabled: boolean
     saveOnServer: boolean     // indicates do we need to initiate saving operation or not
+    spreadsheetId: string
     displayName?: string | null
 };
 
@@ -22,6 +22,7 @@ export type ConfigContextData = {
 const defaultConfigState = {
     enabled: false,
     saveOnServer: false,
+    spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
 };
 
 const omitProperties = ['saveOnServer'];
@@ -45,6 +46,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
     const [configState, setConfigState] = React.useState<ConfigState>(defaultConfigState);
     const [oldConfigState, setOldConfigState] = React.useState<ConfigState>(defaultConfigState);
     const [saved, setSaved] = React.useState(0);
+    const timerIdRef = React.useRef(0);
 
     const configContextValue = React.useMemo(() => ({
         state: configState,
@@ -62,7 +64,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
         if (authContext.uid) {
             const docRef = Firebase.firestore().collection('auto-order-configs').doc(authContext.uid);
             docRef.get().then(data => {
-                if (data.get('displayName') !== authContext.displayName) {
+                if (!data.exists) {
                     docRef.set(prepareConfigForServer({
                         ...configState,
                         displayName: authContext.displayName,
@@ -79,15 +81,14 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
         }
     }, [authContext]);
 
-    let timerId = 0;
     useEffect(() => {
-        console.log('Timer Id: ', timerId);
+        console.log('Timer Id: ', timerIdRef.current);
         if (authContext.uid && !eq(configState, oldConfigState)) {
             if (configState.saveOnServer) {
                 console.log('save config: ', configState);
                 console.log('old state: ', oldConfigState);
-                clearTimeout(timerId);
-                timerId = window.setTimeout(() => {
+                clearTimeout(timerIdRef.current);
+                timerIdRef.current = window.setTimeout(() => {
                     Firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
                     .set(prepareConfigForServer(configState), {merge: true})
                     .then(() => setSaved(s => ++s));
