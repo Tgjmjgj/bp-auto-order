@@ -68,7 +68,15 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                     docRef.set(prepareConfigForServer({
                         ...configState,
                         displayName: authContext.displayName,
-                    }), {merge: true})
+                    }), {merge: true});
+                } else {
+                    const newKeys = prepareConfigForServer(pickBy(configState, (key: string) => !(key in data.data()!)) as ConfigState);
+                    if (Object.keys(newKeys).length) {
+                        docRef.set({
+                            ...configState,
+                            ...newKeys,
+                        });
+                    }
                 }
                 console.log('### initial data: ', data.data());
                 setConfigState({
