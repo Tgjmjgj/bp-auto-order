@@ -47,7 +47,7 @@ export const DeveloperConfig: React.FC = () => {
     const lockPuzzle = (
         <div className={classes.iconGroup}>
             {[0, 1, 2].map(num => 
-                <IconButton onClick={() => onLockClick(num)}>
+                <IconButton onClick={() => onLockClick(num)} key={num}>
                     {rightOrderRef.current.slice(0, correctClicks).includes(num) ? <LockOpenIcon /> : <LockIcon />}
                 </IconButton>
             )}

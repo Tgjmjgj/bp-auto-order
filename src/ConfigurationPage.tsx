@@ -20,10 +20,11 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Container from '@material-ui/core/Container';
 import MuiAlert from '@material-ui/lab/Alert';
 
-import {ConfigStateContext} from './ConfigStateProvider';
+import { ConfigStateContext } from './ConfigStateProvider';
 import { DeveloperConfig } from './layouts/DeveloperConfig';
+import { AutoOrderOptions } from './layouts/AutoOrderOptions';
 
-const menuCategories = ['Configuration', 'Generator', 'Options', 'Developer Settings'] as const;
+const menuCategories = ['Auto-order Options', 'Manual order', 'Nothing now', 'Developer Settings'] as const;
 type MenuCategories = typeof menuCategories[number];
 
 const drawerWidth = 240;
@@ -78,9 +79,9 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const mainLayouts: Record<MenuCategories, JSX.Element> = {
-    'Configuration': <div/>,
-    'Generator': <div/>,
-    'Options': <div/>,
+    'Auto-order Options': <AutoOrderOptions />,
+    'Manual order': <div />,
+    'Nothing now': <div />,
     'Developer Settings': <DeveloperConfig />,
 };
 
@@ -88,14 +89,14 @@ export const ConfigurationPage: React.FC = () => {
 
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [saveMessageShows, setSaveMessageShows] = React.useState(false);
-    const [selectedMenuItem, setSelectMenuItem] = React.useState<MenuCategories>('Configuration');
+    const [selectedMenuItem, setSelectMenuItem] = React.useState<MenuCategories>('Auto-order Options');
     const configState = React.useContext(ConfigStateContext);
     const enabled = configState.state.enabled;
     const classes = useStyles();
 
     const toggleEnabled = () => {
         console.log('toggle enabled');
-        configState.updateState({enabled: !enabled});
+        configState.updateState({ enabled: !enabled });
     };
     const toggleMenuOnMobile = () => setMobileOpen(!mobileOpen);
     const closeSaveMessage = () => setSaveMessageShows(false);
