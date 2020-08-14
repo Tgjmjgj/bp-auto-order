@@ -5,12 +5,17 @@ import eq from 'fast-deep-equal';
 
 import { AutoAuthContext } from './AutoAuthProvider';
 
+export type OrderTarget = {
+    key: string
+    displayName: string
+};
 
 export type ConfigState = {
     enabled: boolean
     saveOnServer: boolean     // indicates do we need to initiate saving operation or not
     spreadsheetId: string
     defaultOrder: OrderItem[]
+    savedTargets: OrderTarget[]
     systemName?: string
     customName?: string
 };
@@ -25,13 +30,20 @@ export type OrderItem = {
     name: string
     price: number
     quantity: number
+    target: string
 };
 
 const defaultConfigState: ConfigState = {
     enabled: false,
     saveOnServer: false,
     spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
-    defaultOrder: [{ name: 'Cувлаки', price: 140, quantity: 2 }],
+    defaultOrder: [
+        { name: 'Cувлаки', price: 140, quantity: 2, target: 'chanakhi' },
+    ],
+    savedTargets: [
+        { key: 'kumir', displayName: 'Ку-мир' },
+        { key: 'chanakhi', displayName: 'Чанахи' },
+    ],
 };
 
 const omitProperties = ['saveOnServer'];
@@ -45,7 +57,7 @@ const defaultConfigContextData = {
     saved: 0,
 };
 
-const saveConfigInactivityTimeout = 5000;
+const saveConfigInactivityTimeout = 3000;
 
 export const ConfigStateContext = React.createContext<ConfigContextData>(defaultConfigContextData);
 
@@ -57,17 +69,24 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
     const oldConfigStateRef = React.useRef<ConfigState>(defaultConfigState);
     const timerIdRef = React.useRef(0);
 
-    const configContextValue = React.useMemo(() => ({
-        state: configState,
-        updateState: (stateUpdate: Partial<ConfigState>) => {
-            setConfigState({
-                ...configState,
-                ...stateUpdate,
-                saveOnServer: true,
-            });
-        },
-        saved,
-    }), [configState, saved]);
+    const configContextValue = React.useMemo(() => {
+        return {
+            state: configState,
+            updateState: (stateUpdate: Partial<ConfigState>) => {
+                const newState = {
+                    ...configState,
+                    ...stateUpdate,
+                    saveOnServer: true,
+                };
+                setConfigState(newState);
+            },
+            saved,
+        };
+    }, [configState, saved]);
+
+    React.useEffect(() => {
+        console.log('@ new state: ', configState)
+    }, [configState]);
 
     useEffect(() => {
         if (authContext.uid) {
@@ -80,10 +99,10 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                         customName: authContext.displayName || '',
                     }), {merge: true});
                 } else {
-                    const newKeys = prepareConfigForServer(pickBy(defaultConfigState, (key: string) => !(key in data.data()!)) as ConfigState);
+                    const newKeys = prepareConfigForServer(pickBy(defaultConfigState, (val, key) => !(key in data.data()!)) as ConfigState);
                     if (Object.keys(newKeys).length) {
                         docRef.set({
-                            ...defaultConfigState,
+                            ...data.data(),
                             ...newKeys,
                         });
                     }
@@ -108,8 +127,10 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                 console.log('old state: ', oldConfigStateRef.current);
                 clearTimeout(timerIdRef.current);
                 timerIdRef.current = window.setTimeout(() => {
+                    const preparedData = prepareConfigForServer(configState);
+                    console.log('@Send to server: ', preparedData);
                     Firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
-                    .set(prepareConfigForServer(configState), {merge: true})
+                    .set(preparedData, {merge: true})
                     .then(() => setSaved(s => ++s));
                 }, saveConfigInactivityTimeout);
             }

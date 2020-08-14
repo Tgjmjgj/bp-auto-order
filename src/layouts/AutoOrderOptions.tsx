@@ -44,6 +44,7 @@ const newOrderItem = (): OrderItemData => ({
     name: '',
     price: 0,
     quantity: 1,
+    target: '',
 });
 
 
@@ -52,6 +53,8 @@ export const AutoOrderOptions: React.FC = () => {
     const classes = useStyles();
     const customName = configState.state.customName;
     const orderItems = configState.state.defaultOrder;
+
+    const savedTargets = configState.state.savedTargets;
 
     const changeCustomName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         configState.updateState({customName: e.target.value})
@@ -81,13 +84,29 @@ export const AutoOrderOptions: React.FC = () => {
                 ...orderItems.slice(index + 1, orderItems.length),
             ],
         });
-    }, [orderItems]);
+    }, [orderItems, configState]);
+    const addNewTargetAndSelectIt = React.useCallback((index: number, value: string) => {
+        console.log('@addNewTarget: ', value);
+        configState.updateState({
+            savedTargets: [
+                ...savedTargets,
+                { key: value, displayName: value },
+            ],
+            defaultOrder: [
+                ...orderItems.slice(0, index),
+                {
+                    ...orderItems[index],
+                    target: value,
+                },
+                ...orderItems.slice(index + 1, orderItems.length),
+            ],
+        });
+    }, [orderItems, savedTargets, configState]);
 
     console.log('## Order Items: ', orderItems);
     console.log('## Config State: ', configState);
 
     const orderItemsUI = React.useMemo(() => orderItems.map((item, i) => {
-
         return (
             <Grid item key={i}>
                 <OrderItem
@@ -95,10 +114,12 @@ export const AutoOrderOptions: React.FC = () => {
                     canClose={orderItems.length > 1}
                     value={item}
                     setValue={newValue => setOrderItem(i, newValue)}
+                    savedTargets={savedTargets}
+                    addNewTarget={value => addNewTargetAndSelectIt(i, value)}
                 />
             </Grid>
         );
-    }), [orderItems, deleteOrderItem, setOrderItem]);
+    }), [orderItems, savedTargets, deleteOrderItem, setOrderItem, addNewTargetAndSelectIt]);
 
     return (
         <Grid container spacing={4} direction="column">

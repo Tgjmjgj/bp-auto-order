@@ -3,29 +3,36 @@ import React from 'react';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
-import Grid from '@material-ui/core/Grid';
-import Input from '@material-ui/core/Input';
+import CardMedia from '@material-ui/core/CardMedia';
+import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-import { Typography } from '@material-ui/core';
-import { OrderItem as OrderItemData } from '../ConfigStateProvider';
+
+import { OrderItem as OrderItemData, OrderTarget } from '../ConfigStateProvider';
+import {FreeSelect} from './FreeSelect'
+
+import foodPlaceholder from '../images/food-placeholder.png';
 
 type Props = {
     onClose: () => void
     canClose: boolean
     value: OrderItemData
     setValue: (newValue: OrderItemData) => void
+    savedTargets: OrderTarget[]
+    addNewTarget: (value: string) => void
 };
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         card: {
-            backgroundColor: '#fcfcfc',
-            width: 320,
+            backgroundColor: '#f9f9f9',
+            width: 220,
             position: 'relative',
             overflow: 'visible',
         },
         cardContent: {
+            backgroundColor: '#fff',
+            borderTop: '1px solid rgba(0, 0, 0, 0.12)',
             padding: '0 !important',
         },
         closeIcon: {
@@ -45,12 +52,22 @@ const useStyles = makeStyles((theme: Theme) =>
         quantityLabel: {
             margin: `0 ${theme.spacing(2)}px`,
         },
+        dishImage: {
+            paddingTop: '56.25%',
+            margin: '0 50px',
+        },
+        input: {
+            width: '100%',
+        },
     })
 );
 
-export const OrderItem: React.FC<Props> = React.memo(({onClose, canClose, value, setValue}) => {
-
+export const OrderItem: React.FC<Props> = props => {
+    const { onClose, canClose, value, setValue, savedTargets, addNewTarget } = props;
     const classes = useStyles();
+    const targetOptions = savedTargets.map(target => target.displayName);
+    const target = savedTargets.find(target => target.key === value.target)
+    const selectedTargetName = target ? target.displayName : ''
 
     const changeName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setValue({
@@ -74,39 +91,65 @@ export const OrderItem: React.FC<Props> = React.memo(({onClose, canClose, value,
             quantity: Number.isNaN(newValue) ? 1 : newValue < 1 ? 1 : newValue,
         });
     }, [value, setValue]);
+    const changeTarget = React.useCallback((targetName: string) => {
+        const foundTarget = savedTargets.find(target => target.displayName === targetName)
+        if (foundTarget) {
+            setValue({
+                ...value,
+                target: foundTarget.key,
+            });
+        }
+    }, [value, savedTargets, setValue]);
+    const addNewTargetItem = React.useCallback((targetName: string) => {
+        if (targetName) {
+            addNewTarget(targetName);
+        }
+    }, [addNewTarget]);
 
     console.log('### order item re-rendering');
 
     return (
-        <Card variant="outlined" className={classes.card}>
+        <Card variant="outlined" className={classes.card} elevation={3}>
+            <CardMedia
+                className={classes.dishImage}
+                image={foodPlaceholder}
+                title="dish"
+            />
             <CardContent className={classes.cardContent}>
-                <Grid container>
-                    <Grid item xs={8}>
-                        <Input
-                            value={value.name}
-                            onChange={changeName}
-                            placeholder="Dish name"
-                            multiline={true}
-                            rows="2"
-                        />
-                    </Grid>
-                    <Grid item xs={4}>
-                        <Input
-                            value={value.price || ''}
-                            onChange={changePrice}
-                            placeholder="Price"
-                        />
-                    </Grid>
-                    <Grid item xs={12} className={classes.row}>
-                        <Typography className={classes.quantityLabel}>
-                            Quantity:
-                        </Typography>
-                        <Input
-                            value={value.quantity}
-                            onChange={changeQuantity}
-                        />
-                    </Grid>
-                </Grid>
+                <TextField
+                    label="Dish name"
+                    variant="filled"
+                    value={value.name}
+                    onChange={changeName}
+                    multiline={true}
+                    size="small"
+                    className={classes.input}
+                />
+                <TextField
+                    label="Price"
+                    variant="filled"
+                    value={value.price || ''}
+                    onChange={changePrice}
+                    size="small"
+                    className={classes.input}
+                />
+                <TextField
+                    label="Quantity"
+                    type="number"
+                    variant="filled"
+                    value={value.quantity}
+                    onChange={changeQuantity}
+                    size="small"
+                    className={classes.input}
+                />
+                <FreeSelect
+                    label="From"
+                    options={targetOptions}
+                    value={selectedTargetName}
+                    onChange={changeTarget}
+                    className={classes.input}
+                    addNewItem={addNewTargetItem}
+                />
             </CardContent>
 
             {canClose && (
@@ -118,4 +161,4 @@ export const OrderItem: React.FC<Props> = React.memo(({onClose, canClose, value,
             )}
         </Card>
     );
-});
+};

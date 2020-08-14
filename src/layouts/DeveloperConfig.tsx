@@ -33,7 +33,7 @@ export const DeveloperConfig: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
     const classes = useStyles();
     const spreadsheetId = configState.state.spreadsheetId;
-    
+
     const changeSpreadsheetId = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         configState.updateState({spreadsheetId: e.target.value});
     }, []);
