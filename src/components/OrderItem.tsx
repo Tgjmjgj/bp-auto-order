@@ -44,6 +44,10 @@ const useStyles = makeStyles((theme: Theme) =>
             transformOrigin: 'center',
             transform: 'translate(50%, -50%) scale(.5)',
             backgroundColor: '#fcfcfc',
+            transition: 'background-color .2s ease-out',
+            '&:hover': {
+                backgroundColor: theme.palette.secondary.light,
+            },
         },
         row: {
             display: 'flex',

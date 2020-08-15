@@ -4,13 +4,15 @@ import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import IconButton from '@material-ui/core/IconButton';
-import AddIcon from '@material-ui/icons/Add';
-import { ConfigStateContext } from '../ConfigStateProvider';
-import { Divider } from '@material-ui/core';
+import Divider from '@material-ui/core/Divider';
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogActions from '@material-ui/core/DialogActions';
 
-import { OrderItem } from '../components/OrderItem';
-import { OrderItem as OrderItemData } from '../ConfigStateProvider';
+import { ConfigStateContext } from '../ConfigStateProvider';
+import { OrderPreset } from '../components/OrderPreset';
+import { OrderPreset as OrderPresetData } from '../ConfigStateProvider';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -27,126 +29,131 @@ const useStyles = makeStyles((theme: Theme) =>
         divider: {
             marginBottom: theme.spacing(2),
         },
-        addIcon: {
-            borderRadius: '50%',
-            borderWidth: 1,
-            borderColor: 'rgba(0, 0, 0, 0.54)',
-            borderStyle: 'dashed',
-        },
-        centered: {
-            display: 'flex',
-            alignItems: 'center',
+        newPresetButton: {
+            marginTop: theme.spacing(4),
+            transition: 'color .2s ease-out, border-color .2s ease-out, background-color .2s ease-out',
+            '&:hover': {
+                color: theme.palette.primary.main,
+                borderColor: theme.palette.primary.main,
+                backgroundColor: 'rgb(22, 2, 232, .04)',
+            },
         },
     })
 );
 
-const newOrderItem = (): OrderItemData => ({
-    name: '',
-    price: 0,
-    quantity: 1,
-    target: '',
-});
-
-
 export const AutoOrderOptions: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
+    const [open, toggleOpen] = React.useState<number | null>(null);
+    const uniqDialogIdRef = React.useRef('delete-preset-dialog-' + btoa(Math.random().toString()).substring(0,12))
     const classes = useStyles();
     const customName = configState.state.customName;
-    const orderItems = configState.state.defaultOrder;
-
-    const savedTargets = configState.state.savedTargets;
+    const presets = configState.state.presets;
 
     const changeCustomName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         configState.updateState({customName: e.target.value})
-    }, []);
+    }, [configState]);
 
-    const addOrderItem = React.useCallback(() => {
-        configState.updateState({
-            defaultOrder: [
-                ...orderItems,
-                newOrderItem(),
-            ],
-        });
-    }, [orderItems]);
-    const deleteOrderItem = React.useCallback((index: number) => {
-        configState.updateState({
-            defaultOrder: [
-                ...orderItems.slice(0, index),
-                ...orderItems.slice(index + 1, orderItems.length),
-            ],
-        })
-    }, [orderItems]);
-    const setOrderItem = React.useCallback((index: number, newValue: OrderItemData) => {
-        configState.updateState({
-            defaultOrder: [
-                ...orderItems.slice(0, index),
-                newValue,
-                ...orderItems.slice(index + 1, orderItems.length),
-            ],
-        });
-    }, [orderItems, configState]);
-    const addNewTargetAndSelectIt = React.useCallback((index: number, value: string) => {
-        console.log('@addNewTarget: ', value);
-        configState.updateState({
-            savedTargets: [
-                ...savedTargets,
-                { key: value, displayName: value },
-            ],
-            defaultOrder: [
-                ...orderItems.slice(0, index),
-                {
-                    ...orderItems[index],
-                    target: value,
-                },
-                ...orderItems.slice(index + 1, orderItems.length),
-            ],
-        });
-    }, [orderItems, savedTargets, configState]);
-
-    console.log('## Order Items: ', orderItems);
-    console.log('## Config State: ', configState);
-
-    const orderItemsUI = React.useMemo(() => orderItems.map((item, i) => {
-        return (
-            <Grid item key={i}>
-                <OrderItem
-                    onClose={() => deleteOrderItem(i)}
-                    canClose={orderItems.length > 1}
-                    value={item}
-                    setValue={newValue => setOrderItem(i, newValue)}
-                    savedTargets={savedTargets}
-                    addNewTarget={value => addNewTargetAndSelectIt(i, value)}
-                />
-            </Grid>
+    const getNewEmptyPreset = React.useCallback((): OrderPresetData => {
+        const nameIndex = Math.max(
+            1,
+            ...(presets
+            .map(preset => preset.name)
+            .filter(name => name.match(/^New Preset \d+$/))
+            .map(name => Number(name.match(/^New Preset (\d+)$/)![1])))
         );
-    }), [orderItems, savedTargets, deleteOrderItem, setOrderItem, addNewTargetAndSelectIt]);
+        return {
+            name: 'New Preset ' + nameIndex,
+            items: [
+                { name: '', quantity: 1, price: 0, target: '' },
+            ],
+        };
+    }, [presets]);
+
+    const addPreset = React.useCallback(() => {
+        configState.updateState({
+            presets: [
+                ...presets,
+                getNewEmptyPreset(),
+            ],
+        });
+    }, [presets, getNewEmptyPreset, configState]);
+
+    const deletePreset = React.useCallback(() => {
+        if (open !== null) {
+            configState.updateState({
+                presets: [
+                    ...configState.state.presets.slice(0, open),
+                    ...configState.state.presets.slice(open + 1, configState.state.presets.length),
+                ],
+            });
+        }
+    }, [open, configState]);
+
+    const onCloseDialog = React.useCallback(() => toggleOpen(null), []);
+
+    const onSubmitDialog = React.useCallback((e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        deletePreset();
+        onCloseDialog();
+    }, [deletePreset, onCloseDialog]);
+
+    const presetsUi = React.useMemo(() => presets.map((preset, i) => {
+        return (
+            <React.Fragment key={i}>
+                <OrderPreset
+                    presetIndex={i}
+                    deletePreset={() => toggleOpen(i)}
+                />
+                { (i !== presets.length - 1) && (
+                    <Divider className={classes.divider} />
+                )}
+            </React.Fragment>
+        );
+    }), [presets, classes.divider]);
 
     return (
-        <Grid container spacing={4} direction="column">
-            <Grid item className={classes.gridRow}>
-                <Typography className={classes.label}>
-                    Custom display name:
-                </Typography>
-                <TextField
-                    label="Display name"
-                    value={customName || ''}
-                    onChange={changeCustomName}
-                />
-            </Grid>
-            <Grid item>
-                <Divider className={classes.divider} />
-                <Typography variant="h5" gutterBottom>
-                    Predefined order:
-                </Typography>
-                <Grid container spacing={2} direction="row">
-                    { orderItemsUI }
-                    <Grid item className={classes.centered}>
-                        <IconButton className={classes.addIcon} onClick={addOrderItem}>
-                            <AddIcon />
-                        </IconButton>
-                    </Grid>
+        <>
+            <Grid container spacing={4} direction="column">
+                <Grid item className={classes.gridRow}>
+                    <Typography className={classes.label}>
+                        Custom display name:
+                    </Typography>
+                    <TextField
+                        value={customName || ''}
+                        onChange={changeCustomName}
+                    />
+                </Grid>
+                <Grid item>
+                    <Divider className={classes.divider} />
+                    <Typography variant="h5" gutterBottom align="center">
+                        Order Presets
+                    </Typography>
+                    { presetsUi }
+                    <Button
+                        variant="outlined"
+                        onClick={addPreset}
+                        className={classes.newPresetButton}
+                    >
+                        New preset
+                    </Button>
                 </Grid>
             </Grid>
-        </Grid>
+
+            <Dialog open={open !== null} onClose={onCloseDialog} aria-labelledby={uniqDialogIdRef.current}>
+                <form onSubmit={onSubmitDialog}>
+                    <DialogTitle id={uniqDialogIdRef.current}>
+                        {`Delete "${presets[open!] ? presets[open!].name : ''}" preset?`}
+                    </DialogTitle>
+                    <DialogActions>
+                        <Button onClick={onCloseDialog}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" color="secondary">
+                            Delete
+                        </Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
+        </>
     );
 };

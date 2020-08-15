@@ -29,16 +29,6 @@ html, body, #root {
   flex-flow: column nowrap;
 }
 
-.header {
-  height: 60px;
-  background-color: #b5152e !important;
-  z-index: 1201 !important;
-}
-
-.header.enabled {
-  background-color: #539e3e !important;
-}
-
 .main {
   flex: 1 1 0;
 }

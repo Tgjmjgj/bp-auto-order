@@ -36,7 +36,7 @@ export const DeveloperConfig: React.FC = () => {
 
     const changeSpreadsheetId = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         configState.updateState({spreadsheetId: e.target.value});
-    }, []);
+    }, [configState]);
 
     const onLockClick = React.useCallback((num: number) => {
         const nextCorrectClicks = correctClicks < rightOrderRef.current.length && num === rightOrderRef.current[correctClicks] ? correctClicks + 1 : 0;

@@ -12,9 +12,9 @@ export type OrderTarget = {
 
 export type ConfigState = {
     enabled: boolean
-    saveOnServer: boolean     // indicates do we need to initiate saving operation or not
+    saveOnServer: boolean       // indicates do we need to initiate saving operation or not
     spreadsheetId: string
-    defaultOrder: OrderItem[]
+    presets: OrderPreset[]
     savedTargets: OrderTarget[]
     systemName?: string
     customName?: string
@@ -23,7 +23,12 @@ export type ConfigState = {
 export type ConfigContextData = {
     state: ConfigState
     updateState: (stateUpdate: Partial<ConfigState>) => void
-    saved: number           // value changes when config successfully saved on server
+    saved: number               // value changes when config successfully saved on server
+};
+
+export type OrderPreset = {
+    name: string
+    items: OrderItem[]
 };
 
 export type OrderItem = {
@@ -37,8 +42,13 @@ const defaultConfigState: ConfigState = {
     enabled: false,
     saveOnServer: false,
     spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
-    defaultOrder: [
-        { name: 'Cувлаки', price: 140, quantity: 2, target: 'chanakhi' },
+    presets: [
+        {
+            name: 'Default preset',
+            items: [
+                { name: 'Cувлаки', price: 140, quantity: 2, target: 'chanakhi' },
+            ],
+        },
     ],
     savedTargets: [
         { key: 'kumir', displayName: 'Ку-мир' },

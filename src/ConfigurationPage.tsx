@@ -75,6 +75,14 @@ const useStyles = makeStyles((theme: Theme) =>
         contentContainer: {
             margin: `${theme.spacing(3)}px 0`,
         },
+        header: {
+            height: '60px',
+            backgroundColor: theme.palette.secondary.dark,
+            zIndex: 1201,
+        },
+        enabled: {
+            backgroundColor: '#539e3e !important',
+        },
     })
 );
 
@@ -125,7 +133,7 @@ export const ConfigurationPage: React.FC = () => {
 
     return (
         <div className="page-container">
-            <AppBar position="static" className={cn('header', { 'enabled': enabled })}>
+            <AppBar position="sticky" className={cn(classes.header, { [classes.enabled]: enabled })}>
                 <Toolbar className={classes.toolbar}>
                     <IconButton
                         color="inherit"
