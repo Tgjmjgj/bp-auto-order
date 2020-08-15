@@ -10,11 +10,16 @@ export type OrderTarget = {
     displayName: string
 };
 
+export const authOrderMode = ['preset', 'random'] as const;
+export type AutoOrderMode = typeof authOrderMode[number];
+
 export type ConfigState = {
     enabled: boolean
     saveOnServer: boolean       // indicates do we need to initiate saving operation or not
     spreadsheetId: string
+    mode: AutoOrderMode
     presets: OrderPreset[]
+    selectedPresets: number[]
     savedTargets: OrderTarget[]
     systemName?: string
     customName?: string
@@ -43,6 +48,8 @@ const defaultConfigState: ConfigState = {
     enabled: false,
     saveOnServer: false,
     spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
+    mode: 'preset',
+    selectedPresets: [0],
     presets: [
         {
             name: 'Default preset',

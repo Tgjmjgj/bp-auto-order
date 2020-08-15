@@ -90,6 +90,7 @@ export const PresetsScreen: React.FC = () => {
                 <OrderPreset
                     presetIndex={i}
                     deletePreset={() => toggleOpen(i)}
+                    allowDelete={presets.length > 1}
                 />
                 {(i !== presets.length - 1) && (
                     <Divider className={classes.divider} />

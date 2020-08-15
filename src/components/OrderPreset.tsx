@@ -13,6 +13,7 @@ import { OrderItem } from './OrderItem';
 
 type Props = {
     presetIndex: number
+    allowDelete: boolean
     deletePreset: () => void
 };
 
@@ -56,7 +57,7 @@ const newOrderItem = (): OrderItemData => ({
     target: '',
 });
 
-export const OrderPreset: React.FC<Props> = ({presetIndex, deletePreset}) => {
+export const OrderPreset: React.FC<Props> = ({presetIndex, allowDelete, deletePreset}) => {
     const configState = React.useContext(ConfigStateContext);
     const classes = useStyles();
     const preset = configState.state.presets[presetIndex];
@@ -173,9 +174,11 @@ export const OrderPreset: React.FC<Props> = ({presetIndex, deletePreset}) => {
                     value={preset.name}
                     onChange={onChangePresetName}
                 />
-                <IconButton className={classes.deletePresetButton} onClick={deletePreset}>
-                    <DeleteIcon />
-                </IconButton>
+                { allowDelete && (
+                    <IconButton className={classes.deletePresetButton} onClick={deletePreset}>
+                        <DeleteIcon />
+                    </IconButton>
+                )}
             </Grid>
             <Grid container spacing={2} direction="row" className={classes.grid}>
                 { presetItemsUI }
