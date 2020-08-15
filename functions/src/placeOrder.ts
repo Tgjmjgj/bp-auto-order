@@ -148,11 +148,16 @@ const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumb
     const translit = new cyrillicToTranslit();
     const nameVariants = uniq(names.reduce<string[]>((total, next) => {
         const lName = next.toLowerCase().trim();
-        total.push(translit.transform(lName));
-        total.push(translit.reverse(lName));
+        const translitName = translit.transform(lName);
+        total.push(translitName);
+        total.push(translit.reverse(translitName));
         const splits = lName.split(' ').filter(namePart => namePart);
         if (splits.length > 1) {
-            total.push(`${splits[1]} ${splits[0]}`);
+            const reversedName = `${splits[1]} ${splits[0]}`;
+            const translitReversedName = translit.transform(lName);
+            total.push(reversedName);
+            total.push(translitReversedName);
+            total.push(translit.reverse(translitReversedName));
         }
         total.push(...splits);
         return total;
