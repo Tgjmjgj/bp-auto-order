@@ -3,7 +3,6 @@ import React from 'react';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
 import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -16,13 +15,6 @@ import { OrderPreset as OrderPresetData } from '../ConfigStateProvider';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
-        gridRow: {
-            display: 'flex',
-            alignItems: 'flex-end',
-        },
-        label: {
-            marginRight: '20px',
-        },
         iconGroup: {
             margin: theme.spacing(1),
         },
@@ -41,25 +33,20 @@ const useStyles = makeStyles((theme: Theme) =>
     })
 );
 
-export const AutoOrderOptions: React.FC = () => {
+export const PresetsScreen: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
     const [open, toggleOpen] = React.useState<number | null>(null);
-    const uniqDialogIdRef = React.useRef('delete-preset-dialog-' + btoa(Math.random().toString()).substring(0,12))
+    const uniqDialogIdRef = React.useRef('delete-preset-dialog-' + btoa(Math.random().toString()).substring(0, 12))
     const classes = useStyles();
-    const customName = configState.state.customName;
     const presets = configState.state.presets;
-
-    const changeCustomName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        configState.updateState({customName: e.target.value})
-    }, [configState]);
 
     const getNewEmptyPreset = React.useCallback((): OrderPresetData => {
         const nameIndex = Math.max(
             1,
             ...(presets
-            .map(preset => preset.name)
-            .filter(name => name.match(/^New Preset \d+$/))
-            .map(name => Number(name.match(/^New Preset (\d+)$/)![1])))
+                .map(preset => preset.name)
+                .filter(name => name.match(/^New Preset \d+$/))
+                .map(name => Number(name.match(/^New Preset (\d+)$/)![1])))
         );
         return {
             name: 'New Preset ' + nameIndex,
@@ -104,7 +91,7 @@ export const AutoOrderOptions: React.FC = () => {
                     presetIndex={i}
                     deletePreset={() => toggleOpen(i)}
                 />
-                { (i !== presets.length - 1) && (
+                {(i !== presets.length - 1) && (
                     <Divider className={classes.divider} />
                 )}
             </React.Fragment>
@@ -114,21 +101,12 @@ export const AutoOrderOptions: React.FC = () => {
     return (
         <>
             <Grid container spacing={4} direction="column">
-                <Grid item className={classes.gridRow}>
-                    <Typography className={classes.label}>
-                        Custom display name:
-                    </Typography>
-                    <TextField
-                        value={customName || ''}
-                        onChange={changeCustomName}
-                    />
-                </Grid>
                 <Grid item>
                     <Divider className={classes.divider} />
                     <Typography variant="h5" gutterBottom align="center">
                         Order Presets
                     </Typography>
-                    { presetsUi }
+                    {presetsUi}
                     <Button
                         variant="outlined"
                         onClick={addPreset}

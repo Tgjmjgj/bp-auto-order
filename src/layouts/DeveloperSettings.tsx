@@ -8,6 +8,7 @@ import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import LockIcon from '@material-ui/icons/Lock';
 import LockOpenIcon from '@material-ui/icons/LockOpen';
+
 import { ConfigStateContext } from '../ConfigStateProvider';
 
 
@@ -22,11 +23,11 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         iconGroup: {
             margin: theme.spacing(1),
-        }
+        },
     })
 );
 
-export const DeveloperConfig: React.FC = () => {
+export const DeveloperSettings: React.FC = () => {
     const rightOrderRef = React.useRef(shuffle([0, 1, 2]));
     const [correctClicks, setCorrectClicks] = React.useState(0);
     const [sheetIdDisabled, setSheetIdDisabled] = React.useState(true);

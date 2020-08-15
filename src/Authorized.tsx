@@ -21,13 +21,14 @@ import Container from '@material-ui/core/Container';
 import MuiAlert from '@material-ui/lab/Alert';
 
 import { ConfigStateContext } from './ConfigStateProvider';
-import { DeveloperConfig } from './layouts/DeveloperConfig';
-import { AutoOrderOptions } from './layouts/AutoOrderOptions';
+import { MainOptions } from './layouts/MainOptions';
+import { DeveloperSettings } from './layouts/DeveloperSettings';
+import { PresetsScreen } from './layouts/PresetsScreen';
 
-const menuCategories = ['Auto-order Options', 'Manual order', 'Nothing now', 'Developer Settings'] as const;
+const menuCategories = ['Main Options', 'Presets', 'Random Configuration', 'Developer Settings'] as const;
 type MenuCategories = typeof menuCategories[number];
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -87,10 +88,10 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const mainLayouts: Record<MenuCategories, JSX.Element> = {
-    'Auto-order Options': <AutoOrderOptions />,
-    'Manual order': <div />,
-    'Nothing now': <div />,
-    'Developer Settings': <DeveloperConfig />,
+    'Main Options': <MainOptions />,
+    'Presets': <PresetsScreen />,
+    'Random Configuration': <div />,
+    'Developer Settings': <DeveloperSettings />,
 };
 
 export const Authorized: React.FC = () => {
@@ -98,7 +99,7 @@ export const Authorized: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [saveMessageShows, setSaveMessageShows] = React.useState(false);
-    const [selectedMenuItem, setSelectMenuItem] = React.useState<MenuCategories>('Auto-order Options');
+    const [selectedMenuItem, setSelectMenuItem] = React.useState<MenuCategories>('Main Options');
     const enabled = configState.state.enabled;
     const classes = useStyles();
 
