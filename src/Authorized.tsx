@@ -93,12 +93,12 @@ const mainLayouts: Record<MenuCategories, JSX.Element> = {
     'Developer Settings': <DeveloperConfig />,
 };
 
-export const ConfigurationPage: React.FC = () => {
+export const Authorized: React.FC = () => {
 
+    const configState = React.useContext(ConfigStateContext);
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [saveMessageShows, setSaveMessageShows] = React.useState(false);
     const [selectedMenuItem, setSelectMenuItem] = React.useState<MenuCategories>('Auto-order Options');
-    const configState = React.useContext(ConfigStateContext);
     const enabled = configState.state.enabled;
     const classes = useStyles();
 

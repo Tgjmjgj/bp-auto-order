@@ -24,6 +24,7 @@ export type ConfigContextData = {
     state: ConfigState
     updateState: (stateUpdate: Partial<ConfigState>) => void
     saved: number               // value changes when config successfully saved on server
+    dataLoaded: boolean
 };
 
 export type OrderPreset = {
@@ -65,6 +66,7 @@ const defaultConfigContextData = {
     state: defaultConfigState,
     updateState: () => {},
     saved: 0,
+    dataLoaded: false,
 };
 
 const saveConfigInactivityTimeout = 3000;
@@ -76,6 +78,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
     const authContext = React.useContext(AutoAuthContext);
     const [configState, setConfigState] = React.useState<ConfigState>(defaultConfigState);
     const [saved, setSaved] = React.useState(0);
+    const [dataLoaded, setDataLoaded] = React.useState(false);
     const oldConfigStateRef = React.useRef<ConfigState>(defaultConfigState);
     const timerIdRef = React.useRef(0);
 
@@ -91,11 +94,12 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                 setConfigState(newState);
             },
             saved,
+            dataLoaded,
         };
-    }, [configState, saved]);
+    }, [configState, saved, dataLoaded]);
 
     React.useEffect(() => {
-        console.log('@ new state: ', configState)
+        console.log('@ new state: ', configState);
     }, [configState]);
 
     useEffect(() => {
@@ -125,6 +129,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                     ...(data.exists ? data.data() : undefined),
                     saveOnServer: false,
                 });
+                setDataLoaded(true);
             });
         }
     }, [authContext]);

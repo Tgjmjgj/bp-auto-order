@@ -3,6 +3,8 @@ import Firebase from 'firebase';
 
 
 export type AuthData = {
+    authInProcess: boolean
+    authWithGoogle: () => void
     uid?: string
     email?: string | null
     displayName?: string | null
@@ -19,41 +21,68 @@ const firebaseConfig = {
     appId: "1:463231819575:web:1530cce4693247f08104b2",
 };
 
-export const AutoAuthContext = React.createContext<AuthData>({});
+const defaultAuthData = {
+    authInProcess: true,
+    authWithGoogle: () => {}
+};
+
+export const AutoAuthContext = React.createContext<AuthData>(defaultAuthData);
 
 export const AuthAuthProvider: React.FC = ({ children }) => {
 
-    const [authState, setAuthState] = React.useState<AuthData>({});
+    const [authState, setAuthState] = React.useState<AuthData>(defaultAuthData);
+
+    const authWithGoogle = React.useCallback(() => {
+        const provider = new Firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({
+            login_hint: 'you@brightpattern.com',
+        });
+        try {
+            setAuthState({
+                authWithGoogle,
+                authInProcess: true,
+            });
+            Firebase.auth().signInWithPopup(provider)
+            .catch(() => {
+                setAuthState({
+                    authWithGoogle,
+                    authInProcess: false,
+                });
+            });
+            console.log('Google Sign In');
+        } catch (error) {
+            console.log(error);
+        }
+    }, []);
 
     React.useEffect(() => {
+        setAuthState({
+            authInProcess: true,
+            authWithGoogle,
+        });
         Firebase
         .initializeApp(firebaseConfig)
         .auth()
         .onAuthStateChanged(user => {
             if (user) {
                 setAuthState({
+                    authWithGoogle,
+                    authInProcess: false,
                     uid: user.uid,
                     email: user.email,
                     displayName: user.displayName,
                     photoUrl: user.photoURL,
                 });
                 console.log('User is logged in');
-                console.log(user);
             } else {
+                setAuthState({
+                    authWithGoogle,
+                    authInProcess: false,
+                });
                 console.log('User is not logged in');
-                // const provider = new Firebase.auth.GoogleAuthProvider();
-                // provider.setCustomParameters({
-                //     login_hint: 'you@brightpattern.com',
-                // });
-                // try {
-                //     Firebase.auth().signInWithPopup(provider);
-                //     console.log('Google Sign In');
-                // } catch (error) {
-                //     console.log(error);
-                // }
             }
         });
-    }, []);
+    }, [authWithGoogle]);
 
     return (
         <AutoAuthContext.Provider value={ authState }>
