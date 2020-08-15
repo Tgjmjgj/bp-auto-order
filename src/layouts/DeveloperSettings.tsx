@@ -11,7 +11,6 @@ import LockOpenIcon from '@material-ui/icons/LockOpen';
 
 import { ConfigStateContext } from '../ConfigStateProvider';
 
-
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         gridRow: {
@@ -36,7 +35,7 @@ export const DeveloperSettings: React.FC = () => {
     const spreadsheetId = configState.state.spreadsheetId;
 
     const changeSpreadsheetId = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        configState.updateState({spreadsheetId: e.target.value});
+        configState.updateState({ spreadsheetId: e.target.value });
     }, [configState]);
 
     const onLockClick = React.useCallback((num: number) => {

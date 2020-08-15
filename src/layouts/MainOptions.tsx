@@ -6,9 +6,11 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
 import Autocomplete from '@material-ui/lab/Autocomplete';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 
-import { ConfigStateContext, AutoOrderMode } from '../ConfigStateProvider';
-import { Select, MenuItem } from '@material-ui/core';
+import { ConfigStateContext } from '../ConfigStateProvider';
+import { AutoOrderMode } from '../../types/autoOrderConfigs';
 
 type AutoOrderOption = {
     key: AutoOrderMode
@@ -17,7 +19,7 @@ type AutoOrderOption = {
 
 type PresetOption = {
     value: string
-    key: number
+    key: string
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -44,19 +46,29 @@ const autoOrderModeOptions: AutoOrderOption[] = [
 export const MainOptions: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
     const [selectedPresets, setSelectedPresets] = React.useState<PresetOption[]>(() => {
-        return configState.state.selectedPresets.map(key => ({
-            key,
-            value: configState.state.presets[key]!.name,
-        }));
+        return configState.state.selectedPresets.map(presetId => {
+            const realPreset = configState.state.presets.find(preset => preset.id === presetId);
+            return realPreset ? { key: presetId, value: realPreset.name } : null;
+        }).filter(option => option) as PresetOption[];
     });
     const classes = useStyles();
     const customName = configState.state.customName;
     const mode = configState.state.mode;
 
-    const presetsOptions = React.useMemo<PresetOption[]>(() => configState.state.presets.map((preset, i) => {
+    React.useEffect(() => {
+        const realPresetIds = configState.state.presets.map(preset => preset.id);
+        const goodIds = configState.state.selectedPresets.filter(presetId => realPresetIds.includes(presetId));
+        if (goodIds.length < configState.state.selectedPresets.length) {
+            configState.updateState({
+                selectedPresets: goodIds,
+            });
+        }
+    }, []); // eslint-disable-line
+
+    const presetsOptions = React.useMemo<PresetOption[]>(() => configState.state.presets.map(preset => {
         return {
             value: preset.name,
-            key: i,
+            key: preset.id,
         };
     }), [configState]);
 

@@ -11,7 +11,8 @@ import DialogActions from '@material-ui/core/DialogActions';
 
 import { ConfigStateContext } from '../ConfigStateProvider';
 import { OrderPreset } from '../components/OrderPreset';
-import { OrderPreset as OrderPresetData } from '../ConfigStateProvider';
+import { OrderPreset as OrderPresetData } from '../../types/autoOrderConfigs';
+import { randomId, getI } from '../utils';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -35,23 +36,24 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export const PresetsScreen: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
-    const [open, toggleOpen] = React.useState<number | null>(null);
-    const uniqDialogIdRef = React.useRef('delete-preset-dialog-' + btoa(Math.random().toString()).substring(0, 12))
+    const [presetIdForDeletion, setPresetIdForDeletion] = React.useState<string | null>(null);  // also used to determine when to show "Delete preset" dialog
+    const uniqDialogIdRef = React.useRef('delete-preset-dialog-' + randomId())
     const classes = useStyles();
     const presets = configState.state.presets;
 
     const getNewEmptyPreset = React.useCallback((): OrderPresetData => {
-        const nameIndex = Math.max(
-            1,
+        const nameIndex = 1 + Math.max(
+            0,
             ...(presets
                 .map(preset => preset.name)
                 .filter(name => name.match(/^New Preset \d+$/))
                 .map(name => Number(name.match(/^New Preset (\d+)$/)![1])))
         );
         return {
+            id: randomId(),
             name: 'New Preset ' + nameIndex,
             items: [
-                { name: '', quantity: 1, price: 0, target: '' },
+                { id: randomId(), name: '', quantity: 1, price: 0, target: '' },
             ],
         };
     }, [presets]);
@@ -66,17 +68,31 @@ export const PresetsScreen: React.FC = () => {
     }, [presets, getNewEmptyPreset, configState]);
 
     const deletePreset = React.useCallback(() => {
-        if (open !== null) {
-            configState.updateState({
-                presets: [
-                    ...configState.state.presets.slice(0, open),
-                    ...configState.state.presets.slice(open + 1, configState.state.presets.length),
-                ],
-            });
+        if (presetIdForDeletion !== null) {
+            const delIndex = getI(configState.state.presets, presetIdForDeletion);
+            if (delIndex !== -1) {
+                const updatedPresets = [
+                    ...configState.state.presets.slice(0, delIndex),
+                    ...configState.state.presets.slice(delIndex + 1, configState.state.presets.length),
+                ];
+                const updatedSelectedPresets = configState.state.selectedPresets.filter(presetId => presetId !== presetIdForDeletion);
+                if (!updatedSelectedPresets.length) {
+                    updatedSelectedPresets.push(updatedPresets[0].id);
+                }
+                configState.updateState({
+                    presets: updatedPresets,
+                    selectedPresets: updatedSelectedPresets,
+                });
+            }
         }
-    }, [open, configState]);
+    }, [presetIdForDeletion, configState]);
 
-    const onCloseDialog = React.useCallback(() => toggleOpen(null), []);
+    const deletingPresetName = React.useMemo(() => {
+        const preset = configState.state.presets.find(preset => preset.id === presetIdForDeletion);
+        return preset ? preset.name : null;
+    }, [presetIdForDeletion, configState]);
+
+    const onCloseDialog = React.useCallback(() => setPresetIdForDeletion(null), []);
 
     const onSubmitDialog = React.useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -84,12 +100,12 @@ export const PresetsScreen: React.FC = () => {
         onCloseDialog();
     }, [deletePreset, onCloseDialog]);
 
-    const presetsUi = React.useMemo(() => presets.map((preset, i) => {
+    const presetsUi = presets.map((preset, i) => {
         return (
-            <React.Fragment key={i}>
+            <React.Fragment key={preset.id}>
                 <OrderPreset
-                    presetIndex={i}
-                    deletePreset={() => toggleOpen(i)}
+                    presetId={preset.id}
+                    deletePreset={() => setPresetIdForDeletion(preset.id)}
                     allowDelete={presets.length > 1}
                 />
                 {(i !== presets.length - 1) && (
@@ -97,7 +113,7 @@ export const PresetsScreen: React.FC = () => {
                 )}
             </React.Fragment>
         );
-    }), [presets, classes.divider]);
+    });
 
     return (
         <>
@@ -106,7 +122,7 @@ export const PresetsScreen: React.FC = () => {
                     <Typography variant="h5" gutterBottom align="center">
                         Order Presets
                     </Typography>
-                    {presetsUi}
+                    { presetsUi }
                     <Button
                         variant="outlined"
                         onClick={addPreset}
@@ -117,10 +133,10 @@ export const PresetsScreen: React.FC = () => {
                 </Grid>
             </Grid>
 
-            <Dialog open={open !== null} onClose={onCloseDialog} aria-labelledby={uniqDialogIdRef.current}>
+            <Dialog open={presetIdForDeletion !== null} onClose={onCloseDialog} aria-labelledby={uniqDialogIdRef.current}>
                 <form onSubmit={onSubmitDialog}>
                     <DialogTitle id={uniqDialogIdRef.current}>
-                        {`Delete "${presets[open!] ? presets[open!].name : ''}" preset?`}
+                        {`Delete ${deletingPresetName ? `"${deletingPresetName}"` : 'this'} preset?`}
                     </DialogTitle>
                     <DialogActions>
                         <Button onClick={onCloseDialog}>

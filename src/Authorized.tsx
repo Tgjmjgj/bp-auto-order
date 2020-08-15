@@ -103,12 +103,12 @@ export const Authorized: React.FC = () => {
     const enabled = configState.state.enabled;
     const classes = useStyles();
 
-    const toggleEnabled = () => {
-        console.log('toggle enabled');
+    const toggleEnabled = React.useCallback(() => {
         configState.updateState({ enabled: !enabled });
-    };
-    const toggleMenuOnMobile = () => setMobileOpen(!mobileOpen);
-    const closeSaveMessage = () => setSaveMessageShows(false);
+    }, [configState, enabled]);
+
+    const toggleMenuOnMobile = React.useCallback(() => setMobileOpen(!mobileOpen), [mobileOpen]);
+    const closeSaveMessage = React.useCallback(() => setSaveMessageShows(false), []);
 
     React.useEffect(() => void (configState.saved > 0 && setSaveMessageShows(true)), [configState.saved]);
 

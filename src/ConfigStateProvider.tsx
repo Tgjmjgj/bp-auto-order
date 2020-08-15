@@ -4,69 +4,49 @@ import pickBy from 'lodash/pickBy';
 import eq from 'fast-deep-equal';
 
 import { AutoAuthContext } from './AutoAuthProvider';
+import { ConfigState } from '../types/autoOrderConfigs';
+import { randomId } from './utils';
 
 export type OrderTarget = {
     key: string
     displayName: string
 };
 
-export const authOrderMode = ['preset', 'random'] as const;
-export type AutoOrderMode = typeof authOrderMode[number];
-
-export type ConfigState = {
-    enabled: boolean
-    saveOnServer: boolean       // indicates do we need to initiate saving operation or not
-    spreadsheetId: string
-    mode: AutoOrderMode
-    presets: OrderPreset[]
-    selectedPresets: number[]
-    savedTargets: OrderTarget[]
-    systemName?: string
-    customName?: string
-};
-
 export type ConfigContextData = {
-    state: ConfigState
+    state: LocalConfigState
     updateState: (stateUpdate: Partial<ConfigState>) => void
-    saved: number               // value changes when config successfully saved on server
+    saved: number                   // value changes when config successfully saved on server
     dataLoaded: boolean
 };
 
-export type OrderPreset = {
-    name: string
-    items: OrderItem[]
+export type LocalConfigState = ConfigState & {
+    saveOnServer: boolean           // indicates does we need to initiate saving operation or not
 };
 
-export type OrderItem = {
-    name: string
-    price: number
-    quantity: number
-    target: string
+const defaultKumirTarget = { id: randomId(), key: 'kumir', displayName: 'Ку-мир' };
+const defaultChanakhiTarget = { id: randomId(), key: 'chanakhi', displayName: 'Чанахи' };
+
+const defaultPreset = {
+    id: randomId(),
+    name: 'Default preset',
+    items: [
+        { id: randomId(), name: 'Cувлаки', price: 140, quantity: 2, target: defaultChanakhiTarget.id },
+    ],
 };
 
-const defaultConfigState: ConfigState = {
+const defaultConfigState: LocalConfigState = {
     enabled: false,
     saveOnServer: false,
     spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
     mode: 'preset',
-    selectedPresets: [0],
-    presets: [
-        {
-            name: 'Default preset',
-            items: [
-                { name: 'Cувлаки', price: 140, quantity: 2, target: 'chanakhi' },
-            ],
-        },
-    ],
-    savedTargets: [
-        { key: 'kumir', displayName: 'Ку-мир' },
-        { key: 'chanakhi', displayName: 'Чанахи' },
-    ],
+    selectedPresets: [ defaultPreset.id ],
+    presets: [ defaultPreset ],
+    savedTargets: [ defaultKumirTarget, defaultChanakhiTarget ],
 };
 
 const omitProperties = ['saveOnServer'];
-const prepareConfigForServer = (conf: ConfigState) => {
-    return pickBy(conf, (val, key) => !omitProperties.includes(key));
+const prepareConfigForServer = (conf: LocalConfigState) => {
+    return pickBy(conf, (val, key) => !omitProperties.includes(key)) as ConfigState;
 };
 
 const defaultConfigContextData = {
@@ -83,22 +63,21 @@ export const ConfigStateContext = React.createContext<ConfigContextData>(default
 export const ConfigStateProvider: React.FC = ({ children }) => {
 
     const authContext = React.useContext(AutoAuthContext);
-    const [configState, setConfigState] = React.useState<ConfigState>(defaultConfigState);
+    const [configState, setConfigState] = React.useState<LocalConfigState>(defaultConfigState);
     const [saved, setSaved] = React.useState(0);
     const [dataLoaded, setDataLoaded] = React.useState(false);
-    const oldConfigStateRef = React.useRef<ConfigState>(defaultConfigState);
+    const serverConfigStateRef = React.useRef<ConfigState>(defaultConfigState);
     const timerIdRef = React.useRef(0);
 
     const configContextValue = React.useMemo(() => {
         return {
             state: configState,
             updateState: (stateUpdate: Partial<ConfigState>) => {
-                const newState = {
+                setConfigState({
                     ...configState,
                     ...stateUpdate,
                     saveOnServer: true,
-                };
-                setConfigState(newState);
+                });
             },
             saved,
             dataLoaded,
@@ -120,7 +99,9 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                         customName: authContext.displayName || '',
                     }), {merge: true});
                 } else {
-                    const newKeys = prepareConfigForServer(pickBy(defaultConfigState, (val, key) => !(key in data.data()!)) as ConfigState);
+                    const newKeys = prepareConfigForServer(
+                        pickBy(defaultConfigState, (val, key) => !(key in data.data()!)) as LocalConfigState
+                    );
                     if (Object.keys(newKeys).length) {
                         docRef.set({
                             ...data.data(),
@@ -129,36 +110,46 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                     }
                 }
                 console.log('### initial data: ', data.data());
-                setConfigState({
+                const initialConfigState = {
                     ...defaultConfigState,
                     systemName: authContext.displayName || '',
                     customName: authContext.displayName || '',
                     ...(data.exists ? data.data() : undefined),
                     saveOnServer: false,
-                });
+                };
+                setConfigState(initialConfigState);
+                serverConfigStateRef.current = initialConfigState;
                 setDataLoaded(true);
             });
         }
     }, [authContext]);
 
     useEffect(() => {
-        console.log('Timer Id: ', timerIdRef.current);
-        if (authContext.uid && !eq(configState, oldConfigStateRef.current)) {
+        if (authContext.uid) {
             if (configState.saveOnServer) {
-                console.log('save config: ', configState);
-                console.log('old state: ', oldConfigStateRef.current);
                 clearTimeout(timerIdRef.current);
+
                 timerIdRef.current = window.setTimeout(() => {
+
+                    console.log('local config: ', configState);
+                    console.log('server state: ', serverConfigStateRef.current);
+
                     const preparedData = prepareConfigForServer(configState);
-                    console.log('@Send to server: ', preparedData);
-                    Firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
-                    .set(preparedData, {merge: true})
-                    .then(() => setSaved(s => ++s));
+                    if (!eq(preparedData, serverConfigStateRef.current)) {
+
+                        console.log('@Send to server: ', preparedData);
+
+                        Firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
+                        .set(preparedData, {merge: true})
+                        .then(() => {
+                            setSaved(s => ++s);
+                            serverConfigStateRef.current = configState;
+                        });
+                    }
                 }, saveConfigInactivityTimeout);
             }
-            oldConfigStateRef.current = configState;
         }
-    }, [configState, authContext.uid, oldConfigStateRef]);
+    }, [configState, authContext.uid, serverConfigStateRef]);
 
     return (
         <ConfigStateContext.Provider value={ configContextValue }>

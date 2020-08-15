@@ -8,18 +8,19 @@ import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
-import { OrderItem as OrderItemData, OrderTarget } from '../ConfigStateProvider';
-import {FreeSelect} from './FreeSelect'
+import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
+import { FreeSelect } from './FreeSelect'
+// import eq from 'fast-deep-equal';
 
 import foodPlaceholder from '../images/food-placeholder.png';
 
 type Props = {
-    onClose: () => void
     canClose: boolean
     value: OrderItemData
-    setValue: (newValue: OrderItemData) => void
     savedTargets: OrderTarget[]
-    addNewTarget: (value: string) => void
+    addNewTarget: (itemId: string, newTarget: string) => void
+    updateItem: (updatedOrderItem: OrderItemData) => void
+    deleteItem: (itemId: string) => void
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -67,50 +68,52 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export const OrderItem: React.FC<Props> = props => {
-    const { onClose, canClose, value, setValue, savedTargets, addNewTarget } = props;
+    const { canClose, value, savedTargets, addNewTarget, updateItem, deleteItem } = props;
     const classes = useStyles();
-    const targetOptions = savedTargets.map(target => target.displayName);
-    const target = savedTargets.find(target => target.key === value.target)
-    const selectedTargetName = target ? target.displayName : ''
+
+    const targetOptions = savedTargets.map(target => ({
+        key: target.id,
+        displayValue: target.displayName,
+    }));
 
     const changeName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        setValue({
+        updateItem({
             ...value,
             name: e.target.value,
         });
-    }, [value, setValue]);
+    }, [value, updateItem]);
     const changePrice = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = Number(e.target.value);
         if (!Number.isNaN(newValue)) {
-            setValue({
+            updateItem({
                 ...value,
                 price: newValue,
             });
         }
-     }, [value, setValue]);
+     }, [value, updateItem]);
     const changeQuantity = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = Number(e.target.value);
-        setValue({
+        updateItem({
             ...value,
             quantity: Number.isNaN(newValue) ? 1 : newValue < 1 ? 1 : newValue,
         });
-    }, [value, setValue]);
-    const changeTarget = React.useCallback((targetName: string) => {
-        const foundTarget = savedTargets.find(target => target.displayName === targetName)
+    }, [value, updateItem]);
+    const changeTarget = React.useCallback((targetId: string) => {
+        const foundTarget = savedTargets.find(target => target.id === targetId);
         if (foundTarget) {
-            setValue({
+            updateItem({
                 ...value,
-                target: foundTarget.key,
+                target: foundTarget.id,
             });
         }
-    }, [value, savedTargets, setValue]);
-    const addNewTargetItem = React.useCallback((targetName: string) => {
-        if (targetName) {
-            addNewTarget(targetName);
+    }, [value, savedTargets, updateItem]);
+    const addNewTargetItem = React.useCallback((newTargetName: string) => {
+        if (newTargetName) {
+            addNewTarget(value.id, newTargetName);
         }
-    }, [addNewTarget]);
+    }, [value, addNewTarget]);
 
-    console.log('### order item re-rendering');
+    console.log(`### order item ${value.id} re-rendering`);
 
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
@@ -149,7 +152,7 @@ export const OrderItem: React.FC<Props> = props => {
                 <FreeSelect
                     label="From"
                     options={targetOptions}
-                    value={selectedTargetName}
+                    value={value.target}
                     onChange={changeTarget}
                     className={classes.input}
                     addNewItem={addNewTargetItem}
@@ -158,7 +161,7 @@ export const OrderItem: React.FC<Props> = props => {
 
             {canClose && (
                 <div className={classes.closeIcon}>
-                    <IconButton onClick={onClose} size="small">
+                    <IconButton onClick={() => deleteItem(value.id)} size="small">
                         <CloseIcon />
                     </IconButton>
                 </div>
@@ -166,3 +169,7 @@ export const OrderItem: React.FC<Props> = props => {
         </Card>
     );
 };
+// }, (prevProps, nextProps) => {
+//     return eq(prevProps.value, nextProps.value)
+//         && eq(prevProps.savedTargets, nextProps.savedTargets)
+// });

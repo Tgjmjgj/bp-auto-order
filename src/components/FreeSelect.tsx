@@ -11,8 +11,15 @@ import TextField from '@material-ui/core/TextField';
 import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 
+import {randomId} from '../utils';
+
+type FreeSelectOption = {
+    key: string
+    displayValue: string
+};
+
 type Props = {
-    options: string[]
+    options: FreeSelectOption[]
     value: string
     onChange: (value: string) => void
     addNewItem?: (value: string) => void
@@ -24,13 +31,13 @@ export const FreeSelect: React.FC<Props> = props => {
     const { options, value, onChange, className, label, addNewItem } = props
     const [open, toggleOpen] = React.useState(false);
     const [newValue, setNewValue] = React.useState('');
-    const uniqControlIdRef = React.useRef('free-select-' + btoa(Math.random().toString()).substring(0,12))
-    const uniqDialogIdRef = React.useRef('free-select-dialog-' + btoa(Math.random().toString()).substring(0,12))
+    const uniqControlIdRef = React.useRef('free-select-' + randomId())
+    const uniqDialogIdRef = React.useRef('free-select-dialog-' + randomId())
 
-    const selectItems = React.useMemo(() => options.map((option, i) => {
+    const selectItems = React.useMemo(() => options.map(option => {
         return (
-            <MenuItem value={option} key={`${option}_${i}`}>
-                {option}
+            <MenuItem value={option.key} key={option.key}>
+                {option.displayValue}
             </MenuItem>
         );
     }), [options]);

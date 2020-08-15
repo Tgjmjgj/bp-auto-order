@@ -1,7 +1,6 @@
 import React from 'react';
 import Firebase from 'firebase';
 
-
 export type AuthData = {
     authInProcess: boolean
     authWithGoogle: () => void
@@ -82,6 +81,7 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
                 console.log('User is not logged in');
             }
         });
+        // Firebase.functions();
     }, [authWithGoogle]);
 
     return (
