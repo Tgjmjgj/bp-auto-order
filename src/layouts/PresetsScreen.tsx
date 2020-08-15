@@ -102,7 +102,6 @@ export const PresetsScreen: React.FC = () => {
         <>
             <Grid container spacing={4} direction="column">
                 <Grid item>
-                    <Divider className={classes.divider} />
                     <Typography variant="h5" gutterBottom align="center">
                         Order Presets
                     </Typography>

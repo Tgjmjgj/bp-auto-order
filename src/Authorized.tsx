@@ -79,10 +79,10 @@ const useStyles = makeStyles((theme: Theme) =>
         header: {
             height: '60px',
             backgroundColor: theme.palette.secondary.dark,
-            zIndex: 1201,
+            zIndex: theme.zIndex.drawer + 1,
         },
         enabled: {
-            backgroundColor: '#539e3e !important',
+            backgroundColor: '#539e3e',
         },
     })
 );
