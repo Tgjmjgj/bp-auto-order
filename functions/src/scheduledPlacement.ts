@@ -19,7 +19,10 @@ export const scheduledPlacement = async (context: functions.EventContext) => {
                         spreadsheetId: data.spreadsheetId,
                         systemName: data.systemName,
                         customName: data.customName,
-                        items: chosenPreset.items,
+                        items: chosenPreset.items.map(item => ({
+                            ...item,
+                            target: data.savedTargets.find(target => target.id === item.id)!.key,
+                        })),
                     });
                     functions.logger.info(result);
                 }
