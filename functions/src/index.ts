@@ -4,6 +4,8 @@ import * as FirebaseAdmin from 'firebase-admin';
 import { placeOrder } from './placeOrder';
 import { scheduledPlacement } from './scheduledPlacement';
 
+process.env.APIFY_MEMORY_MBYTES = '256';
+
 FirebaseAdmin.initializeApp();
 
 export default {

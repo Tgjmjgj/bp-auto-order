@@ -8,16 +8,20 @@ export const randomId = () => Math.random().toString(36).substring(2);
 
 export const randomizeOrder = (target: string, menu: Menu, conf: RandomOrderConfig): OrderItem[] | null => {
     
+    const filteredMenu = menu.filter(item => {
+        if ((item.category in conf.categories) && conf.categories[item.category].maxItems === 0) {
+            return false;
+        } else {
+            return true;
+        }
+    });
     const orderItems: OrderItemWithRef[] = [];
-    const totalCost = 0;
+    let totalCost = 0;
     do {
-        const rndItem = menu[Math.floor(Math.random() * menu.length)];
+        const rndItem = filteredMenu[Math.floor(Math.random() * filteredMenu.length)];
         const nextCost = totalCost + rndItem.price;
         const sameCategoryItemsNumber = orderItems.reduce((num, item) => {
-            if (item.ref.category === rndItem.category) {
-                num += item.quantity;
-            }
-            return num;
+            return num + (item.ref.category === rndItem.category ? item.quantity : 0);
         }, 0);
         if (
             nextCost < conf.cost.max && (
@@ -26,6 +30,7 @@ export const randomizeOrder = (target: string, menu: Menu, conf: RandomOrderConf
             )
         ){
             const existingItem = orderItems.find(item => item.name === rndItem.name);
+            totalCost += rndItem.price;
             if (existingItem) {
                 existingItem.quantity++;
             } else {

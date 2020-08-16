@@ -180,7 +180,16 @@ const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData
             if (!fullItems.length) {
                 return null;
             }
-            const orderItemGroups = chunk(fullItems.map(item => (item.quantity || 1) > 1 ? `${item.name} x${item.quantity}` : item.name) as string[], 6);
+            const orderItemGroups = chunk(fullItems.map(item => {
+                let itemDisplayName = item.name;
+                if (item.price) {
+                    itemDisplayName += ` ${item.price}р.`;
+                }
+                if ((item.quantity || 1) > 1) {
+                    itemDisplayName += ` x${item.quantity}`;
+                }
+                return itemDisplayName;
+            }) as string[], 6);
             while (orderItemGroups[orderItemGroups.length - 1].length < 6) {
                 orderItemGroups[orderItemGroups.length - 1].push('');
             }

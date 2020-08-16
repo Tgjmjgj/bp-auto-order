@@ -28,7 +28,7 @@ export const scrapKumirMenu = () => {
                                 return {
                                     name: $(el2).find('.name-dish').text().trim(),
                                     price: Number($(el2).find('.nb-price.tr-item-price').text()),
-                                    imageUrl: $(el2).find('.tr-item-img img').data('original'),
+                                    imageUrl: $(el2).find('.tr-item-img img').data('original') || null,
                                     category,
                                 };
                             }).get();

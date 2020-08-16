@@ -6,19 +6,19 @@ import { placeOrder, PlaceOrderResult } from './placeOrder';
 import { randomizeOrder } from './randomizeOrder';
 import { scrapKumirMenu } from './scrapKumirMenu';
 import { ConfigState } from '../../types/autoOrderConfigs';
-import { Menu } from '../../types/autoOrderMenus';
+import { Menu, MenuTable } from '../../types/autoOrderMenus';
 
 const maxMenuHistorySize = 5;
 
-export const getUpdatedKumirMenu = async (): Promise<Menu | null> => {
+export const getUpdatedMenuData = async (target: string): Promise<Menu | null> => {
     try {
-        const kumirTable = await FirebaseAdmin.firestore().collection('auto-order-kumir-menus').get();
+        const kumirTable = await FirebaseAdmin.firestore().collection(`auto-order-${target}-menus`).get();
         const today = (new Date()).toDateString();
         const keys = kumirTable.docs.map(doc => doc.id);
         if (keys.includes(today)) {
             const data = kumirTable.docs.find(doc => doc.id === today);
             if (data && data.exists) {
-                return data.data() as Menu;
+                return (data.data() as MenuTable).menu;
             }
         }
         const newMenuData = await scrapKumirMenu();
@@ -28,7 +28,10 @@ export const getUpdatedKumirMenu = async (): Promise<Menu | null> => {
             .slice(0, keys.length - maxMenuHistorySize + 1)
             .forEach(key => kumirTable.docs.find(doc => doc.id === key)!.ref.delete());
         }
-        await FirebaseAdmin.firestore().collection('auto-order-kumir-menus').doc(today).set(newMenuData);
+        await FirebaseAdmin.firestore().collection('auto-order-kumir-menus').doc(today).set({
+            target: 'kumir',
+            menu: newMenuData,
+        });
         return newMenuData;
     } catch (e) {
         functions.logger.error(`Can't get kumir menu data: ${e}`);
@@ -38,7 +41,7 @@ export const getUpdatedKumirMenu = async (): Promise<Menu | null> => {
 
 export const scheduledPlacement = async (context: functions.EventContext) => {
     
-    const menu = await getUpdatedKumirMenu();
+    const menu = await getUpdatedMenuData('kumir');
     const tableData = await FirebaseAdmin.firestore().collection('auto-order-configs').get();
     tableData.forEach(async entry => {
         const data = entry.data() as ConfigState;
