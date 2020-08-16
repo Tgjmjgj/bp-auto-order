@@ -6,11 +6,11 @@ import { placeOrder, PlaceOrderResult } from './placeOrder';
 import { randomizeOrder } from './randomizeOrder';
 import { scrapKumirMenu } from './scrapKumirMenu';
 import { ConfigState } from '../../types/autoOrderConfigs';
-import { KumirMenu } from '../../types/autoOrderMenus';
+import { Menu } from '../../types/autoOrderMenus';
 
 const maxMenuHistorySize = 5;
 
-export const getUpdatedKumirMenu = async (): Promise<KumirMenu | null> => {
+export const getUpdatedKumirMenu = async (): Promise<Menu | null> => {
     try {
         const kumirTable = await FirebaseAdmin.firestore().collection('auto-order-kumir-menus').get();
         const today = (new Date()).toDateString();
@@ -18,7 +18,7 @@ export const getUpdatedKumirMenu = async (): Promise<KumirMenu | null> => {
         if (keys.includes(today)) {
             const data = kumirTable.docs.find(doc => doc.id === today);
             if (data && data.exists) {
-                return data.data() as KumirMenu;
+                return data.data() as Menu;
             }
         }
         const newMenuData = await scrapKumirMenu();
@@ -47,10 +47,14 @@ export const scheduledPlacement = async (context: functions.EventContext) => {
             try {
                 let result: PlaceOrderResult | null = null;
                 if (data.mode === 'random' && menu) {
-                    const items = await randomizeOrder(menu, {
-                        cost: [300, 370],
-                        categories: {},
-                    });
+                    const items = await randomizeOrder(
+                        'kumir',
+                        menu,
+                        {
+                            cost: { min: 270, mid: 300, max: 370 },
+                            categories: {},
+                        },
+                    );
                     if (items) {
                         result = await placeOrder({
                             spreadsheetId: data.spreadsheetId,

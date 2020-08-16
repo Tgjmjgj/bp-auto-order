@@ -1,12 +1,10 @@
 
 
-export type KumirMenu = {
+export type MenuItem = {
     name: string
     price: number
     imageUrl: string
     category: string
-}[];
+};
 
-type DateString = string;
-
-export type KumirMenuHistory = Record<DateString, KumirMenu>;
+export type Menu = MenuItem[];

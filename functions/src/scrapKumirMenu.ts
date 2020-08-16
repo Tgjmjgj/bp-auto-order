@@ -1,14 +1,14 @@
 import Apify from 'apify';
 import flatten from 'lodash/flatten';
-import {KumirMenu} from '../../types/autoOrderMenus';
+import {Menu} from '../../types/autoOrderMenus';
 
 const kumirBaseUrl = 'https://ku-mir.ru';
 const kumirMenuUrl = kumirBaseUrl + '/menu';
 
 export const scrapKumirMenu = () => {
-    return new Promise<KumirMenu>((resolve, reject) => {
+    return new Promise<Menu>((resolve, reject) => {
         Apify.main(async () => {
-            
+
             const requestList = new Apify.RequestList({
                 sources: [{ url: kumirMenuUrl }],
             });
