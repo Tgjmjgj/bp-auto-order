@@ -16,7 +16,7 @@ type Target = StaticTarget | string;
 
 type OrderItem = {
     name?: string
-    cost?: number
+    price?: number
     quantity?: number
     target?: Target
 }
@@ -190,7 +190,7 @@ const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData
             const targetName = fullItems[0].target ? (targetDisplayNames[fullItems[0].target] || fullItems[0].target) : '';
             const totalCostIndex = fullItems[0].target === 'chanakhi' ? 9 : fullItems[0].target === 'kumir' ? 10 : 11;
             const totalCostValue = fullItems.reduce((sum, item) => {
-                const addition = Number(item.cost!) * Number(item.quantity!);
+                const addition = Number(item.price!) * Number(item.quantity!);
                 return sum + (Number.isNaN(addition) ? 0 : addition);
             }, 0);
             rows.forEach((row, i) => {

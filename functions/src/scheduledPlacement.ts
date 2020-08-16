@@ -21,7 +21,7 @@ export const scheduledPlacement = async (context: functions.EventContext) => {
                         customName: data.customName,
                         items: chosenPreset.items.map(item => ({
                             ...item,
-                            target: data.savedTargets.find(target => target.id === item.id)!.key,
+                            target: data.savedTargets.find(target => target.id === item.target)!.key,
                         })),
                     });
                     functions.logger.info(result);
