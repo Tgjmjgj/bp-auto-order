@@ -31,15 +31,27 @@ export type OrderItem = {
     price: number
     quantity: number
     target: string
+    ref?: string
 };
 
 export type RandomOrderConfig = {
-    cost: {
-        min: number
-        mid: number
-        max: number
+    total: {
+        cost?: {
+            min?: number
+            mid?: number
+            max?: number
+        }
+        maxItems?: number
+        minItems?: number
     }
     categories: Record<string, {
-        maxItems: number
+        weight?: number
+        maxItems?: number
+        minItems?: number
+    }>
+    items: Record<string, {
+        weight?: number
+        maxItems?: number
+        minItems?: number
     }>
 };

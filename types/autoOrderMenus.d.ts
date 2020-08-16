@@ -1,15 +1,24 @@
 
-
-export type MenuItem = {
+export type ScrapedMenuItem = {
     name: string
     price: number
     imageUrl: string | null
     category: string
 };
 
+export type MenuItem = {
+    id: string
+    name: string
+    price: number
+    imageUrl: string | null
+    category: string
+    enabled: boolean
+};
+
+export type ScrapedMenu = ScrapedMenuItem[];
 export type Menu = MenuItem[];
 
 export type MenuTable = {
-    target: string
+    updateDate: string
     menu: Menu
 };

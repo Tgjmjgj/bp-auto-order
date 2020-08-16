@@ -5,34 +5,59 @@ import sample from 'lodash/sample';
 import { placeOrder, PlaceOrderResult } from './placeOrder';
 import { randomizeOrder } from './randomizeOrder';
 import { scrapKumirMenu } from './scrapKumirMenu';
+import { randomId } from './utils';
 import { ConfigState } from '../../types/autoOrderConfigs';
 import { Menu, MenuTable } from '../../types/autoOrderMenus';
 
-const maxMenuHistorySize = 5;
-
 export const getUpdatedMenuData = async (target: string): Promise<Menu | null> => {
     try {
-        const kumirTable = await FirebaseAdmin.firestore().collection(`auto-order-${target}-menus`).get();
+        const docRef = FirebaseAdmin.firestore().collection(`auto-order-menus`).doc(target);
+        const data = await docRef.get();
         const today = (new Date()).toDateString();
-        const keys = kumirTable.docs.map(doc => doc.id);
-        if (keys.includes(today)) {
-            const data = kumirTable.docs.find(doc => doc.id === today);
-            if (data && data.exists) {
-                return (data.data() as MenuTable).menu;
+        if (data.exists) {
+            const menuData = data.data() as MenuTable;
+            if (menuData.updateDate === today) {
+                return menuData.menu;
             }
+
+            const todayMenuData = await scrapKumirMenu();
+            todayMenuData.forEach(item => {
+                const sameNameItem = menuData.menu.find(oldItem => oldItem.name === item.name);
+                if (sameNameItem) {
+                    sameNameItem.price = item.price;
+                    sameNameItem.category = item.category;
+                    sameNameItem.imageUrl = item.imageUrl;
+                } else {
+                    menuData.menu.push({
+                        id: randomId(),
+                        enabled: true,
+                        ...item,
+                    });
+                }
+            });
+            const updatedMenu = menuData.menu.map(item => {
+                const enabled = todayMenuData.find(todayItem => todayItem.name === item.name);
+                return { ...item, enabled: !!enabled };
+            });
+            await docRef.set({
+                updateData: today,
+                menu: updatedMenu,
+            });
+            return updatedMenu;
         }
-        const newMenuData = await scrapKumirMenu();
-        if (keys.length >= maxMenuHistorySize) {
-            keys
-            .sort((key1, key2) => new Date(key1) > new Date(key2) ? 1 : -1)
-            .slice(0, keys.length - maxMenuHistorySize + 1)
-            .forEach(key => kumirTable.docs.find(doc => doc.id === key)!.ref.delete());
-        }
-        await FirebaseAdmin.firestore().collection('auto-order-kumir-menus').doc(today).set({
-            target: 'kumir',
-            menu: newMenuData,
+
+        const firstMenuData = await scrapKumirMenu();
+        const preparedMenu = firstMenuData.map(item => ({
+            id: randomId(),
+            enabled: true,
+            ...item,
+        }));
+        await docRef.set({
+            updateData: today,
+            menu: preparedMenu,
         });
-        return newMenuData;
+        return preparedMenu;
+
     } catch (e) {
         functions.logger.error(`Can't get kumir menu data: ${e}`);
         return null;
@@ -41,7 +66,8 @@ export const getUpdatedMenuData = async (target: string): Promise<Menu | null> =
 
 export const scheduledPlacement = async (context: functions.EventContext) => {
     
-    const menu = await getUpdatedMenuData('kumir');
+    const randomModeTarget = 'kumir';
+    const menu = await getUpdatedMenuData(randomModeTarget);
     const tableData = await FirebaseAdmin.firestore().collection('auto-order-configs').get();
     tableData.forEach(async entry => {
         const data = entry.data() as ConfigState;
@@ -51,11 +77,14 @@ export const scheduledPlacement = async (context: functions.EventContext) => {
                 let result: PlaceOrderResult | null = null;
                 if (data.mode === 'random' && menu) {
                     const items = await randomizeOrder(
-                        'kumir',
+                        randomModeTarget,
                         menu,
                         {
-                            cost: { min: 270, mid: 300, max: 370 },
+                            total: {
+                                cost: { min: 270, mid: 300, max: 370 },
+                            },
                             categories: {},
+                            items: {},
                         },
                     );
                     if (items) {

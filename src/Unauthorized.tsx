@@ -2,7 +2,7 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import { AutoAuthContext } from './AutoAuthProvider';
 
-import {ReactComponent as GoogleSvgIcon} from './icons8-google.svg';
+import {ReactComponent as GoogleSvgIcon} from './images/google.svg';
 
 export const Unauthorized: React.FC = () => {
     const authContext = React.useContext(AutoAuthContext);
