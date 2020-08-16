@@ -11,5 +11,5 @@ export default {
         const result = await placeOrder(request.body);
         response.status(result.status).send(result.data);
     }),
-    scheduledPlacement: functions.region('europe-west1').pubsub.schedule('45 13 * * 7').timeZone('Europe/Moscow').onRun(scheduledPlacement),
+    scheduledPlacement: functions.region('europe-west1').pubsub.schedule('00 15 * * 1,3').timeZone('Europe/Moscow').onRun(scheduledPlacement),
 };
