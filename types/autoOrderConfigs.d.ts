@@ -32,3 +32,10 @@ export type OrderItem = {
     quantity: number
     target: string
 };
+
+export type RandomOrderConfig = {
+    cost: number[]
+    categories: Record<string, {
+        maxItems: number
+    }>
+};

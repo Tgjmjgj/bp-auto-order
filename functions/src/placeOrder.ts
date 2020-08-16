@@ -28,7 +28,7 @@ type ExpectedRequestData = {
     customName?: string
 };
 
-type OperationResult = {
+export type PlaceOrderResult = {
     status: number
     data: any
 };
@@ -224,7 +224,7 @@ const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData
     return res;
 };
 
-export const placeOrder = async (data: ExpectedRequestData): Promise<OperationResult> => {
+export const placeOrder = async (data: ExpectedRequestData): Promise<PlaceOrderResult> => {
     try {
         const spreadsheetId = data.spreadsheetId;
         if (!spreadsheetId) {

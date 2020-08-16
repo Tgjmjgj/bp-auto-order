@@ -11,10 +11,11 @@
     "d": "npm run build & npm run deploy"
   },
   "engines": {
-    "node": "10"
+    "node": "12"
   },
   "main": "lib/index.js",
   "dependencies": {
+    "apify": "^0.21.3",
     "cyrillic-to-translit-js": "^3.1.0",
     "faker": "^4.1.0",
     "firebase-admin": "^8.10.0",
@@ -27,6 +28,7 @@
     "@types/faker": "^4.1.12",
     "@types/js-levenshtein": "^1.1.0",
     "@types/lodash": "^4.14.159",
+    "@types/node": "^14.0.27",
     "firebase-functions-test": "^0.2.0",
     "tslint": "^5.12.0",
     "typescript": "^3.8.0"
