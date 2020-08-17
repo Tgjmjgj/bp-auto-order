@@ -97,13 +97,13 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                         ...defaultConfigState,
                         systemName: authContext.displayName || '',
                         customName: authContext.displayName || '',
-                    }), {merge: true});
+                    }));
                 } else {
                     const newKeys = prepareConfigForServer(
                         pickBy(defaultConfigState, (val, key) => !(key in data.data()!)) as LocalConfigState
                     );
                     if (Object.keys(newKeys).length) {
-                        docRef.set({
+                        docRef.update({
                             ...data.data(),
                             ...newKeys,
                         });
@@ -140,7 +140,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                         console.log('@Send to server: ', preparedData);
 
                         Firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
-                        .set(preparedData, {merge: true})
+                        .update(preparedData)
                         .then(() => {
                             setSaved(s => ++s);
                             serverConfigStateRef.current = configState;
