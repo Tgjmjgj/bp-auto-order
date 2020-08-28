@@ -1,0 +1,4 @@
+
+export const randomOrderOptionsTargetKeys = [
+    'kumir',
+];

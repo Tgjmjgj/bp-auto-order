@@ -144,7 +144,7 @@ const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumb
             emptyCellSpan = 0;
         }
     }
-    
+
     const translit = new cyrillicToTranslit();
     const nameVariants = uniq(names.reduce<string[]>((total, next) => {
         const lName = next.toLowerCase().trim();

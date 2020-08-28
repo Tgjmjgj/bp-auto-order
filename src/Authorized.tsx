@@ -24,8 +24,10 @@ import { ConfigStateContext } from './ConfigStateProvider';
 import { MainOptions } from './layouts/MainOptions';
 import { DeveloperSettings } from './layouts/DeveloperSettings';
 import { PresetsScreen } from './layouts/PresetsScreen';
+import { RandomConfiguration } from './layouts/RandomConfiguration';
+import { ManualOrder } from './layouts/ManualOrder';
 
-const menuCategories = ['Main Options', 'Presets', 'Random Configuration', 'Developer Settings'] as const;
+const menuCategories = ['Main Options', 'Presets', 'Random Configuration', 'Manual Order', 'Developer Settings'] as const;
 type MenuCategories = typeof menuCategories[number];
 
 const drawerWidth = 260;
@@ -90,7 +92,8 @@ const useStyles = makeStyles((theme: Theme) =>
 const mainLayouts: Record<MenuCategories, JSX.Element> = {
     'Main Options': <MainOptions />,
     'Presets': <PresetsScreen />,
-    'Random Configuration': <div />,
+    'Random Configuration': <RandomConfiguration />,
+    'Manual Order': <ManualOrder />,
     'Developer Settings': <DeveloperSettings />,
 };
 
