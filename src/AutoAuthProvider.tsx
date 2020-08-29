@@ -1,5 +1,6 @@
 import React from 'react';
-import Firebase from 'firebase';
+import * as firebase from 'firebase/app';
+import 'firebase/auth';
 
 export type AuthData = {
     authInProcess: boolean
@@ -32,7 +33,7 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
     const [authState, setAuthState] = React.useState<AuthData>(defaultAuthData);
 
     const authWithGoogle = React.useCallback(() => {
-        const provider = new Firebase.auth.GoogleAuthProvider();
+        const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({
             login_hint: 'you@brightpattern.com',
         });
@@ -41,7 +42,7 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
                 authWithGoogle,
                 authInProcess: true,
             });
-            Firebase.auth().signInWithPopup(provider)
+            firebase.auth().signInWithPopup(provider)
             .catch(() => {
                 setAuthState({
                     authWithGoogle,
@@ -59,9 +60,7 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
             authInProcess: true,
             authWithGoogle,
         });
-        Firebase
-        .initializeApp(firebaseConfig)
-        .auth()
+        firebase.initializeApp(firebaseConfig).auth()
         .onAuthStateChanged(user => {
             if (user) {
                 setAuthState({
@@ -81,7 +80,6 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
                 console.log('User is not logged in');
             }
         });
-        // Firebase.functions();
     }, [authWithGoogle]);
 
     return (

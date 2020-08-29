@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions';
 import * as FirebaseAdmin from 'firebase-admin';
 import sample from 'lodash/sample';
 
-import { placeOrder, PlaceOrderResult } from './placeOrder';
+import { placeOrder } from './placeOrder';
 import { randomizeItems } from './randomizeItems';
 import { getUpdatedMenu } from './getUpdatedMenu';
 import { defaultRandomOrderConfig } from './defaults';
@@ -18,9 +18,9 @@ export const scheduledPlacement = async () => {
         const data = entry.data() as ConfigState;
         if (data.enabled) {
             functions.logger.info(`Start order placement for ${data.customName || data.systemName}...`);
-            try {
-                let result: PlaceOrderResult | null = null;
-                if (data.mode === 'random' && menu) {
+            let result: number | null = null;
+            if (data.mode === 'random' && menu) {
+                try {
                     const items = await randomizeItems(randomModeTarget, menu, defaultRandomOrderConfig);
                     if (items) {
                         result = await placeOrder({
@@ -30,8 +30,10 @@ export const scheduledPlacement = async () => {
                             items,
                         });
                     }
-                }
-                if (data.mode === 'preset' || !result) {
+                } catch { }
+            }
+            if (data.mode === 'preset' || !result) {
+                try {
                     const presetId = sample(data.selectedPresets);
                     const chosenPreset = data.presets.find(preset => preset.id === presetId)!;
                     result = await placeOrder({
@@ -43,11 +45,9 @@ export const scheduledPlacement = async () => {
                             target: data.savedTargets.find(target => target.id === item.target)!.key,
                         })),
                     });
-                }
-                functions.logger.info(result);
-            } catch (e) {
-                functions.logger.error(`Unable to place order for ${data.customName || data.systemName}.`);
+                } catch { }
             }
+            functions.logger.info(result ? `Order was placed on the row ${result}` : 'Placement fails');
         } else {
             functions.logger.info(`Skip order placement for ${data.customName || data.systemName}...`);
         }

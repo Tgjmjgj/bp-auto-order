@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import * as Firebase from 'firebase';
+import * as firebase from 'firebase/app';
+import 'firebase/firestore';
 import pickBy from 'lodash/pickBy';
 import eq from 'fast-deep-equal';
 
@@ -90,7 +91,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
 
     useEffect(() => {
         if (authContext.uid) {
-            const docRef = Firebase.firestore().collection('auto-order-configs').doc(authContext.uid);
+            const docRef = firebase.firestore().collection('auto-order-configs').doc(authContext.uid);
             docRef.get().then(data => {
                 if (!data.exists) {
                     docRef.set(prepareConfigForServer({
@@ -139,7 +140,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
 
                         console.log('@Send to server: ', preparedData);
 
-                        Firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
+                        firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
                         .update(preparedData)
                         .then(() => {
                             setSaved(s => ++s);

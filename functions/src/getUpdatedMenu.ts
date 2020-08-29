@@ -5,7 +5,7 @@ import { scrapKumirMenu } from './scrapKumirMenu';
 import { randomId } from './utils';
 import { Menu, MenuTable } from '../../types/autoOrderMenus';
 
-export const getUpdatedMenu = async (target: string): Promise<Menu | null> => {
+export const getUpdatedMenu = async (target: string): Promise<Menu> => {
     try {
         const docRef = FirebaseAdmin.firestore().collection(`auto-order-menus`).doc(target);
         const data = await docRef.get();
@@ -55,7 +55,7 @@ export const getUpdatedMenu = async (target: string): Promise<Menu | null> => {
         return preparedMenu;
 
     } catch (e) {
-        functions.logger.error(`Can't get kumir menu data: ${e}`);
-        return null;
+        functions.logger.error(`Can't get ${target} menu data: ${e}`);
+        throw new functions.https.HttpsError('aborted', 'Unknown error in getting the updated menu', e);
     }
 };

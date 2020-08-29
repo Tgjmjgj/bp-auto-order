@@ -9,13 +9,15 @@ import Box from '@material-ui/core/Box/Box';
 import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
+import Divider from '@material-ui/core/Divider';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { ConfigStateContext } from '../ConfigStateProvider';
+import { getRandomOrder } from '../service/functions';
 import { OrderItemStatic } from '../components/OrderItemStatic';
-import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 import { randomOrderOptionsTargetKeys } from '../constants';
 import { randomId } from '../utils';
-import { Divider } from '@material-ui/core';
+import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -31,8 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
         innerRow: {
             display: 'flex',
             alignItems: 'center',
-            marginLeft: theme.spacing(3),
-            marginRight: theme.spacing(3),
+            marginRight: theme.spacing(6),
             marginBottom: theme.spacing(2),
         },
         presetSelect: {
@@ -45,6 +46,19 @@ const useStyles = makeStyles((theme: Theme) =>
         grid: {
             padding: theme.spacing(2),
         },
+        itemsLoader: {
+            marginTop: theme.spacing(16),
+            marginLeft: theme.spacing(30),
+        },
+        totalRow: {
+            display: 'flex',
+            justifyContent: 'space-between',
+        },
+        totalCost: {
+            fontWeight: 700,
+            marginLeft: theme.spacing(2),
+            marginRight: theme.spacing(1),
+        },
     }),
 );
 
@@ -55,6 +69,7 @@ export const ManualOrder: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
     const [selectedPreset, setSelectedPreset] = React.useState('');
     const [items, setItems] = React.useState<OrderItemData[]>([]);
+    const [loading, setLoading] = React.useState(false);
     const [presetLabel, setPresetLabel] = React.useState<PresetLabelText>('Choose from preset');
     const uniqControlIdRef = React.useRef('manual-order-preset' + randomId());
     const classes = useStyles();
@@ -72,18 +87,18 @@ export const ManualOrder: React.FC = () => {
         [configState],
     );
 
-    const [targetForRandom, setTargetForRandom] = React.useState(targetsForRandom[0].id)
+    const [targetKeyForRandom, setTargetKeyForRandom] = React.useState(targetsForRandom[0].key)
 
     const targetOptionsForRandom = React.useMemo(() =>
         targetsForRandom.map(target => (
-            <MenuItem value={target.id} key={target.id}>
+            <MenuItem value={target.key} key={target.id}>
                 {target.displayName}
             </MenuItem>
         ),
     ), [targetsForRandom]);
 
     const onTargetForRandomChange = React.useCallback((e: React.ChangeEvent<{name?: string | undefined; value: unknown}>) => {
-        setTargetForRandom(e.target.value as string);
+        setTargetKeyForRandom(e.target.value as string);
     }, []);
 
     const onSelectedPresetChange = React.useCallback((e: React.ChangeEvent<{name?: string | undefined; value: unknown}>) => {
@@ -95,27 +110,42 @@ export const ManualOrder: React.FC = () => {
         setItems(preset ? preset.items : []);
     }, [configState, selectedPreset]);
 
-    const randomize = React.useCallback(() => {
+    const randomize = React.useCallback(async () => {
         setSelectedPreset('');
-    }, []);
+        setItems([]);
+        try {
+            setLoading(true);
+            const {data} = await getRandomOrder({target: targetKeyForRandom});
+            if (data) {
+                console.log('@Items: ', data);
+                setItems(data);
+                setLoading(false);
+            }
+        } catch (e) {
+            console.error(`Error: getRandomOrder > ${e}`);
+            setLoading(false);
+        }
+    }, [targetKeyForRandom]);
 
     React.useEffect(() => {
         setPresetLabel(selectedPreset ? 'Preset' : 'Choose from preset');
     }, [selectedPreset]);
 
     const onPresetSelectOpen = React.useCallback(() => setPresetLabel('Preset'), []);
-    
+
     const onPresetSelectBlur = React.useCallback(() => {
         setPresetLabel(selectedPreset ? 'Preset' : 'Choose from preset');
     }, [selectedPreset]);
 
     const displayItems = React.useMemo(() => items.map(item => {
-        const target = configState.state.savedTargets.find(target => target.id === item.target);
+        const target = configState.state.savedTargets.find(({id, key}) => [id, key].includes(item.target));
         return {
             ...item,
             target: target ? target.displayName : item.id,
         };
     }), [items, configState]);
+
+    const totalCost = React.useMemo(() => items.reduce((total, item) => total + item.price * item.quantity, 0), [items]);
 
     const itemsUI = React.useMemo(() => {
         return displayItems.map(item => (
@@ -148,6 +178,7 @@ export const ManualOrder: React.FC = () => {
                                 onChange={onSelectedPresetChange}
                                 onOpen={onPresetSelectOpen}
                                 onBlur={onPresetSelectBlur}
+                                disabled={loading}
                             >
                                 {presetOptions}
                             </Select>
@@ -163,6 +194,7 @@ export const ManualOrder: React.FC = () => {
                             variant="outlined"
                             color="primary"
                             onClick={randomize}
+                            disabled={loading}
                         >
                             Randomize
                         </Button>
@@ -170,25 +202,46 @@ export const ManualOrder: React.FC = () => {
                             from
                         </Typography>
                         <Select
-                            value={targetForRandom}
+                            value={targetKeyForRandom}
                             onChange={onTargetForRandomChange}
+                            disabled={loading}
                         >
                             {targetOptionsForRandom}
                         </Select>
                     </Box>
                 </Grid>
-                <Divider/>
+                <Divider />
                 <Grid container spacing={2} direction="row" className={classes.grid}>
                     {itemsUI}
                 </Grid>
                 { !!items.length && (
-                    <Grid item>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                        >
-                            Place this order
-                        </Button>
+                    <>
+                        <Divider />
+                        <Grid item className={classes.totalRow}>
+                            <Box display='flex'>
+                                <Typography>
+                                    Total cost:
+                                </Typography>
+                                <Typography className={classes.totalCost}>
+                                    {totalCost}
+                                </Typography>
+                                <Typography>
+                                    ₽
+                                </Typography>
+                            </Box>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                disabled={loading}
+                            >
+                                Place this order
+                            </Button>
+                        </Grid>
+                    </>
+                )}
+                { loading && (
+                    <Grid className={classes.itemsLoader}>
+                        <CircularProgress color="inherit" />
                     </Grid>
                 )}
             </Grid>
