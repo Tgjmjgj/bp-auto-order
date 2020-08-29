@@ -7,37 +7,43 @@ import Button from '@material-ui/core/Button';
 import Select from '@material-ui/core/Select';
 import Box from '@material-ui/core/Box/Box';
 import MenuItem from '@material-ui/core/MenuItem/MenuItem';
-
-import { ConfigStateContext } from '../ConfigStateProvider';
-import { randomOrderOptionsTargetKeys } from '../constants';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
+
+import { ConfigStateContext } from '../ConfigStateProvider';
+import { OrderItemStatic } from '../components/OrderItemStatic';
+import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
+import { randomOrderOptionsTargetKeys } from '../constants';
 import { randomId } from '../utils';
+import { Divider } from '@material-ui/core';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         row: {
             display: 'flex',
             alignItems: 'center',
+            [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+            },
         },
         innerRow: {
             display: 'flex',
             alignItems: 'center',
             marginLeft: theme.spacing(3),
             marginRight: theme.spacing(3),
+            marginBottom: theme.spacing(2),
         },
         presetSelect: {
             minWidth: 200,
-        },
-        selectLabel: {
-            // backgroundColor: '#fff',
         },
         fromText: {
             marginLeft: theme.spacing(2),
             marginRight: theme.spacing(2),
         },
-        formControl: {
-            minWidht: 200,
+        grid: {
+            padding: theme.spacing(2),
         },
     }),
 );
@@ -48,8 +54,9 @@ export const ManualOrder: React.FC = () => {
 
     const configState = React.useContext(ConfigStateContext);
     const [selectedPreset, setSelectedPreset] = React.useState('');
+    const [items, setItems] = React.useState<OrderItemData[]>([]);
     const [presetLabel, setPresetLabel] = React.useState<PresetLabelText>('Choose from preset');
-    const uniqControlIdRef = React.useRef('manual-order-preset' + randomId())
+    const uniqControlIdRef = React.useRef('manual-order-preset' + randomId());
     const classes = useStyles();
 
     const presetOptions = React.useMemo(() =>
@@ -83,6 +90,11 @@ export const ManualOrder: React.FC = () => {
         setSelectedPreset(e.target.value as string);
     }, []);
 
+    React.useEffect(() => {
+        const preset = configState.state.presets.find(preset => preset.id === selectedPreset);
+        setItems(preset ? preset.items : []);
+    }, [configState, selectedPreset]);
+
     const randomize = React.useCallback(() => {
         setSelectedPreset('');
     }, []);
@@ -97,6 +109,22 @@ export const ManualOrder: React.FC = () => {
         setPresetLabel(selectedPreset ? 'Preset' : 'Choose from preset');
     }, [selectedPreset]);
 
+    const displayItems = React.useMemo(() => items.map(item => {
+        const target = configState.state.savedTargets.find(target => target.id === item.target);
+        return {
+            ...item,
+            target: target ? target.displayName : item.id,
+        };
+    }), [items, configState]);
+
+    const itemsUI = React.useMemo(() => {
+        return displayItems.map(item => (
+            <Grid item key={item.id}>
+                <OrderItemStatic value={item} />
+            </Grid>
+        ));
+    }, [displayItems]);
+
     return (
         <>
             <Grid container spacing={4} direction="column">
@@ -108,7 +136,7 @@ export const ManualOrder: React.FC = () => {
                 <Grid item className={classes.row}>
                     <Box className={classes.innerRow}>
                         <FormControl variant="outlined" size="small">
-                            <InputLabel id={uniqControlIdRef.current} className={classes.selectLabel}>
+                            <InputLabel id={uniqControlIdRef.current}>
                                 {presetLabel}
                             </InputLabel>
                             <Select
@@ -149,6 +177,20 @@ export const ManualOrder: React.FC = () => {
                         </Select>
                     </Box>
                 </Grid>
+                <Divider/>
+                <Grid container spacing={2} direction="row" className={classes.grid}>
+                    {itemsUI}
+                </Grid>
+                { !!items.length && (
+                    <Grid item>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                        >
+                            Place this order
+                        </Button>
+                    </Grid>
+                )}
             </Grid>
         </>
     );
