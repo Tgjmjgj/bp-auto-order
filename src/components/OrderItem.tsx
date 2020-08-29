@@ -14,9 +14,13 @@ import { FreeSelect } from './FreeSelect'
 
 import foodPlaceholder from '../images/food-placeholder.png';
 
+export interface OrderItemDisplayData extends OrderItemData {
+    imageUrl?: string
+}
+
 type Props = {
     canClose: boolean
-    value: OrderItemData
+    value: OrderItemDisplayData
     savedTargets: OrderTarget[]
     addNewTarget: (itemId: string, newTarget: string) => void
     updateItem: (updatedOrderItem: OrderItemData) => void

@@ -8,6 +8,7 @@ import groupBy from 'lodash/groupBy';
 import chunk from 'lodash/chunk';
 import uniq from 'lodash/uniq';
 import get from 'lodash/get';
+import { throwError } from './utils';
 
 // const spreadsheetId = '1S-gWGUUqDzfBUUZNRo2UjlHR8kw9LrKQ-I_PvH7nXB4'; // tmp
 
@@ -35,7 +36,7 @@ const targetDisplayNames: Record<string, string> = {
 
 const randomName = () => `${capitalize(faker.hacker.adjective())} ${capitalize(faker.hacker.noun())}`;
 
-const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string) => {
+const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): Promise<number> => {
     try {
         const bulkSize = 300;
         let iteration = 0, foundRow = 0, possiblyFoundRow = 0, checkIter = 0;
@@ -77,15 +78,15 @@ const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string) =>
                         }
                     }
                 } else {
-                    throw new functions.https.HttpsError('not-found', `Cannot retreive spreadsheet ${spreadsheetId} range data ${range}`);
+                    throwError('not-found', `Cannot retreive spreadsheet ${spreadsheetId} range data ${range}`);
                 }
             } else {
-                throw new functions.https.HttpsError('not-found', `Cannot find spreadsheet pages in the document with id ${spreadsheetId}`);
+                throwError('not-found', `Cannot find spreadsheet pages in the document with id ${spreadsheetId}`);
             }
 
             iteration++;
             if (row1 < 1) {
-                throw new functions.https.HttpsError('not-found', 'Can\'t get last filled row by D column: All rows examined.');
+                throwError('not-found', 'Can\'t get last filled row by D column: All rows examined.');
             }
         } while (!foundRow);
 
@@ -119,11 +120,12 @@ const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string) =>
         if (e instanceof functions.https.HttpsError) {
             throw e;
         }
-        throw new functions.https.HttpsError('unknown', 'Unknown Error in last filled row detection', e);
+        throwError('unknown', 'Unknown Error in last filled row detection', e);
     }
+    return -1;
 };
 
-const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumber: number, spreadsheetId: string) => {
+const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumber: number, spreadsheetId: string): Promise<boolean> => {
     try {
         const {data} = await api.spreadsheets.get({
             spreadsheetId,
@@ -173,8 +175,9 @@ const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumb
         functions.logger.info(`Found name: ${foundName} for [${nameVariants.join(', ')}]`);
         return !!foundName;
     } catch (e) {
-        throw new functions.https.HttpsError('unknown', 'Unknown Error in checking of the order existence', e);
+        throwError('unknown', 'Unknown Error in checking of the order existence', e);
     }
+    return false;
 };
 
 const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData, rowNumber: number) => {
@@ -233,22 +236,25 @@ const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData
             },
         });
         if (res.status !== 200) {
-            throw new functions.https.HttpsError('aborted', `Insert row failed: ${res.data}`);
+            throwError('aborted', `Insert row failed: ${res.data}`);
         }
         functions.logger.info(`Insert row result: ${res.data}`, {structuredData: true});
         return res;
     } catch (e) {
-        throw new functions.https.HttpsError('unknown', 'Unknown Error in writing order into the spreadsheet', e);
+        throwError('unknown', 'Unknown Error in writing order into the spreadsheet', e);
     }
+    return null;
 };
 
 export const placeOrder = async (data: ExpectedRequestData): Promise<number> => {
     const spreadsheetId = data.spreadsheetId;
     if (!spreadsheetId) {
-        throw new functions.https.HttpsError('invalid-argument', 'No spreadsheetId in the request');
+        throwError('invalid-argument', 'No spreadsheetId in the request');
+        return -1;
     }
     if (!data.items || !data.items.length) {
-        throw new functions.https.HttpsError('invalid-argument', 'Trying to place an empty order (no items)');
+        throwError('invalid-argument', 'Trying to place an empty order (no items)');
+        return -1;
     }
     const auth = await google.auth.getClient({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
     const api = google.sheets({ version: 'v4', auth });
@@ -256,9 +262,9 @@ export const placeOrder = async (data: ExpectedRequestData): Promise<number> => 
     const names = [data.systemName, data.customName].filter(name => name) as string[];
     const isOrderAlreadyThere = await checkExistedOrder(api, names, lastRow, spreadsheetId);
     if (isOrderAlreadyThere) {
-        throw new functions.https.HttpsError('already-exists', 'Your order already exists');
+        throwError('already-exists', 'Your order already exists');
     } else {
         await writeOrderToRow(api, data, lastRow);
-        return lastRow;
     }
+    return lastRow;
 };

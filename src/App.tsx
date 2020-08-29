@@ -1,14 +1,17 @@
 import React from 'react';
-import { ConfigStateProvider } from './ConfigStateProvider';
-import { AuthAuthProvider } from './AutoAuthProvider';
+import { AuthAuthProvider } from './providers/AutoAuthProvider';
+import { MenuProvider } from './providers/MenuProvider';
+import { ConfigStateProvider } from './providers/ConfigStateProvider';
 import { Main } from './Main';
 
 export const App: React.FC = () => {
     return (
         <AuthAuthProvider>
-            <ConfigStateProvider>
-                <Main />
-            </ConfigStateProvider>
+            <MenuProvider>
+                <ConfigStateProvider>
+                    <Main />
+                </ConfigStateProvider>
+            </MenuProvider>
         </AuthAuthProvider>
     );
 };

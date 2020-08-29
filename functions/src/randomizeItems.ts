@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import get from 'lodash/get';
 
-import { randomId } from './utils';
+import { randomId, throwError } from './utils';
 import { RandomOrderConfig, OrderItem } from '../../types/autoOrderConfigs';
 import { Menu } from '../../types/autoOrderMenus';
 
@@ -17,8 +17,8 @@ export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConf
             if (
                 get(conf.categories, `[${item.category}].maxItems`) === 0 ||
                 get(conf.categories, `[${item.category}].weight`) === 0 ||
-                get(conf.items, `[${item.id}].maxItems`) === 0 ||
-                get(conf.items, `[${item.id}].weight`) === 0
+                get(conf.items, `[${item.name}].maxItems`) === 0 ||
+                get(conf.items, `[${item.name}].weight`) === 0
             ) {
                 return false;
             } else {
@@ -63,13 +63,14 @@ export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConf
         } while (totalCost < minCost && i < maxLoopIterations);
 
         if (i === maxLoopIterations) {
-            throw new functions.https.HttpsError('deadline-exceeded', 'Random order generator exceeded the maximum iteration number!');
+            throwError('deadline-exceeded', 'Random order generator exceeded the maximum iteration number!');
         }
         return orderItems;
     } catch (e) {
         if (e instanceof functions.https.HttpsError) {
             throw e;
         }
-        throw new functions.https.HttpsError('unknown', 'Unknown error in random order generator', e);
+        throwError('unknown', 'Unknown error in random order generator', e);
     }
+    return [];
 };

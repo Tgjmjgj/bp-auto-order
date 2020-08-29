@@ -5,8 +5,8 @@ import pickBy from 'lodash/pickBy';
 import eq from 'fast-deep-equal';
 
 import { AutoAuthContext } from './AutoAuthProvider';
-import { ConfigState } from '../types/autoOrderConfigs';
-import { randomId } from './utils';
+import { ConfigState } from '../../types/autoOrderConfigs';
+import { randomId } from '../utils';
 
 export type OrderTarget = {
     key: string
@@ -110,7 +110,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                         });
                     }
                 }
-                console.log('### initial data: ', data.data());
+                console.log('@initial Configuration: ', data.data());
                 const initialConfigState = {
                     ...defaultConfigState,
                     systemName: authContext.displayName || '',
@@ -123,7 +123,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                 setDataLoaded(true);
             });
         }
-    }, [authContext]);
+    }, [authContext.uid, authContext.displayName]);
 
     useEffect(() => {
         if (authContext.uid) {
@@ -157,4 +157,4 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
             { children }
         </ConfigStateContext.Provider>
     );
-}
+};

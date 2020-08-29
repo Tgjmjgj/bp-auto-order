@@ -9,7 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import LockIcon from '@material-ui/icons/Lock';
 import LockOpenIcon from '@material-ui/icons/LockOpen';
 
-import { ConfigStateContext } from '../ConfigStateProvider';
+import { ConfigStateContext } from '../providers/ConfigStateProvider';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({

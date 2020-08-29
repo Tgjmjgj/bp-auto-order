@@ -12,12 +12,14 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import { ConfigStateContext } from '../ConfigStateProvider';
+import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { MenuContext } from '../providers/MenuProvider';
 import { getRandomOrder } from '../service/functions';
 import { OrderItemStatic } from '../components/OrderItemStatic';
-import { randomOrderOptionsTargetKeys } from '../constants';
+import { RandomOrderOptionsTargetKey, randomOrderOptionsTargetKeys } from '../constants';
 import { randomId } from '../utils';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
+import { OrderItemDisplayData } from '../components/OrderItem';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -67,6 +69,7 @@ type PresetLabelText = 'Choose from preset' | 'Preset';
 export const ManualOrder: React.FC = () => {
 
     const configState = React.useContext(ConfigStateContext);
+    const menuState = React.useContext(MenuContext);
     const [selectedPreset, setSelectedPreset] = React.useState('');
     const [items, setItems] = React.useState<OrderItemData[]>([]);
     const [loading, setLoading] = React.useState(false);
@@ -82,10 +85,11 @@ export const ManualOrder: React.FC = () => {
         ),
     ), [configState]);
 
-    const targetsForRandom = React.useMemo(
-        () => configState.state.savedTargets.filter(target => randomOrderOptionsTargetKeys.includes(target.key)),
-        [configState],
-    );
+    const targetsForRandom = React.useMemo(() => {
+        return configState.state.savedTargets.filter(target =>
+            (randomOrderOptionsTargetKeys as unknown as string[]).includes(target.key),
+        );
+    }, [configState]);
 
     const [targetKeyForRandom, setTargetKeyForRandom] = React.useState(targetsForRandom[0].key)
 
@@ -115,7 +119,7 @@ export const ManualOrder: React.FC = () => {
         setItems([]);
         try {
             setLoading(true);
-            const {data} = await getRandomOrder({target: targetKeyForRandom});
+            const {data} = await getRandomOrder(targetKeyForRandom);
             if (data) {
                 console.log('@Items: ', data);
                 setItems(data);
@@ -137,17 +141,21 @@ export const ManualOrder: React.FC = () => {
         setPresetLabel(selectedPreset ? 'Preset' : 'Choose from preset');
     }, [selectedPreset]);
 
-    const displayItems = React.useMemo(() => items.map(item => {
+    const displayItems = React.useMemo<OrderItemDisplayData[]>(() => items.map(item => {
         const target = configState.state.savedTargets.find(({id, key}) => [id, key].includes(item.target));
+        const targetMenu = target && menuState[target.key as RandomOrderOptionsTargetKey];
+        const menuItem = item.ref && targetMenu && targetMenu.find(menuItem => menuItem.id === item.ref);
         return {
             ...item,
             target: target ? target.displayName : item.id,
+            imageUrl: menuItem && menuItem.imageUrl ? menuItem.imageUrl : undefined,
         };
-    }), [items, configState]);
+    }), [items, configState, menuState]);
 
     const totalCost = React.useMemo(() => items.reduce((total, item) => total + item.price * item.quantity, 0), [items]);
 
     const itemsUI = React.useMemo(() => {
+        console.log('@displayItems: ', displayItems);
         return displayItems.map(item => (
             <Grid item key={item.id}>
                 <OrderItemStatic value={item} />

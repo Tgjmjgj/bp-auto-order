@@ -9,7 +9,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 
-import { ConfigStateContext } from '../ConfigStateProvider';
+import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { OrderPreset } from '../components/OrderPreset';
 import { OrderPreset as OrderPresetData } from '../../types/autoOrderConfigs';
 import { randomId, getI } from '../utils';

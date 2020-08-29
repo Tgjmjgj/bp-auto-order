@@ -9,7 +9,7 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 
-import { ConfigStateContext } from '../ConfigStateProvider';
+import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { AutoOrderMode } from '../../types/autoOrderConfigs';
 
 type AutoOrderOption = {

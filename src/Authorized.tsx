@@ -20,7 +20,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Container from '@material-ui/core/Container';
 import MuiAlert from '@material-ui/lab/Alert';
 
-import { ConfigStateContext } from './ConfigStateProvider';
+import { ConfigStateContext } from './providers/ConfigStateProvider';
 import { MainOptions } from './layouts/MainOptions';
 import { DeveloperSettings } from './layouts/DeveloperSettings';
 import { PresetsScreen } from './layouts/PresetsScreen';

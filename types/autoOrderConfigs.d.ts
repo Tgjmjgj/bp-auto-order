@@ -25,14 +25,14 @@ export type OrderPreset = {
     items: OrderItem[]
 };
 
-export type OrderItem = {
+export interface OrderItem {
     id: string
     name: string
     price: number
     quantity: number
     target: string
     ref?: string
-};
+}
 
 export type RandomOrderConfig = {
     total: {

@@ -7,7 +7,7 @@ import TextField from '@material-ui/core/TextField';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 
-import { ConfigStateContext } from '../ConfigStateProvider';
+import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 import { OrderItem } from './OrderItem';
 import { randomId, getI } from '../utils';

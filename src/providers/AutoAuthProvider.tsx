@@ -87,4 +87,4 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
             { children }
         </AutoAuthContext.Provider>
     );
-}
+};

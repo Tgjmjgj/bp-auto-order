@@ -1,6 +1,6 @@
 import React from 'react';
-import { AutoAuthContext } from './AutoAuthProvider';
-import { ConfigStateContext } from './ConfigStateProvider';
+import { AutoAuthContext } from './providers/AutoAuthProvider';
+import { ConfigStateContext } from './providers/ConfigStateProvider';
 import { Authorized } from './Authorized';
 import { Unauthorized } from './Unauthorized';
 import { Loader } from './components/Loader';

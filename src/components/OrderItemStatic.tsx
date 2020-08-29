@@ -1,4 +1,5 @@
 import React from 'react';
+import cn from 'classnames';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
@@ -6,12 +7,12 @@ import CardContent from '@material-ui/core/CardContent';
 import CardMedia from '@material-ui/core/CardMedia';
 import TextField from '@material-ui/core/TextField';
 
-import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
+import { OrderItemDisplayData } from './OrderItem';
 
 import foodPlaceholder from '../images/food-placeholder.png';
 
 type Props = {
-    value: OrderItemData
+    value: OrderItemDisplayData
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -50,6 +51,8 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         dishImage: {
             paddingTop: '56.25%',
+        },
+        placeholder: {
             margin: '0 50px',
         },
         input: {
@@ -64,8 +67,8 @@ export const OrderItemStatic: React.FC<Props> = ({value}) => {
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
             <CardMedia
-                className={classes.dishImage}
-                image={foodPlaceholder}
+                className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
+                image={value.imageUrl || foodPlaceholder}
                 title="dish"
             />
             <CardContent className={classes.cardContent}>
