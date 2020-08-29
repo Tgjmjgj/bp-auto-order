@@ -6,6 +6,9 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardMedia from '@material-ui/core/CardMedia';
 import TextField from '@material-ui/core/TextField';
+import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
+import CloseIcon from '@material-ui/icons/Close';
 
 import { OrderItemDisplayData } from './OrderItem';
 
@@ -13,6 +16,9 @@ import foodPlaceholder from '../images/food-placeholder.png';
 
 type Props = {
     value: OrderItemDisplayData
+    canClose?: boolean
+    onClose?: (itemId: string) => void
+    onQuantityChange?: (quantity: number, itemId: string) => void
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -61,8 +67,16 @@ const useStyles = makeStyles((theme: Theme) =>
     })
 );
 
-export const OrderItemStatic: React.FC<Props> = ({value}) => {
+export const OrderItemStatic: React.FC<Props> = props => {
+    const { value, canClose = false, onClose, onQuantityChange } = props;
     const classes = useStyles();
+
+    const quantityChangeHandler = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = Number(e.target.value);
+        if (onQuantityChange) {
+            onQuantityChange(Number.isNaN(newValue) ? 1 : newValue < 1 ? 1 : newValue, value.id);
+        }
+    }, [value, onQuantityChange]);
 
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
@@ -91,6 +105,8 @@ export const OrderItemStatic: React.FC<Props> = ({value}) => {
                     label="Quantity"
                     variant="filled"
                     value={value.quantity}
+                    type={onQuantityChange ? 'number' : 'text'}
+                    onChange={quantityChangeHandler}
                     size="small"
                     className={classes.input}
                 />
@@ -102,6 +118,16 @@ export const OrderItemStatic: React.FC<Props> = ({value}) => {
                     className={classes.input}
                 />
             </CardContent>
+
+            {canClose && onClose && (
+                <div className={classes.closeIcon}>
+                    <Tooltip title="Delete item" aria-label="Delete item">
+                        <IconButton onClick={() => onClose(value.id)} size="small">
+                            <CloseIcon />
+                        </IconButton>
+                    </Tooltip>
+                </div>
+            )}
         </Card>
     );
 };

@@ -6,8 +6,8 @@ import { Menu } from '../../types/autoOrderMenus';
 export const placeOrder = (payload: any): Promise<{ data: number }> =>
     firebase.app().functions('europe-west1').httpsCallable('placeOrder')(payload);
 
-export const getRandomOrder = (target: string): Promise<{ data: OrderItem[] }> =>
-    firebase.app().functions('europe-west1').httpsCallable('getRandomOrder')({target})
+export const getRandomOrder = (target: string, items?: OrderItem[]): Promise<{ data: OrderItem[] }> =>
+    firebase.app().functions('europe-west1').httpsCallable('getRandomOrder')({target, items})
 
 export const getUpdatedMenu = (target: string): Promise<{ data: Menu }> =>
     firebase.app().functions('europe-west1').httpsCallable('getUpdatedMenu')({target});

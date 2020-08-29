@@ -11,13 +11,16 @@ import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
+import AddIcon from '@material-ui/icons/Add';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { MenuContext } from '../providers/MenuProvider';
 import { getRandomOrder } from '../service/functions';
 import { OrderItemStatic } from '../components/OrderItemStatic';
 import { RandomOrderOptionsTargetKey, randomOrderOptionsTargetKeys } from '../constants';
-import { randomId } from '../utils';
+import { getI, randomId } from '../utils';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 import { OrderItemDisplayData } from '../components/OrderItem';
 
@@ -37,6 +40,22 @@ const useStyles = makeStyles((theme: Theme) =>
             alignItems: 'center',
             marginRight: theme.spacing(6),
             marginBottom: theme.spacing(2),
+        },
+        addItemButton: {
+            borderRadius: '50%',
+            borderWidth: 1,
+            borderColor: 'rgba(0, 0, 0, 0.54)',
+            borderStyle: 'dashed',
+            transition: 'color .2s ease-out, borderColor .2s ease-out, backgroundColor .2s ease-out',
+            '&:hover': {
+                color: theme.palette.primary.main,
+                borderColor: theme.palette.primary.main,
+                backgroundColor: 'rgb(22, 2, 232, .04)',
+            },
+        },
+        centered: {
+            display: 'flex',
+            alignItems: 'center',
         },
         presetSelect: {
             minWidth: 200,
@@ -73,6 +92,7 @@ export const ManualOrder: React.FC = () => {
     const [selectedPreset, setSelectedPreset] = React.useState('');
     const [items, setItems] = React.useState<OrderItemData[]>([]);
     const [loading, setLoading] = React.useState(false);
+    const [itemLoading, setItemLoading] = React.useState(false);
     const [presetLabel, setPresetLabel] = React.useState<PresetLabelText>('Choose from preset');
     const uniqControlIdRef = React.useRef('manual-order-preset' + randomId());
     const classes = useStyles();
@@ -114,7 +134,7 @@ export const ManualOrder: React.FC = () => {
         setItems(preset ? preset.items : []);
     }, [configState, selectedPreset]);
 
-    const randomize = React.useCallback(async () => {
+    const randomizeAllItems = React.useCallback(async () => {
         setSelectedPreset('');
         setItems([]);
         try {
@@ -123,13 +143,29 @@ export const ManualOrder: React.FC = () => {
             if (data) {
                 console.log('@Items: ', data);
                 setItems(data);
-                setLoading(false);
             }
+            setLoading(false);
         } catch (e) {
-            console.error(`Error: getRandomOrder > ${e}`);
+            console.error('Error: getRandomOrder: ', e);
             setLoading(false);
         }
     }, [targetKeyForRandom]);
+
+    const randomizeOneItem = React.useCallback(async () => {
+        setSelectedPreset('');
+        try {
+            setItemLoading(true);
+            const {data} = await getRandomOrder(targetKeyForRandom, items);
+            if (data) {
+                console.log('@Items: ', data);
+                setItems(data);
+            }
+            setItemLoading(false);
+        } catch (e) {
+            console.error('Error: getRandomOrder with items: ', e);
+            setItemLoading(false);
+        }
+    }, [targetKeyForRandom, items]);
 
     React.useEffect(() => {
         setPresetLabel(selectedPreset ? 'Preset' : 'Choose from preset');
@@ -154,14 +190,43 @@ export const ManualOrder: React.FC = () => {
 
     const totalCost = React.useMemo(() => items.reduce((total, item) => total + item.price * item.quantity, 0), [items]);
 
+    const deleteItem = React.useCallback((itemId: string) => {
+        const delIndex = getI(items, itemId);
+        if (delIndex !== -1) {
+            setItems([
+                ...items.slice(0, delIndex),
+                ...items.slice(delIndex + 1, items.length),
+            ]);
+        }
+    }, [items]);
+
+    const changeQuantity = React.useCallback((newQuantity: number, itemId: string) => {
+        const itemIndex = getI(items, itemId);
+        if (itemIndex !== -1 && items[itemIndex].quantity !== newQuantity) {
+            setItems([
+                ...items.slice(0, itemIndex),
+                {
+                    ...items[itemIndex],
+                    quantity: newQuantity,
+                },
+                ...items.slice(itemIndex + 1, items.length),
+            ]);
+        }
+    }, [items]);
+
     const itemsUI = React.useMemo(() => {
         console.log('@displayItems: ', displayItems);
         return displayItems.map(item => (
             <Grid item key={item.id}>
-                <OrderItemStatic value={item} />
+                <OrderItemStatic
+                    value={item}
+                    canClose={!selectedPreset}
+                    onClose={deleteItem}
+                    onQuantityChange={selectedPreset ? undefined : changeQuantity}
+                />
             </Grid>
         ));
-    }, [displayItems]);
+    }, [displayItems, selectedPreset]);
 
     return (
         <>
@@ -201,7 +266,7 @@ export const ManualOrder: React.FC = () => {
                         <Button
                             variant="outlined"
                             color="primary"
-                            onClick={randomize}
+                            onClick={randomizeAllItems}
                             disabled={loading}
                         >
                             Randomize
@@ -221,6 +286,15 @@ export const ManualOrder: React.FC = () => {
                 <Divider />
                 <Grid container spacing={2} direction="row" className={classes.grid}>
                     {itemsUI}
+                    { !selectedPreset && (
+                        <Grid item className={classes.centered}>
+                            <Tooltip title="Add one random item" aria-label="Add one randome item">
+                                <IconButton className={classes.addItemButton} onClick={randomizeOneItem}>
+                                    <AddIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </Grid>
+                    )}
                 </Grid>
                 { !!items.length && (
                     <>

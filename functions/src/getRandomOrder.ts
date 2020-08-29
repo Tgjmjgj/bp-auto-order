@@ -11,8 +11,8 @@ export type GetRandomOrderResult = {
     items?: OrderItem[]
 };
 
-export const getRandomOrder = async (target: string): Promise<OrderItem[]> => {
-    functions.logger.info(`#Call: getRandomOrder(target = ${target})`);
+export const getRandomOrder = async (target: string, items?: OrderItem[]): Promise<OrderItem[]> => {
+    functions.logger.info(`#Call: getRandomOrder(target = ${target}, items = ${items})`);
     const menu = await getUpdatedMenu(target);
-    return randomizeItems(target, menu, defaultRandomOrderConfig);
+    return randomizeItems(target, menu, defaultRandomOrderConfig, items);
 }

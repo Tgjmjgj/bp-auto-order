@@ -10,7 +10,14 @@ const defaultMaxCost = 320;
 
 const maxLoopIterations = 1000;
 
-export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConfig): OrderItem[] => {
+/**
+ * 
+ * @param target The restourant
+ * @param menu Source list of menu items
+ * @param conf Random algorithm configuration
+ * @param items If there are items - function will add only 1 new item to them
+ */
+export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConfig, items?: OrderItem[]): OrderItem[] => {
 
     try {
         const filteredMenu = menu.filter(item => {
@@ -28,8 +35,8 @@ export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConf
         const minCost = get(conf.total, 'cost.min') || defaultMinCost; 
         const maxCost = get(conf.total, 'cost.max') || defaultMaxCost;
 
-        const orderItems: OrderItem[] = [];
-        let totalCost = 0;
+        const orderItems: OrderItem[] = items ? [...items] : [];
+        let totalCost = orderItems.reduce((total, item) => total + item.price * item.quantity, 0);
         let i = 0;
         do {
             i++;
@@ -60,6 +67,9 @@ export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConf
                     });
                 }
             }
+            if (items && orderItems.length > items.length) {
+                break;
+            }
         } while (totalCost < minCost && i < maxLoopIterations);
 
         if (i === maxLoopIterations) {
@@ -67,6 +77,7 @@ export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConf
         }
         return orderItems;
     } catch (e) {
+        console.log(e);
         if (e instanceof functions.https.HttpsError) {
             throw e;
         }

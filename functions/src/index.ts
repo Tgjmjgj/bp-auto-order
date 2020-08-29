@@ -12,7 +12,7 @@ FirebaseAdmin.initializeApp();
 
 export const placeOrder = functions.region('europe-west1').https.onCall(async (data, context) => await placeOrderFn(data));
 
-export const getRandomOrder = functions.region('europe-west1').https.onCall(async (data, context) => await getRandomOrderFn(data.target));
+export const getRandomOrder = functions.region('europe-west1').https.onCall(async (data, context) => await getRandomOrderFn(data.target, data.items));
 
 export const getUpdatedMenu = functions.region('europe-west1').https.onCall(async (data, context) => await getUpdatedMenuFn(data.target));
 

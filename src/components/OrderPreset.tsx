@@ -4,6 +4,7 @@ import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import TextField from '@material-ui/core/TextField';
+import Tooltip from '@material-ui/core/Tooltip';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 
@@ -183,12 +184,12 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
         return preset && preset.items.map(item => (
             <Grid item key={item.id}>
                 <OrderItem
-                    canClose={preset.items.length > 1}
                     value={item}
                     savedTargets={savedTargets}
                     addNewTarget={addNewTargetAndSelectIt}
-                    deleteItem={deleteOrderItem}
                     updateItem={setOrderItem}
+                    canClose={preset.items.length > 1}
+                    onClose={deleteOrderItem}
                 />
             </Grid>
         ));
@@ -203,17 +204,21 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                     onChange={onChangePresetName}
                 />
                 { allowDelete && (
-                    <IconButton className={classes.deletePresetButton} onClick={deletePreset}>
-                        <DeleteIcon />
-                    </IconButton>
+                    <Tooltip title="Delete Preset" aria-label="Delete Preset">
+                        <IconButton className={classes.deletePresetButton} onClick={deletePreset}>
+                            <DeleteIcon />
+                        </IconButton>
+                    </Tooltip>
                 )}
             </Grid>
             <Grid container spacing={2} direction="row" className={classes.grid}>
                 { presetItemsUI }
                 <Grid item className={classes.centered}>
-                    <IconButton className={classes.addItemButton} onClick={addOrderItem}>
-                        <AddIcon />
-                    </IconButton>
+                    <Tooltip title="Add item" aria-label="Add item">
+                        <IconButton className={classes.addItemButton} onClick={addOrderItem}>
+                            <AddIcon />
+                        </IconButton>
+                    </Tooltip>
                 </Grid>
             </Grid>
         </>

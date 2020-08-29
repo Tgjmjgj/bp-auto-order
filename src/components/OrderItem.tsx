@@ -1,10 +1,12 @@
 import React from 'react';
+import cn from 'classnames';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardMedia from '@material-ui/core/CardMedia';
 import TextField from '@material-ui/core/TextField';
+import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
@@ -19,12 +21,12 @@ export interface OrderItemDisplayData extends OrderItemData {
 }
 
 type Props = {
-    canClose: boolean
     value: OrderItemDisplayData
     savedTargets: OrderTarget[]
     addNewTarget: (itemId: string, newTarget: string) => void
     updateItem: (updatedOrderItem: OrderItemData) => void
-    deleteItem: (itemId: string) => void
+    canClose?: boolean
+    onClose?: (itemId: string) => void
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -63,6 +65,8 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         dishImage: {
             paddingTop: '56.25%',
+        },
+        placeholder: {
             margin: '0 50px',
         },
         input: {
@@ -72,7 +76,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export const OrderItem: React.FC<Props> = props => {
-    const { canClose, value, savedTargets, addNewTarget, updateItem, deleteItem } = props;
+    const { canClose = false, value, savedTargets, addNewTarget, updateItem, onClose } = props;
     const classes = useStyles();
 
     const targetOptions = savedTargets.map(target => ({
@@ -122,8 +126,8 @@ export const OrderItem: React.FC<Props> = props => {
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
             <CardMedia
-                className={classes.dishImage}
-                image={foodPlaceholder}
+                className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
+                image={value.imageUrl || foodPlaceholder}
                 title="dish"
             />
             <CardContent className={classes.cardContent}>
@@ -163,11 +167,13 @@ export const OrderItem: React.FC<Props> = props => {
                 />
             </CardContent>
 
-            {canClose && (
+            {canClose && onClose && (
                 <div className={classes.closeIcon}>
-                    <IconButton onClick={() => deleteItem(value.id)} size="small">
-                        <CloseIcon />
-                    </IconButton>
+                    <Tooltip title="Delete item" aria-label="Delete item">
+                        <IconButton onClick={() => onClose(value.id)} size="small">
+                            <CloseIcon />
+                        </IconButton>
+                    </Tooltip>
                 </div>
             )}
         </Card>
