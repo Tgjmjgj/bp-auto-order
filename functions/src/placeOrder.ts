@@ -30,7 +30,12 @@ type ExpectedRequestData = {
 
 export type PlaceOrderResult = {
     status: number
-    data: any
+    data: {
+        success?: boolean
+        row?: number
+        reason?: string
+        error?: string
+    }
 };
 
 const targetDisplayNames: Record<string, string> = {

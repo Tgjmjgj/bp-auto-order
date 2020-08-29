@@ -1,3 +1,4 @@
+import * as functions from 'firebase-functions';
 import get from 'lodash/get';
 
 import { randomId } from './utils';
@@ -7,8 +8,10 @@ import { Menu } from '../../types/autoOrderMenus';
 const defaultMinCost = 250;
 const defaultMaxCost = 320;
 
-export const randomizeOrder = (target: string, menu: Menu, conf: RandomOrderConfig): OrderItem[] | null => {
-    
+const maxLoopIterations = 1000;
+
+export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConfig): OrderItem[] | null => {
+
     const filteredMenu = menu.filter(item => {
         if (
             get(conf.categories, `[${item.category}].maxItems`) === 0 ||
@@ -26,7 +29,9 @@ export const randomizeOrder = (target: string, menu: Menu, conf: RandomOrderConf
 
     const orderItems: OrderItem[] = [];
     let totalCost = 0;
+    let i = 0;
     do {
+        i++;
         const rndItem = filteredMenu[Math.floor(Math.random() * filteredMenu.length)];
         const nextCost = totalCost + rndItem.price;
         const sameCategoryItemsNumber = orderItems.reduce((num, orderItem) => {
@@ -54,7 +59,8 @@ export const randomizeOrder = (target: string, menu: Menu, conf: RandomOrderConf
                 });
             }
         }
-    } while (totalCost < minCost);
+    } while (totalCost < minCost && i < maxLoopIterations);
 
+    functions.logger.error('Randomize algorithm exceeded maximum iteration number!');
     return orderItems;
 };
