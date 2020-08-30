@@ -302,6 +302,7 @@ export const ManualOrder: React.FC = () => {
                 targets: configState.state.savedTargets,
                 customName: configState.state.customName,
                 systemName: configState.state.systemName,
+                allowMultiple: configState.state.allowMultipleOrders,
                 overwrite,
             });
             setPlaceOrderStep('success');

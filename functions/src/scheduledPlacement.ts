@@ -28,8 +28,9 @@ export const scheduledPlacement = async () => {
                             systemName: data.systemName,
                             customName: data.customName,
                             targets: data.savedTargets,
-                            items,
                             overwrite: data.overwriteAlways,
+                            allowMultiple: data.allowMultipleOrders,
+                            items,
                         });
                     }
                 } catch { }
@@ -43,8 +44,9 @@ export const scheduledPlacement = async () => {
                         systemName: data.systemName,
                         customName: data.customName,
                         targets: data.savedTargets,
-                        items: chosenPreset.items,
                         overwrite: data.overwriteAlways,
+                        allowMultiple: data.allowMultipleOrders,
+                        items: chosenPreset.items,
                     });
                 } catch { }
             }

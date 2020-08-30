@@ -25,8 +25,11 @@ const useStyles = makeStyles((theme: Theme) =>
         iconGroup: {
             margin: theme.spacing(1),
         },
-        overwriteControl: {
+        switchRowControl: {
             marginLeft: 0,
+            '&>span:last-child': {
+                minWidth: 200,
+            },
         },
     }),
 );
@@ -39,6 +42,7 @@ export const DeveloperSettings: React.FC = () => {
     const classes = useStyles();
     const spreadsheetId = configState.state.spreadsheetId;
     const alwaysOverwrite = configState.state.overwriteAlways;
+    const allowMultipleOrders = configState.state.allowMultipleOrders;
 
     const changeSpreadsheetId = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         configState.updateState({ spreadsheetId: e.target.value });
@@ -65,7 +69,14 @@ export const DeveloperSettings: React.FC = () => {
             ...configState.state,
             overwriteAlways: !alwaysOverwrite,
         });
-    }, [configState]);
+    }, [configState, alwaysOverwrite]);
+
+    const onChangeAllowMultiple = React.useCallback(() => {
+        configState.updateState({
+            ...configState.state,
+            allowMultipleOrders: !allowMultipleOrders,
+        })
+    }, [configState, allowMultipleOrders]);
 
     return (
         <Grid container spacing={4} direction="column">
@@ -88,13 +99,28 @@ export const DeveloperSettings: React.FC = () => {
                 <FormControlLabel
                     label="Overwrite existing order: "
                     labelPlacement="start"
-                    className={classes.overwriteControl}
+                    className={classes.switchRowControl}
                     control={
                         <Switch
                             color="secondary"
                             name="overwriteSwitch"
                             checked={alwaysOverwrite}
                             onChange={onChangeOverwrite}
+                        />
+                    }
+                />
+            </Grid>
+            <Grid item className={classes.gridRow}>
+                <FormControlLabel
+                    label="Allow multiple orders: "
+                    labelPlacement="start"
+                    className={classes.switchRowControl}
+                    control={
+                        <Switch
+                            color="secondary"
+                            name="overwriteSwitch"
+                            checked={allowMultipleOrders}
+                            onChange={onChangeAllowMultiple}
                         />
                     }
                 />

@@ -311,8 +311,11 @@ export const placeOrder = async (data: PlaceOrderData): Promise<number> => {
     const api = google.sheets({ version: 'v4', auth });
     const lastRow = await getLastFilledRow(api, spreadsheetId);
     const names = [data.systemName, data.customName].filter(name => name) as string[];
-    const foundRowName = await checkExistedOrder(api, names, lastRow, spreadsheetId);
     let writtenToRow = -1;
+    let foundRowName = null;
+    if (!data.allowMultiple) {
+        foundRowName = await checkExistedOrder(api, names, lastRow, spreadsheetId);
+    }
     if (foundRowName) {
         if (data.overwrite) {
             writtenToRow = await overwriteOrderToRow(api, data, foundRowName, lastRow);

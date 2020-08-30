@@ -64,4 +64,5 @@ export type PlaceOrderData = {
     systemName?: string
     customName?: string
     overwrite?: boolean
+    allowMultiple?: boolean
 };

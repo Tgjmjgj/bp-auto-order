@@ -11,14 +11,18 @@ import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import SettingsIcon from '@material-ui/icons/Settings';
-import MenuIcon from '@material-ui/icons/Menu';
 import Hidden from '@material-ui/core/Hidden';
 import Drawer from '@material-ui/core/Drawer';
 import IconButton from '@material-ui/core/IconButton';
 import Snackbar from '@material-ui/core/Snackbar';
 import Container from '@material-ui/core/Container';
 import MuiAlert from '@material-ui/lab/Alert';
+import SettingsIcon from '@material-ui/icons/Settings';
+import MenuIcon from '@material-ui/icons/Menu';
+import BuildIcon from '@material-ui/icons/Build';
+import BookmarksIcon from '@material-ui/icons/Bookmarks';
+import AssignmentIcon from '@material-ui/icons/Assignment';
+import CasinoIcon from '@material-ui/icons/Casino';
 
 import { ConfigStateContext } from './providers/ConfigStateProvider';
 import { MainOptions } from './layouts/MainOptions';
@@ -89,12 +93,27 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-const mainLayouts: Record<MenuCategories, JSX.Element> = {
-    'Main Options': <MainOptions />,
-    'Presets': <PresetsScreen />,
-    'Random Configuration': <RandomConfiguration />,
-    'Manual Order': <ManualOrder />,
-    'Developer Settings': <DeveloperSettings />,
+const menuCategoriesData: Record<MenuCategories, { component: JSX.Element, icon: JSX.Element }> = {
+    'Main Options': {
+        component: <MainOptions />,
+        icon: <SettingsIcon />,
+    },
+    'Presets': {
+        component: <PresetsScreen />,
+        icon: <BookmarksIcon />,
+    },
+    'Random Configuration': {
+        component: <RandomConfiguration />,
+        icon: <CasinoIcon />,
+    },
+    'Manual Order': {
+        component: <ManualOrder />,
+        icon: <AssignmentIcon />,
+    },
+    'Developer Settings': {
+        component: <DeveloperSettings />,
+        icon: <BuildIcon />,
+    },
 };
 
 export const Authorized: React.FC = () => {
@@ -118,18 +137,20 @@ export const Authorized: React.FC = () => {
     const menu = (
         <div>
             <List>
-                {menuCategories.map(menuCategory => (
-                    <ListItem
-                        button
-                        key={menuCategory}
-                        onClick={() => setSelectMenuItem(menuCategory)}
-                    >
-                        <ListItemIcon>
-                            <SettingsIcon />
-                        </ListItemIcon>
-                        <ListItemText primary={menuCategory} />
-                    </ListItem>
-                ))}
+                {(Object.entries(menuCategoriesData) as [MenuCategories, { component: JSX.Element, icon: JSX.Element }][])
+                    .map(([title, data]) => (
+                        <ListItem
+                            button
+                            key={title}
+                            onClick={() => setSelectMenuItem(title)}
+                        >
+                            <ListItemIcon>
+                                {data.icon}
+                            </ListItemIcon>
+                            <ListItemText primary={title} />
+                        </ListItem>
+                    ))
+                }
             </List>
             <Divider />
         </div>
@@ -186,7 +207,7 @@ export const Authorized: React.FC = () => {
                 </nav>
                 <main className={classes.content}>
                     <Container className={classes.contentContainer}>
-                        {mainLayouts[selectedMenuItem]}
+                        {menuCategoriesData[selectedMenuItem].component}
                     </Container>
                 </main>
 
