@@ -14,6 +14,8 @@ export type ConfigState = {
     presets: OrderPreset[]
     selectedPresets: string[]
     savedTargets: OrderTarget[]
+    overwriteAlways: boolean
+    allowMultipleOrders: boolean
     systemName?: string
     customName?: string
 };
@@ -61,4 +63,5 @@ export type PlaceOrderData = {
     targets: OrderTarget[]
     systemName?: string
     customName?: string
+    overwrite?: boolean
 };

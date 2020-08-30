@@ -36,13 +36,16 @@ const defaultPreset = {
 };
 
 const defaultConfigState: LocalConfigState = {
-    enabled: false,
     saveOnServer: false,
+
+    enabled: false,
     spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
     mode: 'preset',
     selectedPresets: [ defaultPreset.id ],
     presets: [ defaultPreset ],
     savedTargets: [ defaultKumirTarget, defaultChanakhiTarget ],
+    overwriteAlways: false,
+    allowMultipleOrders: false,
 };
 
 const omitProperties = ['saveOnServer'];

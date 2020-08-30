@@ -1,4 +1,3 @@
-import * as functions from 'firebase-functions';
 import get from 'lodash/get';
 
 import { randomId, throwError } from './utils';
@@ -78,9 +77,6 @@ export const randomizeItems = (target: string, menu: Menu, conf: RandomOrderConf
         return orderItems;
     } catch (e) {
         console.log(e);
-        if (e instanceof functions.https.HttpsError) {
-            throw e;
-        }
         throwError('unknown', 'Unknown error in random order generator', e);
     }
     return [];

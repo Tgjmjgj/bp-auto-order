@@ -19,7 +19,7 @@ import AddIcon from '@material-ui/icons/Add';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { MenuContext } from '../providers/MenuProvider';
-import { getRandomOrder } from '../service/functions';
+import { getRandomOrder, placeOrder as placeOrderCall } from '../service/functions';
 import { OrderItemStatic } from '../components/OrderItemStatic';
 import { RandomOrderOptionsTargetKey, randomOrderOptionsTargetKeys } from '../constants';
 import { getI, randomId } from '../utils';
@@ -29,7 +29,9 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
 import TextField from '@material-ui/core/TextField';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -109,10 +111,28 @@ const useStyles = makeStyles((theme: Theme) =>
         presetName: {
             minWidth: 300,
         },
+        placeOrderDialog: {
+            minWidth: 400,
+        },
+        placeOrderLoader: {
+            width: '100%',
+            marginTop: 4,
+            marginBottom: 16,
+        },
     }),
 );
 
 type PresetLabelText = 'Choose from preset' | 'Preset';
+
+const placeOrderSteps = [
+    'none',
+    'loading',
+    'error',
+    'success',
+    'already-exists',
+] as const;
+
+type PlaceOrderStep = typeof placeOrderSteps[number];
 
 export const ManualOrder: React.FC = () => {
 
@@ -122,11 +142,15 @@ export const ManualOrder: React.FC = () => {
     const [items, setItems] = React.useState<OrderItemData[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [itemLoading, setItemLoading] = React.useState(false);
+    const [placeOrderStep, setPlaceOrderStep] = React.useState<PlaceOrderStep>('none');
     const [presetLabel, setPresetLabel] = React.useState<PresetLabelText>('Choose from preset');
     const [showPresetDialog, setShowPresetDialog] = React.useState(false);
     const [presetName, setPresetName] = React.useState('');
+    const [placeOrderError, setPlaceOrderError] = React.useState('');
     const uniqControlIdRef = React.useRef('manual-order-preset-' + randomId());
     const uniqDialogIdRef = React.useRef('manual-order-dialog-' + randomId());
+    const uniqDialog2IdRef = React.useRef('manual-order-dialog-2-' + randomId());
+    const uniqDialog3IdRef = React.useRef('manual-order-dialog-3-' + randomId());
     const classes = useStyles();
 
     const presetOptions = React.useMemo(() =>
@@ -269,6 +293,28 @@ export const ManualOrder: React.FC = () => {
         setPresetName(e.target.value);
     }, []);
 
+    const placeOrder = React.useCallback(async (overwrite = false) => {
+        try {
+            setPlaceOrderStep('loading');
+            await placeOrderCall({
+                items,
+                spreadsheetId: configState.state.spreadsheetId,
+                targets: configState.state.savedTargets,
+                customName: configState.state.customName,
+                systemName: configState.state.systemName,
+                overwrite,
+            });
+            setPlaceOrderStep('success');
+        } catch (e) {
+            if (e.code === 'already-exists') {
+                setPlaceOrderStep('already-exists');
+            } else {
+                setPlaceOrderStep('error');
+                setPlaceOrderError(e.message || 'Unknown Error. Please, contact the developer');
+            }
+        }
+    }, [items, configState]);
+
     const itemsUI = React.useMemo(() => {
         console.log('@displayItems: ', displayItems);
         return displayItems.map(item => (
@@ -389,6 +435,7 @@ export const ManualOrder: React.FC = () => {
                                 variant="contained"
                                 color="primary"
                                 disabled={loading || itemLoading}
+                                onClick={() => placeOrder()}
                             >
                                 Place this order
                             </Button>
@@ -433,6 +480,88 @@ export const ManualOrder: React.FC = () => {
                     </form>
                 </Dialog>
             </Grid>
+
+            <Dialog
+                open={placeOrderStep !== 'none'}
+                disableBackdropClick
+                disableEscapeKeyDown
+                aria-labelledby={uniqDialog2IdRef.current}
+                aria-describedby={uniqDialog3IdRef.current}
+            >
+                { placeOrderStep === 'loading' && (
+                    <DialogContent className={classes.placeOrderDialog}>
+                        <LinearProgress variant="indeterminate" className={classes.placeOrderLoader} />
+                    </DialogContent>
+                )}
+                { placeOrderStep === 'already-exists' && (
+                    <>
+                        <DialogTitle id={uniqDialog2IdRef.current}>
+                            Warning
+                        </DialogTitle>
+                        <DialogContent className={classes.placeOrderDialog}>
+                            <DialogContentText id={uniqDialog3IdRef.current}>
+                                Your order already exists. Do you really want to overwrite it?
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button
+                                color="primary"
+                                onClick={() => setPlaceOrderStep('none')}
+                                autoFocus
+                            >
+                                No
+                            </Button>
+                            <Tooltip
+                                placement="top"
+                                title="You privious order will be lost"
+                                aria-label="Your previous order will be lost"
+                            >
+                                <Button color="secondary" onClick={() => placeOrder(true)}>
+                                    Yes
+                                </Button>
+                            </Tooltip>
+                        </DialogActions>
+                    </>
+                )}
+                { placeOrderStep === 'success' && (
+                    <>
+                        <DialogTitle id={uniqDialog2IdRef.current}>
+                            Success
+                        </DialogTitle>
+                        <DialogContent className={classes.placeOrderDialog}>
+                            <DialogContentText id={uniqDialog3IdRef.current}>
+                                Your order has been successfully placed to the spreadsheet!
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button
+                                color="primary"
+                                onClick={() => setPlaceOrderStep('none')}
+                                autoFocus
+                            >
+                                Wonderful
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
+                { placeOrderStep === 'error' && (
+                    <>
+                        <DialogTitle id={uniqDialog2IdRef.current}>
+                            Error
+                        </DialogTitle>
+                        <DialogContent className={classes.placeOrderDialog}>
+                            <DialogContentText id={uniqDialog3IdRef.current}>
+                                {placeOrderError}
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setPlaceOrderStep('none')} autoFocus>
+                                Sadness
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
         </>
     );
 };
