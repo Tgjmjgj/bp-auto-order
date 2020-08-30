@@ -10,8 +10,10 @@ import DeleteIcon from '@material-ui/icons/Delete';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
-import { OrderItem } from './OrderItem';
+import { OrderItem, OrderItemDisplayData } from './OrderItem';
 import { randomId, getI } from '../utils';
+import { MenuContext } from '../providers/MenuProvider';
+import { RandomOrderOptionsTargetKey } from '../constants';
 
 type Props = {
     presetId: string
@@ -62,10 +64,22 @@ const newOrderItem = (): OrderItemData => ({
 
 export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePreset}) => {
     const configState = React.useContext(ConfigStateContext);
+    const menuState = React.useContext(MenuContext);
     const classes = useStyles();
     const preset = configState.state.presets.find(preset => preset.id === presetId);
     const presetIndex = getI(configState.state.presets, presetId);
     const savedTargets = configState.state.savedTargets;
+
+    const presetItems = React.useMemo<OrderItemDisplayData[]>(() => {
+        return preset ? preset.items.map(item => {
+            const menu = item.target && menuState[item.target as RandomOrderOptionsTargetKey];
+            const menuItem = menu && item.ref && menu.find(menuItem => menuItem.id === item.ref);
+            return {
+                ...item,
+                imageUrl: menuItem && menuItem.imageUrl ? menuItem.imageUrl : undefined,
+            };
+        }) : [];
+    }, [preset, menuState]);
 
     const onChangePresetName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (!preset) {
@@ -157,7 +171,7 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
             configState.updateState({
                 savedTargets: [
                     ...savedTargets,
-                    { id: newTargetId, key: newTarget, displayName: newTarget },
+                    { id: newTargetId, displayName: newTarget },
                 ],
                 presets: [
                     ...configState.state.presets.slice(0, presetIndex),
@@ -181,19 +195,19 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
     console.log(`## Preset ${presetId} Items: `, preset ? preset.items : '');
 
     const presetItemsUI = React.useMemo(() => {
-        return preset && preset.items.map(item => (
+        return presetItems && presetItems.map(item => (
             <Grid item key={item.id}>
                 <OrderItem
                     value={item}
                     savedTargets={savedTargets}
                     addNewTarget={addNewTargetAndSelectIt}
                     updateItem={setOrderItem}
-                    canClose={preset.items.length > 1}
+                    canClose={presetItems.length > 1}
                     onClose={deleteOrderItem}
                 />
             </Grid>
         ));
-    }, [preset, savedTargets, deleteOrderItem, setOrderItem, addNewTargetAndSelectIt]);
+    }, [presetItems, savedTargets, deleteOrderItem, setOrderItem, addNewTargetAndSelectIt]);
 
     return (
         <>

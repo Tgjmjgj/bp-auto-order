@@ -1,4 +1,6 @@
 import React from 'react';
+import get from 'lodash/get';
+import cn from 'classnames';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -23,6 +25,11 @@ import { RandomOrderOptionsTargetKey, randomOrderOptionsTargetKeys } from '../co
 import { getI, randomId } from '../utils';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 import { OrderItemDisplayData } from '../components/OrderItem';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import TextField from '@material-ui/core/TextField';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -56,6 +63,7 @@ const useStyles = makeStyles((theme: Theme) =>
         centered: {
             display: 'flex',
             alignItems: 'center',
+            minHeight: 300,
         },
         presetSelect: {
             minWidth: 200,
@@ -80,6 +88,27 @@ const useStyles = makeStyles((theme: Theme) =>
             marginLeft: theme.spacing(2),
             marginRight: theme.spacing(1),
         },
+        leftMargin: {
+            marginLeft: 60,
+        },
+        greenButton: {
+            color: theme.palette.success.dark,
+            borderColor: theme.palette.success.dark,
+            '&:hover': {
+                backgroundColor: `${theme.palette.success.dark}0a`,
+            },
+        },
+        actionsToolbar: {
+            marginTop: theme.spacing(2),
+        },
+        greyButton: {
+            '&:hover': {
+                borderColor: '#000',
+            },
+        },
+        presetName: {
+            minWidth: 300,
+        },
     }),
 );
 
@@ -94,7 +123,10 @@ export const ManualOrder: React.FC = () => {
     const [loading, setLoading] = React.useState(false);
     const [itemLoading, setItemLoading] = React.useState(false);
     const [presetLabel, setPresetLabel] = React.useState<PresetLabelText>('Choose from preset');
-    const uniqControlIdRef = React.useRef('manual-order-preset' + randomId());
+    const [showPresetDialog, setShowPresetDialog] = React.useState(false);
+    const [presetName, setPresetName] = React.useState('');
+    const uniqControlIdRef = React.useRef('manual-order-preset-' + randomId());
+    const uniqDialogIdRef = React.useRef('manual-order-dialog-' + randomId());
     const classes = useStyles();
 
     const presetOptions = React.useMemo(() =>
@@ -107,15 +139,15 @@ export const ManualOrder: React.FC = () => {
 
     const targetsForRandom = React.useMemo(() => {
         return configState.state.savedTargets.filter(target =>
-            (randomOrderOptionsTargetKeys as unknown as string[]).includes(target.key),
+            (randomOrderOptionsTargetKeys as unknown as string[]).includes(target.id),
         );
     }, [configState]);
 
-    const [targetKeyForRandom, setTargetKeyForRandom] = React.useState(targetsForRandom[0].key)
+    const [targetKeyForRandom, setTargetKeyForRandom] = React.useState(targetsForRandom[0].id)
 
     const targetOptionsForRandom = React.useMemo(() =>
         targetsForRandom.map(target => (
-            <MenuItem value={target.key} key={target.id}>
+            <MenuItem value={target.id} key={target.id}>
                 {target.displayName}
             </MenuItem>
         ),
@@ -178,8 +210,8 @@ export const ManualOrder: React.FC = () => {
     }, [selectedPreset]);
 
     const displayItems = React.useMemo<OrderItemDisplayData[]>(() => items.map(item => {
-        const target = configState.state.savedTargets.find(({id, key}) => [id, key].includes(item.target));
-        const targetMenu = target && menuState[target.key as RandomOrderOptionsTargetKey];
+        const target = configState.state.savedTargets.find(target => target.id === item.target);
+        const targetMenu = target && menuState[target.id as RandomOrderOptionsTargetKey];
         const menuItem = item.ref && targetMenu && targetMenu.find(menuItem => menuItem.id === item.ref);
         return {
             ...item,
@@ -214,6 +246,29 @@ export const ManualOrder: React.FC = () => {
         }
     }, [items]);
 
+    const onClosePresetDialog = React.useCallback(() => setShowPresetDialog(false), []);
+
+    const onSubmitPresetDialog = React.useCallback(e => {
+        e.preventDefault();
+        const name = get(e, 'target.elements.presetName.value');
+        if (name) {
+            const id = randomId();
+            configState.updateState({
+                ...configState.state,
+                presets: [
+                    ...configState.state.presets,
+                    { id, name, items },
+                ],
+            });
+            setSelectedPreset(id);
+        }
+        setShowPresetDialog(false);
+    }, [items, configState]);
+
+    const onPresetNameChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setPresetName(e.target.value);
+    }, []);
+
     const itemsUI = React.useMemo(() => {
         console.log('@displayItems: ', displayItems);
         return displayItems.map(item => (
@@ -226,7 +281,7 @@ export const ManualOrder: React.FC = () => {
                 />
             </Grid>
         ));
-    }, [displayItems, selectedPreset]);
+    }, [displayItems, selectedPreset, deleteItem, changeQuantity]);
 
     return (
         <>
@@ -251,7 +306,7 @@ export const ManualOrder: React.FC = () => {
                                 onChange={onSelectedPresetChange}
                                 onOpen={onPresetSelectOpen}
                                 onBlur={onPresetSelectBlur}
-                                disabled={loading}
+                                disabled={loading || itemLoading}
                             >
                                 {presetOptions}
                             </Select>
@@ -265,9 +320,10 @@ export const ManualOrder: React.FC = () => {
                     <Box className={classes.innerRow}>
                         <Button
                             variant="outlined"
-                            color="primary"
+                            color="default"
+                            className={classes.greyButton}
                             onClick={randomizeAllItems}
-                            disabled={loading}
+                            disabled={loading || itemLoading}
                         >
                             Randomize
                         </Button>
@@ -277,20 +333,38 @@ export const ManualOrder: React.FC = () => {
                         <Select
                             value={targetKeyForRandom}
                             onChange={onTargetForRandomChange}
-                            disabled={loading}
+                            disabled={loading || itemLoading}
                         >
                             {targetOptionsForRandom}
                         </Select>
                     </Box>
                 </Grid>
-                <Divider />
+                <Divider  />
+                { !selectedPreset && !!items.length && (
+                    <Grid container justify="flex-start" className={classes.actionsToolbar}>
+                        <Button
+                            variant="outlined"
+                            className={classes.greenButton}
+                            onClick={() => setShowPresetDialog(true)}
+                        >
+                            Save as new Preset
+                        </Button>
+                    </Grid>
+                )}
                 <Grid container spacing={2} direction="row" className={classes.grid}>
                     {itemsUI}
-                    { !selectedPreset && (
+                    { !selectedPreset && !loading && (
                         <Grid item className={classes.centered}>
                             <Tooltip title="Add one random item" aria-label="Add one randome item">
-                                <IconButton className={classes.addItemButton} onClick={randomizeOneItem}>
-                                    <AddIcon />
+                                <IconButton
+                                    className={cn(classes.addItemButton, { [classes.leftMargin]: !items.length })}
+                                    onClick={randomizeOneItem}
+                                    disabled={itemLoading}
+                                >
+                                    { itemLoading
+                                        ? <CircularProgress size={24} color="inherit" />
+                                        : <AddIcon />
+                                    }
                                 </IconButton>
                             </Tooltip>
                         </Grid>
@@ -314,7 +388,7 @@ export const ManualOrder: React.FC = () => {
                             <Button
                                 variant="contained"
                                 color="primary"
-                                disabled={loading}
+                                disabled={loading || itemLoading}
                             >
                                 Place this order
                             </Button>
@@ -326,6 +400,38 @@ export const ManualOrder: React.FC = () => {
                         <CircularProgress color="inherit" />
                     </Grid>
                 )}
+
+                <Dialog open={showPresetDialog} onClose={onClosePresetDialog} aria-labelledby={uniqDialogIdRef.current}>
+                    <form onSubmit={onSubmitPresetDialog}>
+                        <DialogTitle id={uniqDialogIdRef.current}>
+                            Save new preset
+                        </DialogTitle>
+                        <DialogContent>
+                            <TextField
+                                autoFocus
+                                margin="dense"
+                                name="presetName"
+                                label="Preset name"
+                                className={classes.presetName}
+                                autoComplete="off"
+                                value={presetName}
+                                onChange={onPresetNameChange}
+                            />
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={onClosePresetDialog}>
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                color="secondary"
+                                disabled={!presetName}
+                            >
+                                Confirm
+                            </Button>
+                        </DialogActions>
+                    </form>
+                </Dialog>
             </Grid>
         </>
     );

@@ -2,7 +2,6 @@
 
 export type OrderTarget = {
     id: string
-    key: string
     displayName: string
 };
 
@@ -54,4 +53,12 @@ export type RandomOrderConfig = {
         maxItems?: number
         minItems?: number
     }>
+};
+
+export type PlaceOrderData = {
+    spreadsheetId: string
+    items: OrderItem[]
+    targets: OrderTarget[]
+    systemName?: string
+    customName?: string
 };

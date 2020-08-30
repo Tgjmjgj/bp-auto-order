@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions';
-import {google, sheets_v4} from 'googleapis';
+import { google, sheets_v4 } from 'googleapis';
 import cyrillicToTranslit from 'cyrillic-to-translit-js';
 import levenshtein from 'js-levenshtein'
 import faker from 'faker';
@@ -8,31 +8,9 @@ import groupBy from 'lodash/groupBy';
 import chunk from 'lodash/chunk';
 import uniq from 'lodash/uniq';
 import get from 'lodash/get';
+
 import { throwError } from './utils';
-
-// const spreadsheetId = '1S-gWGUUqDzfBUUZNRo2UjlHR8kw9LrKQ-I_PvH7nXB4'; // tmp
-
-type StaticTarget = 'kumir' | 'chanakhi'
-type Target = StaticTarget | string;
-
-type OrderItem = {
-    name?: string
-    price?: number
-    quantity?: number
-    target?: Target
-}
-
-type ExpectedRequestData = {
-    spreadsheetId?: string
-    items?: OrderItem[]
-    systemName?: string
-    customName?: string
-};
-
-const targetDisplayNames: Record<string, string> = {
-    'kumir': 'Ку-Мир',
-    'chanakhi': 'Чанахи',
-};
+import { PlaceOrderData } from '../../types/autoOrderConfigs';
 
 const randomName = () => `${capitalize(faker.hacker.adjective())} ${capitalize(faker.hacker.noun())}`;
 
@@ -180,16 +158,16 @@ const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], rowNumb
     return false;
 };
 
-const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData, rowNumber: number) => {
+const writeOrderToRow = async (api: sheets_v4.Sheets, order: PlaceOrderData, rowNumber: number) => {
     try {
         const tableRows =
             (Object.values(groupBy(order.items, item => item.target))
-            .map(items => {
-                const fullItems = items.filter(item => item.name);
-                if (!fullItems.length) {
+            .map(targetItems => {
+                const validTargetItems = targetItems.filter(item => item.name);
+                if (!validTargetItems.length) {
                     return null;
                 }
-                const orderItemGroups = chunk(fullItems.map(item => {
+                const orderItemGroups = chunk(validTargetItems.map(item => {
                     let itemDisplayName = item.name;
                     if (item.price) {
                         itemDisplayName += ` ${item.price}р.`;
@@ -205,9 +183,11 @@ const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData
                 const rows = orderItemGroups.map(itemGroup => {
                     return ['', '', '↑', ...itemGroup, '', '', ''];
                 });
-                const targetName = fullItems[0].target ? (targetDisplayNames[fullItems[0].target] || fullItems[0].target) : '';
-                const totalCostIndex = fullItems[0].target === 'chanakhi' ? 9 : fullItems[0].target === 'kumir' ? 10 : 11;
-                const totalCostValue = fullItems.reduce((sum, item) => {
+                const relatedTarget = order.targets && order.targets.length &&
+                    order.targets.find(target => target.id === validTargetItems[0].target);
+                const targetName = relatedTarget ? relatedTarget.displayName : '';
+                const totalCostIndex = validTargetItems[0].target === 'chanakhi' ? 9 : validTargetItems[0].target === 'kumir' ? 10 : 11;
+                const totalCostValue = validTargetItems.reduce((sum, item) => {
                     const addition = Number(item.price!) * Number(item.quantity!);
                     return sum + (Number.isNaN(addition) ? 0 : addition);
                 }, 0);
@@ -246,7 +226,7 @@ const writeOrderToRow = async (api: sheets_v4.Sheets, order: ExpectedRequestData
     return null;
 };
 
-export const placeOrder = async (data: ExpectedRequestData): Promise<number> => {
+export const placeOrder = async (data: PlaceOrderData): Promise<number> => {
     const spreadsheetId = data.spreadsheetId;
     if (!spreadsheetId) {
         throwError('invalid-argument', 'No spreadsheetId in the request');

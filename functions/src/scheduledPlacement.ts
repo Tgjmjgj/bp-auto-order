@@ -27,6 +27,7 @@ export const scheduledPlacement = async () => {
                             spreadsheetId: data.spreadsheetId,
                             systemName: data.systemName,
                             customName: data.customName,
+                            targets: data.savedTargets,
                             items,
                         });
                     }
@@ -40,10 +41,8 @@ export const scheduledPlacement = async () => {
                         spreadsheetId: data.spreadsheetId,
                         systemName: data.systemName,
                         customName: data.customName,
-                        items: chosenPreset.items.map(item => ({
-                            ...item,
-                            target: data.savedTargets.find(target => target.id === item.target)!.key,
-                        })),
+                        targets: data.savedTargets,
+                        items: chosenPreset.items,
                     });
                 } catch { }
             }

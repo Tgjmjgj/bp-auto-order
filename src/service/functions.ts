@@ -1,9 +1,9 @@
 import * as firebase from 'firebase/app';
 import 'firebase/functions';
-import { OrderItem } from '../../types/autoOrderConfigs';
+import { OrderItem, PlaceOrderData } from '../../types/autoOrderConfigs';
 import { Menu } from '../../types/autoOrderMenus';
 
-export const placeOrder = (payload: any): Promise<{ data: number }> =>
+export const placeOrder = (payload: PlaceOrderData): Promise<{ data: number }> =>
     firebase.app().functions('europe-west1').httpsCallable('placeOrder')(payload);
 
 export const getRandomOrder = (target: string, items?: OrderItem[]): Promise<{ data: OrderItem[] }> =>
