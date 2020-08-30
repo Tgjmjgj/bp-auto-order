@@ -5,6 +5,8 @@ import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 import IconButton from '@material-ui/core/IconButton';
 import LockIcon from '@material-ui/icons/Lock';
 import LockOpenIcon from '@material-ui/icons/LockOpen';
@@ -23,7 +25,10 @@ const useStyles = makeStyles((theme: Theme) =>
         iconGroup: {
             margin: theme.spacing(1),
         },
-    })
+        overwriteControl: {
+            marginLeft: 0,
+        },
+    }),
 );
 
 export const DeveloperSettings: React.FC = () => {
@@ -33,6 +38,7 @@ export const DeveloperSettings: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
     const classes = useStyles();
     const spreadsheetId = configState.state.spreadsheetId;
+    const alwaysOverwrite = configState.state.overwriteAlways;
 
     const changeSpreadsheetId = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         configState.updateState({ spreadsheetId: e.target.value });
@@ -54,8 +60,15 @@ export const DeveloperSettings: React.FC = () => {
         </div>
     );
 
+    const onChangeOverwrite = React.useCallback(() => {
+        configState.updateState({
+            ...configState.state,
+            overwriteAlways: !alwaysOverwrite,
+        });
+    }, [configState]);
+
     return (
-        <Grid container spacing={4}>
+        <Grid container spacing={4} direction="column">
             <Grid item className={classes.gridRow}>
                 <Typography className={classes.label}>
                     Spreadsheet Id:
@@ -70,6 +83,21 @@ export const DeveloperSettings: React.FC = () => {
                     onChange={changeSpreadsheetId}
                 />
                 {lockPuzzle}
+            </Grid>
+            <Grid item className={classes.gridRow}>
+                <FormControlLabel
+                    label="Overwrite existing order: "
+                    labelPlacement="start"
+                    className={classes.overwriteControl}
+                    control={
+                        <Switch
+                            color="secondary"
+                            name="overwriteSwitch"
+                            checked={alwaysOverwrite}
+                            onChange={onChangeOverwrite}
+                        />
+                    }
+                />
             </Grid>
         </Grid>
     );

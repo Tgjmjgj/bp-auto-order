@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme: Theme) =>
         selectedPresets: {
             minWidth: 300,
         },
-    })
+    }),
 );
 
 const autoOrderModeOptions: AutoOrderOption[] = [

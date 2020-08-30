@@ -31,7 +31,7 @@ const useStyles = makeStyles((theme: Theme) =>
                 backgroundColor: 'rgb(22, 2, 232, .04)',
             },
         },
-    })
+    }),
 );
 
 export const PresetsScreen: React.FC = () => {

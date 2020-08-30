@@ -86,7 +86,7 @@ const useStyles = makeStyles((theme: Theme) =>
         enabled: {
             backgroundColor: '#539e3e',
         },
-    })
+    }),
 );
 
 const mainLayouts: Record<MenuCategories, JSX.Element> = {

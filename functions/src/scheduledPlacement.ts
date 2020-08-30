@@ -29,6 +29,7 @@ export const scheduledPlacement = async () => {
                             customName: data.customName,
                             targets: data.savedTargets,
                             items,
+                            overwrite: data.overwriteAlways,
                         });
                     }
                 } catch { }
@@ -43,6 +44,7 @@ export const scheduledPlacement = async () => {
                         customName: data.customName,
                         targets: data.savedTargets,
                         items: chosenPreset.items,
+                        overwrite: data.overwriteAlways,
                     });
                 } catch { }
             }
