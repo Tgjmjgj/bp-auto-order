@@ -108,7 +108,7 @@ type RowNames = {
 };
 
 const maxNamesAllowed = 40;
-const jColumnTargets = ['всего', 'total'];
+const ijColumnTargets = ['всего', 'total'];
 
 const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], lastRowNumber: number, spreadsheetId: string): Promise<RowNames | null> => {
     try {
@@ -117,17 +117,20 @@ const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], lastRow
             includeGridData: true,
             ranges: [
                 `D${lastRowNumber - 100}:D${lastRowNumber}`,
+                `I${lastRowNumber - 100}:I${lastRowNumber}`,
                 `J${lastRowNumber - 100}:J${lastRowNumber}`,
             ],
         });
-        const namesData = get(data, 'sheets[0].data[0].rowData');
-        const totalData = get(data, 'sheets[0].data[1].rowData');
+        const namesDataD = get(data, 'sheets[0].data[0].rowData');
+        const totalDataI = get(data, 'sheets[0].data[1].rowData');
+        const totalDataJ = get(data, 'sheets[0].data[2].rowData');
 
+        functions.logger.info(totalDataI, {structuredData: true});
         const rowNames: RowNames[] = [];
         let foundTotalLabel = false;
-        let i = namesData.length - 1;
+        let i = namesDataD.length - 1;
         do {
-            const name = get(namesData[i], 'values[0].userEnteredValue.stringValue');
+            const name = get(namesDataD[i], 'values[0].userEnteredValue.stringValue');
             if (typeof name === 'string') {
                 const formattedName = name.toLowerCase().trim();
                 const prevNameData = rowNames.length && rowNames[rowNames.length - 1];
@@ -137,15 +140,19 @@ const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], lastRow
                     prevNameData.row--;
                 } else {
                     rowNames.push({
-                        row: lastRowNumber - namesData.length + i + 1,
+                        row: lastRowNumber - namesDataD.length + i + 1,
                         lines: 1,
                         limited: !!rowNames.length,
                         name: formattedName,
                     });
                 }
             }
-            const totalLabel: string | undefined = get(totalData[i], 'values[0].userEnteredValue.stringValue');
-            if (totalLabel && jColumnTargets.find(targetMark => totalLabel.toLowerCase().trim().includes(targetMark))) {
+            const totalLabel1: string | undefined = get(totalDataI[i], 'values[0].userEnteredValue.stringValue');
+            if (totalLabel1 && ijColumnTargets.find(targetMark => totalLabel1.toLowerCase().trim().includes(targetMark))) {
+                foundTotalLabel = true;
+            }
+            const totalLabel2: string | undefined = get(totalDataJ[i], 'values[0].userEnteredValue.stringValue');
+            if (totalLabel2 && ijColumnTargets.find(targetMark => totalLabel2.toLowerCase().trim().includes(targetMark))) {
                 foundTotalLabel = true;
             }
             i--;
