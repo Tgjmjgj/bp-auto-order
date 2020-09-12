@@ -24,8 +24,8 @@ export type LocalConfigState = ConfigState & {
     saveOnServer: boolean           // indicates does we need to initiate saving operation or not
 };
 
-const defaultKumirTarget = { id: 'kumir', displayName: 'Ку-мир' };
-const defaultChanakhiTarget = { id: 'chanakhi', displayName: 'Чанахи' };
+const defaultKumirTarget = { id: 'kumir', displayName: 'Ку-мир', isSystem: true };
+const defaultChanakhiTarget = { id: 'chanakhi', displayName: 'Чанахи', isSystem: false };
 
 const defaultPreset = {
     id: randomId(),
@@ -35,7 +35,7 @@ const defaultPreset = {
     ],
 };
 
-const defaultConfigState: LocalConfigState = {
+export const defaultConfigState: LocalConfigState = {
     saveOnServer: false,
 
     enabled: false,

@@ -3,6 +3,7 @@
 export type OrderTarget = {
     id: string
     displayName: string
+    isSystem: boolean
 };
 
 export type AutoOrderMode = 'preset' | 'random';
@@ -26,14 +27,14 @@ export type OrderPreset = {
     items: OrderItem[]
 };
 
-export interface OrderItem {
+export type OrderItem = {
     id: string
     name: string
     price: number
     quantity: number
     target: string
     ref?: string
-}
+};
 
 export type RandomOrderConfig = {
     total: {

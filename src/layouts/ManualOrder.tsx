@@ -1,4 +1,5 @@
 import React from 'react';
+import produce from 'immer';
 import get from 'lodash/get';
 import cn from 'classnames';
 
@@ -14,17 +15,6 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Tooltip from '@material-ui/core/Tooltip';
-import IconButton from '@material-ui/core/IconButton';
-import AddIcon from '@material-ui/icons/Add';
-
-import { ConfigStateContext } from '../providers/ConfigStateProvider';
-import { MenuContext } from '../providers/MenuProvider';
-import { getRandomOrder, placeOrder as placeOrderCall } from '../service/functions';
-import { OrderItemStatic } from '../components/OrderItemStatic';
-import { RandomOrderOptionsTargetKey, randomOrderOptionsTargetKeys } from '../constants';
-import { getI, randomId } from '../utils';
-import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
-import { OrderItemDisplayData } from '../components/OrderItem';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -32,6 +22,14 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import TextField from '@material-ui/core/TextField';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import IconButton from '@material-ui/core/IconButton';
+import AddIcon from '@material-ui/icons/Add';
+
+import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { getRandomOrder, placeOrder as placeOrderCall } from '../service/functions';
+import { OrderItem } from '../components/OrderItem';
+import { getI, randomId } from '../utils';
+import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -137,7 +135,6 @@ type PlaceOrderStep = typeof placeOrderSteps[number];
 export const ManualOrder: React.FC = () => {
 
     const configState = React.useContext(ConfigStateContext);
-    const menuState = React.useContext(MenuContext);
     const [selectedPreset, setSelectedPreset] = React.useState('');
     const [items, setItems] = React.useState<OrderItemData[]>([]);
     const [loading, setLoading] = React.useState(false);
@@ -162,9 +159,7 @@ export const ManualOrder: React.FC = () => {
     ), [configState]);
 
     const targetsForRandom = React.useMemo(() => {
-        return configState.state.savedTargets.filter(target =>
-            (randomOrderOptionsTargetKeys as unknown as string[]).includes(target.id),
-        );
+        return configState.state.savedTargets.filter(target => target.isSystem);
     }, [configState]);
 
     const [targetKeyForRandom, setTargetKeyForRandom] = React.useState(targetsForRandom[0].id)
@@ -233,40 +228,25 @@ export const ManualOrder: React.FC = () => {
         setPresetLabel(selectedPreset ? 'Preset' : 'Choose from preset');
     }, [selectedPreset]);
 
-    const displayItems = React.useMemo<OrderItemDisplayData[]>(() => items.map(item => {
-        const target = configState.state.savedTargets.find(target => target.id === item.target);
-        const targetMenu = target && menuState[target.id as RandomOrderOptionsTargetKey];
-        const menuItem = item.ref && targetMenu && targetMenu.find(menuItem => menuItem.id === item.ref);
-        return {
-            ...item,
-            target: target ? target.displayName : item.id,
-            imageUrl: menuItem && menuItem.imageUrl ? menuItem.imageUrl : undefined,
-        };
-    }), [items, configState, menuState]);
-
-    const totalCost = React.useMemo(() => items.reduce((total, item) => total + item.price * item.quantity, 0), [items]);
+    const totalCost = React.useMemo(() => {
+        return items.reduce((total, item) => total + item.price * item.quantity, 0);
+    }, [items]);
 
     const deleteItem = React.useCallback((itemId: string) => {
         const delIndex = getI(items, itemId);
         if (delIndex !== -1) {
-            setItems([
-                ...items.slice(0, delIndex),
-                ...items.slice(delIndex + 1, items.length),
-            ]);
+            setItems(produce(items, state => {
+                state.splice(delIndex);
+            }));
         }
     }, [items]);
 
     const changeQuantity = React.useCallback((newQuantity: number, itemId: string) => {
         const itemIndex = getI(items, itemId);
         if (itemIndex !== -1 && items[itemIndex].quantity !== newQuantity) {
-            setItems([
-                ...items.slice(0, itemIndex),
-                {
-                    ...items[itemIndex],
-                    quantity: newQuantity,
-                },
-                ...items.slice(itemIndex + 1, items.length),
-            ]);
+            setItems(produce(items, state => {
+                state[itemIndex].quantity = newQuantity;
+            }));
         }
     }, [items]);
 
@@ -277,13 +257,9 @@ export const ManualOrder: React.FC = () => {
         const name = get(e, 'target.elements.presetName.value');
         if (name) {
             const id = randomId();
-            configState.updateState({
-                ...configState.state,
-                presets: [
-                    ...configState.state.presets,
-                    { id, name, items },
-                ],
-            });
+            configState.updateState(produce(configState.state, state => {
+                state.presets.push({ id, name, items });
+            }));
             setSelectedPreset(id);
         }
         setShowPresetDialog(false);
@@ -317,18 +293,18 @@ export const ManualOrder: React.FC = () => {
     }, [items, configState]);
 
     const itemsUI = React.useMemo(() => {
-        console.log('@displayItems: ', displayItems);
-        return displayItems.map(item => (
+        console.log('@displayItems: ', items);
+        return items.map(item => (
             <Grid item key={item.id}>
-                <OrderItemStatic
-                    value={item}
-                    canClose={!selectedPreset}
-                    onClose={deleteItem}
-                    onQuantityChange={selectedPreset ? undefined : changeQuantity}
+                <OrderItem
+                    item={item}
+                    savedTargets={configState.state.savedTargets}
+                    onChangeQuantity={selectedPreset ? undefined : changeQuantity}
+                    onClose={selectedPreset ? undefined : deleteItem}
                 />
             </Grid>
         ));
-    }, [displayItems, selectedPreset, deleteItem, changeQuantity]);
+    }, [items, configState, selectedPreset, deleteItem, changeQuantity]);
 
     return (
         <>

@@ -10,23 +10,22 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
-import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
+import { MenuContext } from '../providers/MenuProvider';
 import { FreeSelect } from './FreeSelect'
-// import eq from 'fast-deep-equal';
+import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
 
 import foodPlaceholder from '../images/food-placeholder.png';
 
-export interface OrderItemDisplayData extends OrderItemData {
-    imageUrl?: string
-}
 
 type Props = {
-    value: OrderItemDisplayData
+    item: OrderItemData
     savedTargets: OrderTarget[]
-    addNewTarget: (itemId: string, newTarget: string) => void
-    updateItem: (updatedOrderItem: OrderItemData) => void
-    canClose?: boolean
     onClose?: (itemId: string) => void
+    addNewTarget?: (newTargetName: string, itemId: string) => void
+    onChangeName?: (name: string, itemId: string) => void
+    onChangePrice?: (name: number, itemId: string) => void
+    onChangeQuantity?: (quantity: number, itemId: string) => void
+    onChangeTarget?: (targetId: string, itemId: string) => void
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -89,18 +88,29 @@ const useStyles = makeStyles((theme: Theme) =>
             padding: '0 32px',
             textShadow: '0px 0px 2px rgba(0,0,0,.78)',
             userSelect: 'none',
-            transition: 'ease-out .1s transform',
             '&:hover': {
                 transform: 'rotate(315deg) translate(-30px, -17px) scale(1.1)',
             },
         },
-    })
+    }),
 );
 
 export const OrderItem: React.FC<Props> = props => {
-    const { canClose = false, value, savedTargets, addNewTarget, updateItem, onClose } = props;
+    const {
+        item,
+        savedTargets,
+        onClose,
+        addNewTarget,
+        onChangeName,
+        onChangePrice,
+        onChangeQuantity,
+        onChangeTarget,
+    } = props;
     const classes = useStyles();
-    const itemTarget = savedTargets.find(target => target.id === value.target);
+    const menuData = React.useContext(MenuContext);
+    const itemTarget = savedTargets.find(target => target.id === item.target);
+    const menu = menuData[item.target];
+    const refItem = menu && menu.find(menuItem => menuItem.id === item.ref);
 
     const targetOptions = savedTargets.map(target => ({
         key: target.id,
@@ -108,53 +118,54 @@ export const OrderItem: React.FC<Props> = props => {
     }));
 
     const changeName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        updateItem({
-            ...value,
-            name: e.target.value,
-        });
-    }, [value, updateItem]);
-    const changePrice = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = Number(e.target.value);
-        if (!Number.isNaN(newValue)) {
-            updateItem({
-                ...value,
-                price: newValue,
-            });
+        if (onChangeName) {
+            onChangeName(e.target.value, item.id);
         }
-     }, [value, updateItem]);
-    const changeQuantity = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = Number(e.target.value);
-        updateItem({
-            ...value,
-            quantity: Number.isNaN(newValue) ? 1 : newValue < 1 ? 1 : newValue,
-        });
-    }, [value, updateItem]);
-    const changeTarget = React.useCallback((targetId: string) => {
-        const foundTarget = savedTargets.find(target => target.id === targetId);
-        if (foundTarget) {
-            updateItem({
-                ...value,
-                target: foundTarget.id,
-            });
-        }
-    }, [value, savedTargets, updateItem]);
-    const addNewTargetItem = React.useCallback((newTargetName: string) => {
-        if (newTargetName) {
-            addNewTarget(value.id, newTargetName);
-        }
-    }, [value, addNewTarget]);
+    }, [item.id, onChangeName]);
 
-    console.log(`### order item ${value.id} re-rendering`);
+    const changePrice = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (onChangePrice) {
+            const newValue = Number(e.target.value);
+            if (!Number.isNaN(newValue)) {
+                onChangePrice(newValue, item.id);
+            }
+        }
+    }, [item.id, onChangePrice]);
+
+    const changeQuantity = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (onChangeQuantity) {
+            const numVal = Number(e.target.value);
+            const newQuantity = Number.isNaN(numVal) ? 1 : numVal < 1 ? 1 : numVal;
+            onChangeQuantity(newQuantity, item.id);
+        }
+    }, [item.id, onChangeQuantity]);
+
+    const changeTarget = React.useCallback((targetId: string) => {
+        if (onChangeTarget) {
+            const foundTarget = savedTargets.find(target => target.id === targetId);
+            if (foundTarget) {
+                onChangeTarget(foundTarget.id, item.id);
+            }
+        }
+    }, [item.id, savedTargets, onChangeTarget]);
+
+    const addNewTargetItem = React.useCallback((newTargetName: string) => {
+        if (addNewTarget && newTargetName) {
+            addNewTarget(newTargetName, item.id);
+        }
+    }, [item.id, addNewTarget]);
+
+    console.log(`### order item ${item.id} re-rendering`);
 
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
             <div className={classes.imgWrapper}>
                 <CardMedia
-                    className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
-                    image={value.imageUrl || foodPlaceholder}
-                    title="dish"
+                    className={cn(classes.dishImage, { [classes.placeholder]: !(refItem && refItem.imageUrl) })}
+                    image={(refItem && refItem.imageUrl) || foodPlaceholder}
+                    title={item.name}
                 >
-                    {value.ref && itemTarget && (
+                    {refItem && itemTarget && (
                         <div className={classes.refBadge}>
                             {itemTarget.displayName}
                         </div>
@@ -165,43 +176,61 @@ export const OrderItem: React.FC<Props> = props => {
                 <TextField
                     label="Dish name"
                     variant="filled"
-                    value={value.name}
+                    value={item.name}
                     onChange={changeName}
                     multiline={true}
                     size="small"
                     className={classes.input}
+                    inputProps={onChangeName ? undefined : { readOnly: true }}
                 />
                 <TextField
-                    label="Price"
+                    label="Price, ₽"
                     variant="filled"
-                    value={value.price || ''}
+                    value={item.price || ''}
                     onChange={changePrice}
                     size="small"
                     className={classes.input}
+                    inputProps={onChangePrice ? undefined : { readOnly: true }}
                 />
                 <TextField
                     label="Quantity"
                     type="number"
                     variant="filled"
-                    value={value.quantity}
+                    value={item.quantity}
                     onChange={changeQuantity}
                     size="small"
                     className={classes.input}
+                    inputProps={onChangeQuantity ? undefined : { readOnly: true }}
                 />
-                <FreeSelect
-                    label="From"
-                    options={targetOptions}
-                    value={value.target}
-                    onChange={changeTarget}
-                    className={classes.input}
-                    addNewItem={addNewTargetItem}
-                />
+                {onChangeTarget
+                    ? (
+                        <FreeSelect
+                            label="From"
+                            options={targetOptions}
+                            value={item.target}
+                            onChange={changeTarget}
+                            className={classes.input}
+                            addNewItem={addNewTargetItem}
+                        />
+                    ) : (
+                        <TextField
+                            label="From"
+                            variant="filled"
+                            value={item.target}
+                            size="small"
+                            className={classes.input}
+                            inputProps={{
+                                readOnly: true,
+                            }}
+                        />
+                    )
+                }
             </CardContent>
 
-            {canClose && onClose && (
+            {onClose && (
                 <div className={classes.closeIcon}>
                     <Tooltip title="Delete item" aria-label="Delete item">
-                        <IconButton onClick={() => onClose(value.id)} size="small">
+                        <IconButton onClick={() => onClose(item.id)} size="small">
                             <CloseIcon />
                         </IconButton>
                     </Tooltip>
@@ -210,7 +239,3 @@ export const OrderItem: React.FC<Props> = props => {
         </Card>
     );
 };
-// }, (prevProps, nextProps) => {
-//     return eq(prevProps.value, nextProps.value)
-//         && eq(prevProps.savedTargets, nextProps.savedTargets)
-// });

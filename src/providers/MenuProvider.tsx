@@ -1,15 +1,18 @@
 import React from 'react';
+import * as firebase from 'firebase/app';
+import 'firebase/firestore';
 
 import { getUpdatedMenu } from '../service/functions';
 import { AutoAuthContext } from './AutoAuthProvider';
-import { randomOrderOptionsTargetKeys, RandomOrderOptionsTargetKey } from '../constants';
-import { Menu } from '../../types/autoOrderMenus';
+import { defaultConfigState } from './ConfigStateProvider';
+import { Menu, MenuTable } from '../../types/autoOrderMenus';
 
-type AllMenus = Record<RandomOrderOptionsTargetKey, Menu>;
+type AllMenus = Record<string, Menu>;
 
-const defaultMenus: AllMenus = {
-    'kumir': [],
-};
+const menuTargets = defaultConfigState.savedTargets.filter(target => target.isSystem);
+const defaultMenus: AllMenus = Object.fromEntries(
+    menuTargets.map(target => [target.id, []]),
+);
 
 export const MenuContext = React.createContext<AllMenus>(defaultMenus);
 
@@ -20,20 +23,18 @@ export const MenuProvider: React.FC = ({ children }) => {
 
     React.useEffect(() => {
         if (authContext.uid) {
-            Promise.allSettled(randomOrderOptionsTargetKeys.map(target => getUpdatedMenu(target)))
-            .then(results => {
-                const newState = Object.fromEntries(
-                    results.map((result, i) => {
-                        if (result.status === 'fulfilled') {
-                            return [randomOrderOptionsTargetKeys[i], result.value.data] as const;
-                        } else {
-                            console.error('Can\'t get menu data: ', result.reason);
-                            return [randomOrderOptionsTargetKeys[i], [] as Menu] as const;
-                        }
-                    }),
-                ) as AllMenus;
-                console.log('@Initial Menus: ', newState);
-                setMenusState(newState);
+            Promise.allSettled(menuTargets.map(target => getUpdatedMenu(target.id)))
+            .then(() => {
+                firebase.firestore().collection('auto-order-menus').get().then(data => {
+                    data.forEach(menuEntry => {
+                        const menuData = menuEntry.data() as MenuTable;
+                        setMenusState(state => ({
+                            ...state,
+                            [menuEntry.id]: menuData.menu,
+                        }));
+                        console.log(`@ '${menuEntry.id}' menu: `, menuData.menu);
+                    });
+                });
             });
         }
     }, [authContext.uid]);
