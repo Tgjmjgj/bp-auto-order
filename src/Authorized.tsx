@@ -3,7 +3,6 @@ import cn from 'classnames';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 
 import AppBar from '@material-ui/core/AppBar';
-import Typography from '@material-ui/core/Typography';
 import Switch from '@material-ui/core/Switch';
 import Toolbar from '@material-ui/core/Toolbar';
 import List from '@material-ui/core/List';
@@ -16,6 +15,7 @@ import Drawer from '@material-ui/core/Drawer';
 import IconButton from '@material-ui/core/IconButton';
 import Snackbar from '@material-ui/core/Snackbar';
 import Container from '@material-ui/core/Container';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import MuiAlert from '@material-ui/lab/Alert';
 import SettingsIcon from '@material-ui/icons/Settings';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -89,6 +89,11 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         enabled: {
             backgroundColor: '#539e3e',
+        },
+        enableControl: {
+            '& .MuiFormControlLabel-label': {
+                ...theme.typography.h6,
+            },
         },
     }),
 );
@@ -169,10 +174,19 @@ export const Authorized: React.FC = () => {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6">
-                        Auto order enabled:
-                    </Typography>
-                    <Switch checked={enabled} onChange={toggleEnabled} size="medium" color="primary" />
+                    <FormControlLabel
+                        label="Auto order enabled: "
+                        labelPlacement="start"
+                        className={classes.enableControl}
+                        control={
+                            <Switch
+                                color="primary"
+                                size="medium"
+                                checked={enabled}
+                                onChange={toggleEnabled}
+                            />
+                        }
+                    />
                 </Toolbar>
             </AppBar>
             <div className="page-layout">

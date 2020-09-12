@@ -40,7 +40,7 @@ const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): P
                     } while (!value && i >=0);
                     foundRow = maxRow - bulkSize + i + 2;
                     if (!value) {
-                        throwError('not-found', 'Unable to locale last filled row for range ' + range);
+                        functions.logger.warn('Unable to locale last filled row, or spreadsheet is empty, for range ' + range);
                     }
                 }
             } else {

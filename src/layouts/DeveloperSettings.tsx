@@ -8,6 +8,7 @@ import TextField from '@material-ui/core/TextField';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import IconButton from '@material-ui/core/IconButton';
+import Paper from '@material-ui/core/Paper';
 import LockIcon from '@material-ui/icons/Lock';
 import LockOpenIcon from '@material-ui/icons/LockOpen';
 
@@ -30,6 +31,10 @@ const useStyles = makeStyles((theme: Theme) =>
             '&>span:last-child': {
                 minWidth: 200,
             },
+        },
+        infoMessage: {
+            padding: theme.spacing(2),
+            backgroundColor: '#f5f5cb',
         },
     }),
 );
@@ -80,20 +85,35 @@ export const DeveloperSettings: React.FC = () => {
 
     return (
         <Grid container spacing={4} direction="column">
-            <Grid item className={classes.gridRow}>
-                <Typography className={classes.label}>
-                    Spreadsheet Id:
-                </Typography>
-                <TextField
-                    required
-                    size="small"
-                    label="Spreadsheet Id"
-                    disabled={sheetIdDisabled}
-                    variant={sheetIdDisabled ? 'filled' : 'outlined' as any}
-                    value={spreadsheetId}
-                    onChange={changeSpreadsheetId}
-                />
-                {lockPuzzle}
+            <Grid item>
+                <div className={classes.gridRow}>
+                    <Typography className={classes.label}>
+                        Spreadsheet Id:
+                    </Typography>
+                    <TextField
+                        required
+                        size="small"
+                        label="Spreadsheet Id"
+                        disabled={sheetIdDisabled}
+                        variant={sheetIdDisabled ? 'filled' : 'outlined' as any}
+                        value={spreadsheetId}
+                        onChange={changeSpreadsheetId}
+                    />
+                    {lockPuzzle}
+                </div>
+                {!sheetIdDisabled && (
+                    <div className={classes.gridRow}>
+                        <Paper elevation={3} className={classes.infoMessage}>
+                            <Typography>
+                                If you want to use this app with a different spreadsheet, 
+                                you need to grant edit access to the app service provider account:
+                            </Typography>
+                            <Typography>
+                                brightpattern-282908@appspot.gserviceaccount.com
+                            </Typography>
+                        </Paper>
+                    </div>
+                )}
             </Grid>
             <Grid item className={classes.gridRow}>
                 <FormControlLabel

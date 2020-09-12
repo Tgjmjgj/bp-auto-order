@@ -57,12 +57,32 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         dishImage: {
             paddingTop: '56.25%',
+            position: 'relative',
+            overflow: 'hidden',
         },
         placeholder: {
             margin: '0 50px',
         },
         input: {
             width: '100%',
+        },
+        refBadge: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            color: '#fff',
+            backgroundColor: '#7bb21f',
+            fontSize: '13px',
+            height: '20px',
+            boxShadow: '0px 0px 7px 1px #000;',
+            transform: 'rotate(315deg) translate(-30px, -17px)',
+            padding: '0 32px',
+            textShadow: '0px 0px 2px rgba(0,0,0,.78)',
+            userSelect: 'none',
+            transition: 'ease-out .1s transform',
+            '&:hover': {
+                transform: 'rotate(315deg) translate(-30px, -17px) scale(1.1)',
+            },
         },
     })
 );
@@ -84,7 +104,13 @@ export const OrderItemStatic: React.FC<Props> = props => {
                 className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
                 image={value.imageUrl || foodPlaceholder}
                 title="dish"
-            />
+            >
+                {value.ref && value.target && (
+                    <div className={classes.refBadge}>
+                        {value.target}
+                    </div>
+                )}
+            </CardMedia>
             <CardContent className={classes.cardContent}>
                 <TextField
                     label="Dish name"

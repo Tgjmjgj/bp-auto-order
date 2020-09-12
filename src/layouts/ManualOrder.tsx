@@ -393,6 +393,7 @@ export const ManualOrder: React.FC = () => {
                             variant="outlined"
                             className={classes.greenButton}
                             onClick={() => setShowPresetDialog(true)}
+                            disabled={loading || itemLoading}
                         >
                             Save as new Preset
                         </Button>

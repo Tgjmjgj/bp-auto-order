@@ -65,6 +65,8 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         dishImage: {
             paddingTop: '56.25%',
+            position: 'relative',
+            overflow: 'hidden',
         },
         placeholder: {
             margin: '0 50px',
@@ -72,12 +74,31 @@ const useStyles = makeStyles((theme: Theme) =>
         input: {
             width: '100%',
         },
+        refBadge: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            color: '#fff',
+            backgroundColor: '#7bb21f',
+            fontSize: '13px',
+            height: '20px',
+            boxShadow: '0px 0px 7px 1px #000;',
+            transform: 'rotate(315deg) translate(-30px, -17px)',
+            padding: '0 32px',
+            textShadow: '0px 0px 2px rgba(0,0,0,.78)',
+            userSelect: 'none',
+            transition: 'ease-out .1s transform',
+            '&:hover': {
+                transform: 'rotate(315deg) translate(-30px, -17px) scale(1.1)',
+            },
+        },
     })
 );
 
 export const OrderItem: React.FC<Props> = props => {
     const { canClose = false, value, savedTargets, addNewTarget, updateItem, onClose } = props;
     const classes = useStyles();
+    const itemTarget = savedTargets.find(target => target.id === value.target);
 
     const targetOptions = savedTargets.map(target => ({
         key: target.id,
@@ -129,7 +150,13 @@ export const OrderItem: React.FC<Props> = props => {
                 className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
                 image={value.imageUrl || foodPlaceholder}
                 title="dish"
-            />
+            >
+                {value.ref && itemTarget && (
+                    <div className={classes.refBadge}>
+                        {itemTarget.displayName}
+                    </div>
+                )}
+            </CardMedia>
             <CardContent className={classes.cardContent}>
                 <TextField
                     label="Dish name"
