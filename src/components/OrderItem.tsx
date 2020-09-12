@@ -107,9 +107,9 @@ export const OrderItem: React.FC<Props> = props => {
         onChangeTarget,
     } = props;
     const classes = useStyles();
-    const menuData = React.useContext(MenuContext);
+    const menuState = React.useContext(MenuContext);
     const itemTarget = savedTargets.find(target => target.id === item.target);
-    const menu = menuData[item.target];
+    const menu = menuState[item.target];
     const refItem = menu && menu.find(menuItem => menuItem.id === item.ref);
 
     const targetOptions = savedTargets.map(target => ({
@@ -181,7 +181,7 @@ export const OrderItem: React.FC<Props> = props => {
                     multiline={true}
                     size="small"
                     className={classes.input}
-                    inputProps={onChangeName ? undefined : { readOnly: true }}
+                    inputProps={(onChangeName && !refItem) ? undefined : { readOnly: true }}
                 />
                 <TextField
                     label="Price, ₽"
@@ -190,7 +190,7 @@ export const OrderItem: React.FC<Props> = props => {
                     onChange={changePrice}
                     size="small"
                     className={classes.input}
-                    inputProps={onChangePrice ? undefined : { readOnly: true }}
+                    inputProps={(onChangePrice && !refItem) ? undefined : { readOnly: true }}
                 />
                 <TextField
                     label="Quantity"

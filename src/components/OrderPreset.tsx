@@ -3,21 +3,33 @@ import produce from 'immer';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
 import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
+import CloseIcon from '@material-ui/icons/Close';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { MenuContext } from '../providers/MenuProvider';
 import { OrderItem } from './OrderItem';
 import { randomId, getI } from '../utils';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
+import { MenuItemSelector } from './MenuItemSelector';
 
 type Props = {
     presetId: string
     allowDelete: boolean
     deletePreset: () => void
+};
+
+type PendingChangeTarget = {
+    targetId: string
+    itemId: string
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -50,7 +62,27 @@ const useStyles = makeStyles((theme: Theme) =>
                 color: theme.palette.secondary.dark,
             },
         },
-    })
+        menuDialog: {
+            '& .MuiDialog-paperWidthSm': {
+                maxWidth: 800,
+                width: 800,
+            },
+        },
+        dialogTitle: {
+            margin: 0,
+            marginLeft: theme.spacing(2),
+            padding: theme.spacing(2),
+        },
+        dialogTitleText: {
+            fontSize: '1.3rem',
+        },
+        closeDialogButton: {
+            position: 'absolute',
+            right: theme.spacing(1),
+            top: theme.spacing(1),
+            color: theme.palette.grey[500],
+        },
+    }),
 );
 
 const newOrderItem = (): OrderItemData => ({
@@ -62,11 +94,15 @@ const newOrderItem = (): OrderItemData => ({
 });
 
 export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePreset}) => {
-    const configState = React.useContext(ConfigStateContext);
     const classes = useStyles();
+    const configState = React.useContext(ConfigStateContext);
+    const menuState = React.useContext(MenuContext);
+    const [pendingChangeTarget, setPendingChangeTarget] = React.useState<PendingChangeTarget | null>(null);
+
     const preset = configState.state.presets.find(preset => preset.id === presetId);
     const presetIndex = getI(configState.state.presets, presetId);
     const savedTargets = configState.state.savedTargets;
+    const menuItems = pendingChangeTarget ? menuState[pendingChangeTarget.targetId] : [];
 
     const onChangePresetName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.value) {
@@ -136,15 +172,22 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
     }, [presetIndex, configState]);
 
     const changeOrderItemTarget = React.useCallback((targetId: string, orderItemId: string) => {
-        const target = configState.state.savedTargets.find(target => target.id === targetId);
-        if (presetIndex !== -1 && target) {
-            configState.updateState(produce(configState.state, state => {
-                const presetItems = state.presets[presetIndex].items;
-                const item = presetItems.find(item => item.id === orderItemId);
-                if (item) {
-                    item.target = targetId;
-                }
-            }));
+        const newTarget = configState.state.savedTargets.find(target => target.id === targetId);
+        if (presetIndex !== -1 && newTarget) {
+            if (newTarget.isSystem) {
+                setPendingChangeTarget({
+                    itemId: orderItemId,
+                    targetId,
+                });
+            } else {
+                configState.updateState(produce(configState.state, state => {
+                    const presetItems = state.presets[presetIndex].items;
+                    const item = presetItems.find(item => item.id === orderItemId);
+                    if (item) {
+                        item.target = targetId;
+                    }
+                }));
+            }
         }
     }, [presetIndex, configState]);
 
@@ -165,6 +208,29 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
             }));
         }
     }, [presetIndex, configState]);
+
+    const onCloseMenuDialog = React.useCallback(() => {
+        setPendingChangeTarget(null);
+    }, []);
+
+    const selectTargetMenuItem = React.useCallback((menuItemId: string) => {
+        const menuItem = menuState[pendingChangeTarget!.targetId].find(menuItem => menuItem.id === menuItemId);
+        const itemIndex = getI(configState.state.presets[presetIndex].items, pendingChangeTarget!.itemId);
+        if (presetIndex !== -1 && menuItem && itemIndex !== -1) {
+            configState.updateState(produce(configState.state, state => {
+                const itemData = state.presets[presetIndex].items[itemIndex];
+                state.presets[presetIndex].items[itemIndex] = {
+                    id: itemData.id,
+                    name: menuItem.name,
+                    price: menuItem.price,
+                    quantity: 1,
+                    target: pendingChangeTarget!.targetId,
+                    ref: menuItem.id,
+                };
+            }));
+        }
+        setPendingChangeTarget(null);
+    }, [presetIndex, configState, menuState, pendingChangeTarget]);
 
     console.log(`## Preset ${presetId} Items: `, preset ? preset.items : '');
 
@@ -220,6 +286,33 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                     </Tooltip>
                 </Grid>
             </Grid>
+
+            
+            <Dialog
+                open={pendingChangeTarget !== null}
+                onClose={onCloseMenuDialog}
+                disableBackdropClick
+                className={classes.menuDialog}
+            >
+                <DialogTitle disableTypography className={classes.dialogTitle}>
+                    <Typography className={classes.dialogTitleText}>
+                        Select menu item
+                    </Typography>
+                    <IconButton
+                        aria-label="Close"
+                        className={classes.closeDialogButton}
+                        onClick={onCloseMenuDialog}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    <MenuItemSelector
+                        items={menuItems}
+                        selectItem={selectTargetMenuItem}
+                    />
+                </DialogContent>
+            </Dialog>
         </>
     );
 };
