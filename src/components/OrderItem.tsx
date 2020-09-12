@@ -65,14 +65,16 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         dishImage: {
             paddingTop: '56.25%',
-            position: 'relative',
-            overflow: 'hidden',
         },
         placeholder: {
             margin: '0 50px',
         },
         input: {
             width: '100%',
+        },
+        imgWrapper: {
+            position: 'relative',
+            overflow: 'hidden',
         },
         refBadge: {
             position: 'absolute',
@@ -146,17 +148,19 @@ export const OrderItem: React.FC<Props> = props => {
 
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
-            <CardMedia
-                className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
-                image={value.imageUrl || foodPlaceholder}
-                title="dish"
-            >
-                {value.ref && itemTarget && (
-                    <div className={classes.refBadge}>
-                        {itemTarget.displayName}
-                    </div>
-                )}
-            </CardMedia>
+            <div className={classes.imgWrapper}>
+                <CardMedia
+                    className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
+                    image={value.imageUrl || foodPlaceholder}
+                    title="dish"
+                >
+                    {value.ref && itemTarget && (
+                        <div className={classes.refBadge}>
+                            {itemTarget.displayName}
+                        </div>
+                    )}
+                </CardMedia>
+            </div>
             <CardContent className={classes.cardContent}>
                 <TextField
                     label="Dish name"

@@ -57,14 +57,16 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         dishImage: {
             paddingTop: '56.25%',
-            position: 'relative',
-            overflow: 'hidden',
         },
         placeholder: {
             margin: '0 50px',
         },
         input: {
             width: '100%',
+        },
+        imgWrapper: {
+            position: 'relative',
+            overflow: 'hidden',
         },
         refBadge: {
             position: 'absolute',
@@ -100,17 +102,19 @@ export const OrderItemStatic: React.FC<Props> = props => {
 
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
-            <CardMedia
-                className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
-                image={value.imageUrl || foodPlaceholder}
-                title="dish"
-            >
-                {value.ref && value.target && (
-                    <div className={classes.refBadge}>
-                        {value.target}
-                    </div>
-                )}
-            </CardMedia>
+            <div className={classes.imgWrapper}>
+                <CardMedia
+                    className={cn(classes.dishImage, { [classes.placeholder]: !value.imageUrl })}
+                    image={value.imageUrl || foodPlaceholder}
+                    title="dish"
+                >
+                    {value.ref && value.target && (
+                        <div className={classes.refBadge}>
+                            {value.target}
+                        </div>
+                    )}
+                </CardMedia>
+            </div>
             <CardContent className={classes.cardContent}>
                 <TextField
                     label="Dish name"
@@ -119,6 +123,9 @@ export const OrderItemStatic: React.FC<Props> = props => {
                     multiline={true}
                     size="small"
                     className={classes.input}
+                    inputProps={{
+                        readOnly: true,
+                    }}
                 />
                 <TextField
                     label="Price"
@@ -126,12 +133,14 @@ export const OrderItemStatic: React.FC<Props> = props => {
                     value={value.price || ''}
                     size="small"
                     className={classes.input}
+                    inputProps={{
+                        readOnly: true,
+                    }}
                 />
                 <TextField
                     label="Quantity"
                     variant="filled"
                     value={value.quantity}
-                    type={onQuantityChange ? 'number' : 'text'}
                     onChange={quantityChangeHandler}
                     size="small"
                     className={classes.input}
@@ -142,6 +151,9 @@ export const OrderItemStatic: React.FC<Props> = props => {
                     value={value.target}
                     size="small"
                     className={classes.input}
+                    inputProps={{
+                        readOnly: true,
+                    }}
                 />
             </CardContent>
 
