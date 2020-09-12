@@ -7,5 +7,8 @@ export const throwError = (code: functions.https.FunctionsErrorCode, message: st
         throw e;
     }
     functions.logger.error(message, {structuredData: true});
+    if (e) {
+        functions.logger.error(e, {structuredData: true});
+    }
     throw new functions.https.HttpsError(code, message, e);
 };

@@ -17,84 +17,76 @@ const randomName = () => `${capitalize(faker.hacker.adjective())} ${capitalize(f
 const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): Promise<number> => {
     try {
         const bulkSize = 300;
-        let iteration = 0, foundRow = 0, possiblyFoundRow = 0, checkIter = 0;
+        let foundRow = 0;
         const sheetData = await api.spreadsheets.get({ spreadsheetId });
         const maxRow = get(sheetData, 'data.sheets[0].properties.gridProperties.rowCount');
-
-        do {
-            const row1 = maxRow - bulkSize * (iteration + 1);
-            const row2 = maxRow - bulkSize * iteration;
-            const range = `D${row1 < 1 ? 1 : row1}:D${row2}`;
-
-            const {data} = await api.spreadsheets.get({
-                spreadsheetId,
-                includeGridData: true,
-                ranges: [range],
-            });
-
-            if (data.sheets && data.sheets.length) {
-                if (data.sheets[0].data && data.sheets[0].data.length) {
-                    const rowData = data.sheets[0].data[0].rowData;
-                    if (rowData) {
-                        for (let i = 0; i < rowData.length; i++) {
-                            if (rowData[i] && rowData[i].values && rowData[i].values![0]) {
-                                const value = rowData[i].values![0].userEnteredValue;
-                                if (!value) {
-                                    if (possiblyFoundRow) {
-                                        checkIter++;
-                                        if (checkIter > 10) {
-                                            foundRow = possiblyFoundRow;
-                                        }
-                                    } else {
-                                        possiblyFoundRow = row1 + i;
-                                        checkIter = 0;
-                                    }
-                                } else {
-                                    possiblyFoundRow = 0;
-                                }
-                            }
+        const range = `D${maxRow - bulkSize}:D${maxRow}`;
+        const {data} = await api.spreadsheets.get({
+            spreadsheetId,
+            includeGridData: true,
+            ranges: [range],
+        });
+        if (data.sheets && data.sheets.length) {
+            if (data.sheets[0].data && data.sheets[0].data.length) {
+                const rowData = data.sheets[0].data[0].rowData;
+                if (rowData) {
+                    let value = null;
+                    let i = rowData.length - 1;
+                    do {
+                        if (rowData[i] && rowData[i].values && rowData[i].values![0]) {
+                            value = rowData[i].values![0].userEnteredValue;
                         }
+                        --i;
+                    } while (!value && i >=0);
+                    foundRow = maxRow - bulkSize + i + 2;
+                    if (!value) {
+                        throwError('not-found', 'Unable to locale last filled row for range ' + range);
                     }
-                } else {
-                    throwError('not-found', `Cannot retreive spreadsheet ${spreadsheetId} range data ${range}`);
                 }
             } else {
-                throwError('not-found', `Cannot find spreadsheet pages in the document with id ${spreadsheetId}`);
+                throwError('not-found', `Cannot retreive spreadsheet ${spreadsheetId} range data ${range}`);
             }
-
-            iteration++;
-            if (row1 < 1) {
-                throwError('not-found', 'Can\'t get last filled row by D column: All rows examined.');
-            }
-        } while (!foundRow);
+        } else {
+            throwError('not-found', `Cannot find spreadsheet pages in the document with id ${spreadsheetId}`);
+        }
 
         const packSize = 5;
-        let foundCycle2 = false;
+        let rowShift = 0;
         do {
-            const {data} = await api.spreadsheets.get({
+            foundRow += rowShift;
+            rowShift = 0;
+            const getResult = await api.spreadsheets.get({
                 spreadsheetId,
                 includeGridData: true,
                 ranges: [`B${foundRow}:M${foundRow + packSize}`],
             });
-            const rowData = get(data, 'sheets[0].data[0].rowData');
+            const rowData = get(getResult.data, 'sheets[0].data[0].rowData');
 
-            for (const {values} of rowData) {
-                if (values && values.length) {
-                    const filledRowsNumber = values.filter((cell: sheets_v4.Schema$CellData) => cell.userEnteredValue).length;
-                    if (filledRowsNumber === 0) {
-                        foundCycle2 = true;
+            for (let i = rowData.length - 1; i >= 0; --i) {
+                if (rowData[i].values && rowData[i].values.length) {
+                    functions.logger.info(rowData[i].values);
+                    const filledRowsNumber = rowData[i].values.filter((cell: sheets_v4.Schema$CellData) => cell.userEnteredValue).length;
+                    if (filledRowsNumber !== 0) {
+                        rowShift = i + 1;
                         break;
                     }
                 }
             }
-            if (!foundCycle2) {
-                foundRow++;
-            }
-        } while (!foundCycle2);
+        } while (rowShift);
 
-        functions.logger.info(`Found the next row: ${foundRow}`);
+        functions.logger.info(`Found the next free row: ${foundRow}`);
         return foundRow;
     } catch (e) {
+        console.log(e);
+        if (get(e, 'errors.message') === 'The caller does not have permission') {
+            throwError(
+                'permission-denied',
+                'This service has no access to the specified spreadsheet. ' +
+                    'If you wanna to use non-standard spreadsheet, please, ' +
+                    'share it for editing to the "brightpattern-282908@appspot.gserviceaccount.com".',
+                e,
+            );
+        }
         throwError('unknown', 'Unknown Error in last filled row detection', e);
     }
     return -1;
