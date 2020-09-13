@@ -64,8 +64,12 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         menuDialog: {
             '& .MuiDialog-paperWidthSm': {
+                height: '80%',
                 maxWidth: 800,
                 width: 800,
+                [theme.breakpoints.down('sm')]: {
+                    margin: 0,
+                },
             },
         },
         dialogTitle: {
@@ -81,6 +85,11 @@ const useStyles = makeStyles((theme: Theme) =>
             right: theme.spacing(1),
             top: theme.spacing(1),
             color: theme.palette.grey[500],
+        },
+        dialogContent: {
+            [theme.breakpoints.down('xs')]: {
+                padding: 0,
+            },
         },
     }),
 );
@@ -102,7 +111,15 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
     const preset = configState.state.presets.find(preset => preset.id === presetId);
     const presetIndex = getI(configState.state.presets, presetId);
     const savedTargets = configState.state.savedTargets;
-    const menuItems = pendingChangeTarget ? menuState[pendingChangeTarget.targetId] : [];
+    const menuItems = React.useMemo(() => {
+        if (!pendingChangeTarget) {
+            return [];
+        }
+        return menuState[pendingChangeTarget.targetId].map(menuItem => ({
+            ...menuItem,
+            target: pendingChangeTarget.targetId,
+        }));
+    }, [pendingChangeTarget, menuState]);
 
     const onChangePresetName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.value) {
@@ -306,7 +323,7 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent className={classes.dialogContent}>
                     <MenuItemSelector
                         items={menuItems}
                         selectItem={selectTargetMenuItem}
