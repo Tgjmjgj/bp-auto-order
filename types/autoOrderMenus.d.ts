@@ -22,3 +22,7 @@ export type MenuTable = {
     updateDate: string
     menu: Menu
 };
+
+export interface TargetMenuItem extends MenuItem {
+    target: string
+}

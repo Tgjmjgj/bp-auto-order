@@ -1,9 +1,31 @@
 import * as FirebaseAdmin from 'firebase-admin';
+import allSettled from 'promise.allsettled';
+import fromEntries from 'object.fromentries';
 
 import { scrapKumirMenu } from './scrapKumirMenu';
 import { randomId, throwError } from './utils';
-import { Menu, MenuTable } from '../../types/autoOrderMenus';
+import { Menu, MenuTable, ScrapedMenu } from '../../types/autoOrderMenus';
 
+const menuTargets = [ 'kumir' ];
+
+const targetScrappers: Record<string, () => Promise<ScrapedMenu>> = {
+    'kumir': scrapKumirMenu,
+};
+
+export const getAllUpdatedMenus = async () => {
+    const result = await allSettled(menuTargets.map(target => {
+        return getUpdatedMenu(target);
+    }));
+    return fromEntries(
+        result.map((data, i) => {
+            if (data.status === 'fulfilled') {
+                return [ menuTargets[i], data.value ] as const;
+            } else {
+                return [ menuTargets[i], [] as Menu ] as const;
+            }
+        }),
+    );
+};
 export const getUpdatedMenu = async (target: string): Promise<Menu> => {
     try {
         const docRef = FirebaseAdmin.firestore().collection(`auto-order-menus`).doc(target);
@@ -15,7 +37,7 @@ export const getUpdatedMenu = async (target: string): Promise<Menu> => {
                 return menuData.menu;
             }
 
-            const todayMenuData = await scrapKumirMenu();
+            const todayMenuData = await targetScrappers[target]();
             todayMenuData.forEach(item => {
                 const sameNameItem = menuData.menu.find(oldItem => oldItem.name === item.name);
                 if (sameNameItem) {

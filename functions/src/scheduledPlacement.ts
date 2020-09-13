@@ -4,15 +4,14 @@ import sample from 'lodash/sample';
 
 import { placeOrder } from './placeOrder';
 import { randomizeItems } from './randomizeItems';
-import { getUpdatedMenu } from './getUpdatedMenu';
-import { defaultRandomOrderConfig } from './defaults';
+import { getAllUpdatedMenus } from './getUpdatedMenu';
+import { defaultRandomConfigData } from './defaults';
 
 import { ConfigState } from '../../types/autoOrderConfigs';
 
 export const scheduledPlacement = async () => {
 
-    const randomModeTarget = 'kumir';
-    const menu = await getUpdatedMenu(randomModeTarget);
+    const targetMenus = await getAllUpdatedMenus();
     const tableData = await FirebaseAdmin.firestore().collection('auto-order-configs').get();
     const operations: Array<() => Promise<void>> = []
     tableData.forEach(entry => {
@@ -21,9 +20,9 @@ export const scheduledPlacement = async () => {
             if (data.enabled) {
                 functions.logger.info(`Start order placement for ${data.customName || data.systemName}...`);
                 let result: number | null = null;
-                if (data.mode === 'random' && menu) {
+                if (data.mode === 'random') {
                     try {
-                        const items = await randomizeItems(randomModeTarget, menu, defaultRandomOrderConfig);
+                        const items = await randomizeItems(targetMenus, defaultRandomConfigData);
                         if (items) {
                             result = await placeOrder({
                                 spreadsheetId: data.spreadsheetId,

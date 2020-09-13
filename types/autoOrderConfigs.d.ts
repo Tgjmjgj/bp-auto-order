@@ -15,6 +15,8 @@ export type ConfigState = {
     presets: OrderPreset[]
     selectedPresets: string[]
     savedTargets: OrderTarget[]
+    randomConfigs: RandomOrderConfig[]
+    selectedConfig: string
     overwriteAlways: boolean
     allowMultipleOrders: boolean
     systemName?: string
@@ -36,7 +38,7 @@ export type OrderItem = {
     ref?: string
 };
 
-export type RandomOrderConfig = {
+export type RandomConfigData = {
     total: {
         cost?: {
             min?: number
@@ -46,16 +48,25 @@ export type RandomOrderConfig = {
         maxItems?: number
         minItems?: number
     }
-    categories: Record<string, {
-        weight?: number
-        maxItems?: number
-        minItems?: number
+    selectFromTargets: string[]
+    targetsData: Record<string, {
+        categories: Record<string, {
+            weight?: number
+            maxItems?: number
+            minItems?: number
+        }>
+        items: Record<string, {
+            weight?: number
+            maxItems?: number
+            minItems?: number
+        }>
     }>
-    items: Record<string, {
-        weight?: number
-        maxItems?: number
-        minItems?: number
-    }>
+};
+
+export type RandomOrderConfig = {
+    id: string
+    name: string
+    config: RandomConfigData
 };
 
 export type PlaceOrderData = {
