@@ -98,29 +98,6 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-const menuCategoriesData: Record<MenuCategories, { component: JSX.Element, icon: JSX.Element }> = {
-    'Main Options': {
-        component: <MainOptions />,
-        icon: <SettingsIcon />,
-    },
-    'Presets': {
-        component: <PresetsScreen />,
-        icon: <BookmarksIcon />,
-    },
-    'Random Configuration': {
-        component: <RandomConfiguration />,
-        icon: <CasinoIcon />,
-    },
-    'Manual Order': {
-        component: <ManualOrder />,
-        icon: <AssignmentIcon />,
-    },
-    'Developer Settings': {
-        component: <DeveloperSettings />,
-        icon: <BuildIcon />,
-    },
-};
-
 export const Authorized: React.FC = () => {
 
     const configState = React.useContext(ConfigStateContext);
@@ -138,6 +115,29 @@ export const Authorized: React.FC = () => {
     const closeSaveMessage = React.useCallback(() => setSaveMessageShows(false), []);
 
     React.useEffect(() => void (configState.saved > 0 && setSaveMessageShows(true)), [configState.saved]);
+
+    const menuCategoriesData: Record<MenuCategories, { component: JSX.Element, icon: JSX.Element }> = React.useMemo(() => ({
+        'Main Options': {
+            component: <MainOptions />,
+            icon: <SettingsIcon />,
+        },
+        'Presets': {
+            component: <PresetsScreen />,
+            icon: <BookmarksIcon htmlColor={configState.state.mode === 'preset' ? '#e4a918' : undefined} />,
+        },
+        'Random Configuration': {
+            component: <RandomConfiguration />,
+            icon: <CasinoIcon htmlColor={configState.state.mode === 'random' ? '#da0b0b' : undefined} />,
+        },
+        'Manual Order': {
+            component: <ManualOrder />,
+            icon: <AssignmentIcon />,
+        },
+        'Developer Settings': {
+            component: <DeveloperSettings />,
+            icon: <BuildIcon />,
+        },
+    }), [configState.state.mode]);
 
     const menu = (
         <div>
