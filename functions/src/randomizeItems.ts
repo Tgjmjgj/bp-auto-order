@@ -35,7 +35,7 @@ export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomCo
                 ) {
                     return;
                 }
-                for (let i = 0; i < Math.ceil((categoryWeight || 1) * (itemWeight || 1)); ++i) {
+                for (let j = 0; j < Math.ceil((categoryWeight || 1) * (itemWeight || 1)); ++j) {
                     all.push({ ...item, target });
                 }
             });

@@ -4,10 +4,12 @@ import produce from 'immer';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { ThreeValuesSlider } from '../components/ThreeValueSlider';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -19,12 +21,17 @@ const useStyles = makeStyles((theme: Theme) =>
         label: {
             marginRight: 20,
         },
+        costSlider: {
+            marginTop: theme.spacing(4),
+            marginBottom: theme.spacing(2),
+        },
     }),
 );
 
 export const RandomConfiguration: React.FC = () => {
     const classes = useStyles();
     const configState = useContext(ConfigStateContext);
+    const [costValues, setCostValues] = React.useState<[number, number, number]>([270, 300, 340]);
     const config = configState.state.randomConfigs.find(cfg => cfg.id === configState.state.selectedConfig);
 
     const onSelectRandomConfig = React.useCallback((e: React.ChangeEvent<{ name?: string | undefined; value: unknown }>) => {
@@ -56,8 +63,18 @@ export const RandomConfiguration: React.FC = () => {
                     {configOptions}
                 </Select>
             </Grid>
-            <Grid item className={classes.gridRow}>
-
+            <Divider />
+            <Grid item>
+                <ThreeValuesSlider
+                    className={classes.costSlider}
+                    values={costValues}
+                    setValues={setCostValues}
+                    start={0}
+                    end={500}
+                />
+                <Typography align="center">
+                    Acceptable cost
+                </Typography>
             </Grid>
         </Grid>
     );
