@@ -22,11 +22,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import CloseIcon from '@material-ui/icons/Close';
 import FilterListRoundedIcon from '@material-ui/icons/FilterListRounded';
 
-import { MenuItem } from '../../types/autoOrderMenus';
-
-export interface TargetMenuItem extends MenuItem {
-    target: string
-}
+import { TargetMenuItem } from '../../types/autoOrderMenus';
 
 type Props = {
     items: TargetMenuItem[]

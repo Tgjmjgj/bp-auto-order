@@ -5,7 +5,7 @@ import pickBy from 'lodash/pickBy';
 import eq from 'fast-deep-equal';
 
 import { AutoAuthContext } from './AutoAuthProvider';
-import { ConfigState } from '../../types/autoOrderConfigs';
+import { ConfigState, RandomOrderConfig } from '../../types/autoOrderConfigs';
 import { randomId } from '../utils';
 
 export type OrderTarget = {
@@ -35,6 +35,38 @@ const defaultPreset = {
     ],
 };
 
+const defaultRandomConfig: RandomOrderConfig = {
+    id: randomId(),
+    name: 'Default Config',
+    config: {
+        total: {
+            cost: { min: 270, mid: 300, max: 330 },
+        },
+        selectFromTargets: [ defaultKumirTarget.id ],
+        targetsData: {
+            [defaultKumirTarget.id]: {
+                categories: {
+                    'Хлеб': { weight: 0 },
+                    'Одноразовая посуда': { weight: 0 },
+                    'Соусы и приправы': { weight: 0 },
+                    'Десерты, выпечка': { weight: 0 },
+                    'Буфетная продукция': { weight: 0 },
+                    'Напитки': { weight: 0 },
+                },
+                items: {
+                    '"Бульон мясной с сухариками" (300/25г)': { weight: 0 },
+                    '"Сладкий Орешек" (240г)': { weight: 0 },
+                    '"Сырник Шоколад" (220г)': { weight: 0 },
+                    'Каша рисовая с яблоками и ванилью (250г)': { weight: 0 },
+                    'Смузи клубнично-банановый (300г)': { weight: 0 },
+                    'Хлебцы ржаные (100г)': { weight: 0 },
+                    'Блинчики с мёдом (3/40/30г)': { weight: 0 },
+                },
+            },
+        },
+    },
+};
+
 export const defaultConfigState: LocalConfigState = {
     saveOnServer: false,
 
@@ -44,6 +76,8 @@ export const defaultConfigState: LocalConfigState = {
     selectedPresets: [ defaultPreset.id ],
     presets: [ defaultPreset ],
     savedTargets: [ defaultKumirTarget, defaultChanakhiTarget ],
+    randomConfigs: [ defaultRandomConfig ],
+    selectedConfig: defaultRandomConfig.id,
     overwriteAlways: false,
     allowMultipleOrders: false,
 };
