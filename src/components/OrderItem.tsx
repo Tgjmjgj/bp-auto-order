@@ -75,21 +75,33 @@ const useStyles = makeStyles((theme: Theme) =>
             position: 'relative',
             overflow: 'hidden',
         },
-        refBadge: {
+        unavailableImage: {
+            filter: 'grayscale(1)',
+        },
+        badge: {
             position: 'absolute',
             top: 0,
             left: 0,
             color: '#fff',
-            backgroundColor: '#7bb21f',
             fontSize: '13px',
             height: '20px',
             boxShadow: '0px 0px 7px 1px #000;',
-            transform: 'rotate(315deg) translate(-30px, -17px)',
             padding: '0 32px',
             textShadow: '0px 0px 2px rgba(0,0,0,.78)',
             userSelect: 'none',
+        },
+        refBadge: {
+            backgroundColor: '#7bb21f',
+            transform: 'rotate(315deg) translate(-30px, -17px)',
             '&:hover': {
                 transform: 'rotate(315deg) translate(-30px, -17px) scale(1.1)',
+            },
+        },
+        unavailableBadge: {
+            backgroundColor: '#cc0404',
+            transform: 'rotate(315deg) translate(-38px, -7px)',
+            '&:hover': {
+                transform: 'rotate(315deg) translate(-38px, -10px) scale(1.1)',
             },
         },
     }),
@@ -161,16 +173,26 @@ export const OrderItem: React.FC<Props> = props => {
         <Card variant="outlined" className={classes.card} elevation={3}>
             <div className={classes.imgWrapper}>
                 <CardMedia
-                    className={cn(classes.dishImage, { [classes.placeholder]: !(refItem && refItem.imageUrl) })}
+                    className={cn(
+                        classes.dishImage,
+                        {
+                            [classes.placeholder]: !(refItem && refItem.imageUrl),
+                            [classes.unavailableImage]: !(refItem && refItem.enabled),
+                        },
+                    )}
                     image={(refItem && refItem.imageUrl) || foodPlaceholder}
                     title={item.name}
-                >
-                    {refItem && itemTarget && (
-                        <div className={classes.refBadge}>
-                            {itemTarget.displayName}
-                        </div>
-                    )}
-                </CardMedia>
+                />
+                {refItem && itemTarget && (
+                    <div className={cn(classes.badge, classes.refBadge)}>
+                        {itemTarget.displayName}
+                    </div>
+                )}
+                {refItem && !refItem.enabled && (
+                    <div className={cn(classes.badge, classes.unavailableBadge)}>
+                        unavailable
+                    </div>
+                )}
             </div>
             <CardContent className={classes.cardContent}>
                 <TextField
