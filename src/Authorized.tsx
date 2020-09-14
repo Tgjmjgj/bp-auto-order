@@ -113,6 +113,10 @@ export const Authorized: React.FC = () => {
 
     const toggleMenuOnMobile = React.useCallback(() => setMobileOpen(!mobileOpen), [mobileOpen]);
     const closeSaveMessage = React.useCallback(() => setSaveMessageShows(false), []);
+    const onMenuItemClick = React.useCallback((title: MenuCategories) => {
+        setSelectMenuItem(title);
+        setMobileOpen(false);
+    }, []);
 
     React.useEffect(() => void (configState.saved > 0 && setSaveMessageShows(true)), [configState.saved]);
 
@@ -139,7 +143,7 @@ export const Authorized: React.FC = () => {
         },
     }), [configState.state.mode]);
 
-    const menu = (
+    const menu = React.useMemo(() => (
         <div>
             <List>
                 {(Object.entries(menuCategoriesData) as [MenuCategories, { component: JSX.Element, icon: JSX.Element }][])
@@ -147,7 +151,8 @@ export const Authorized: React.FC = () => {
                         <ListItem
                             button
                             key={title}
-                            onClick={() => setSelectMenuItem(title)}
+                            onClick={() => onMenuItemClick(title)}
+                            selected={selectedMenuItem === title}
                         >
                             <ListItemIcon>
                                 {data.icon}
@@ -159,7 +164,7 @@ export const Authorized: React.FC = () => {
             </List>
             <Divider />
         </div>
-    );
+    ), [menuCategoriesData, onMenuItemClick, selectedMenuItem]);
 
     return (
         <div className="page-container">
