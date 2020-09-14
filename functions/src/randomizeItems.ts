@@ -28,6 +28,7 @@ export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomCo
                 const categoryWeight = get(conf.targetsData[target].categories, `[${item.category}].weight`) as number | undefined;
                 const itemWeight = get(conf.targetsData[target].items, `[${item.name}].weight`) as number | undefined;
                 if (
+                    !item.enabled ||
                     get(conf.targetsData[target].categories, `[${item.category}].maxItems`) === 0 ||
                     categoryWeight === 0 ||
                     get(conf.targetsData[target].items, `[${item.name}].maxItems`) === 0 ||
@@ -78,7 +79,7 @@ export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomCo
                         name: nextItem.name,
                         price: nextItem.price,
                         quantity: 1,
-                        target: nextItem.category,
+                        target: nextItem.target,
                         ref: nextItem.id,
                         category: nextItem.category,
                     });

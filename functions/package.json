@@ -15,9 +15,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@types/object.fromentries": "^2.0.0",
-    "@types/promise.allsettled": "^1.0.3",
-    "apify": "^0.21.3",
+    "@types/cheerio": "^0.22.21",
     "cheerio": "^1.0.0-rc.3",
     "cyrillic-to-translit-js": "^3.1.0",
     "faker": "^4.1.0",
@@ -27,9 +25,7 @@
     "googleapis": "^39.2.0",
     "got": "^11.5.2",
     "js-levenshtein": "^1.1.6",
-    "lodash": "^4.17.19",
-    "object.fromentries": "^2.0.2",
-    "promise.allsettled": "^1.0.2"
+    "lodash": "^4.17.19"
   },
   "devDependencies": {
     "@types/faker": "^4.1.12",

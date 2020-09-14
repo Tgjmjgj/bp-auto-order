@@ -236,7 +236,7 @@ export const ManualOrder: React.FC = () => {
         const delIndex = getI(items, itemId);
         if (delIndex !== -1) {
             setItems(produce(items, state => {
-                state.splice(delIndex);
+                state.splice(delIndex, 1);
             }));
         }
     }, [items]);

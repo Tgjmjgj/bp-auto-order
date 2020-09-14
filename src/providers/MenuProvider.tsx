@@ -1,11 +1,10 @@
 import React from 'react';
-import * as firebase from 'firebase/app';
 import 'firebase/firestore';
 
 import { getUpdatedMenu } from '../service/functions';
 import { AutoAuthContext } from './AutoAuthProvider';
 import { defaultConfigState } from './ConfigStateProvider';
-import { Menu, MenuTable } from '../../types/autoOrderMenus';
+import { Menu } from '../../types/autoOrderMenus';
 
 type AllMenus = Record<string, Menu>;
 
@@ -23,17 +22,13 @@ export const MenuProvider: React.FC = ({ children }) => {
 
     React.useEffect(() => {
         if (authContext.uid) {
-            Promise.allSettled(menuTargets.map(target => getUpdatedMenu(target.id)))
-            .then(() => {
-                firebase.firestore().collection('auto-order-menus').get().then(data => {
-                    data.forEach(menuEntry => {
-                        const menuData = menuEntry.data() as MenuTable;
-                        setMenusState(state => ({
-                            ...state,
-                            [menuEntry.id]: menuData.menu,
-                        }));
-                        console.log(`@ '${menuEntry.id}' menu: `, menuData.menu);
-                    });
+            menuTargets.forEach(target => {
+                getUpdatedMenu(target.id).then(menuData => {
+                    setMenusState(state => ({
+                        ...state,
+                        [target.id]: menuData.data,
+                    }));
+                    console.log(`@ '${target.id}' menu: `, menuData.data);
                 });
             });
         }

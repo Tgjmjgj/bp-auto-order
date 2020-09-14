@@ -1,6 +1,4 @@
 import * as FirebaseAdmin from 'firebase-admin';
-import allSettled from 'promise.allsettled';
-import fromEntries from 'object.fromentries';
 
 import { scrapKumirMenu } from './scrapKumirMenu';
 import { randomId, throwError } from './utils';
@@ -13,10 +11,10 @@ const targetScrappers: Record<string, () => Promise<ScrapedMenu>> = {
 };
 
 export const getAllUpdatedMenus = async () => {
-    const result = await allSettled(menuTargets.map(target => {
+    const result = await Promise.allSettled(menuTargets.map(target => {
         return getUpdatedMenu(target);
     }));
-    return fromEntries(
+    return Object.fromEntries(
         result.map((data, i) => {
             if (data.status === 'fulfilled') {
                 return [ menuTargets[i], data.value ] as const;

@@ -96,9 +96,9 @@ export const ThreeValuesSlider: React.FC<Props> = props => {
 
     const marks = React.useMemo(() => {
         const marks = [
-            { value: start, label: start },
+            { value: start, label: `${start} ₽` },
             { value: values[1], label: values[1] },
-            { value: end, label: end },
+            { value: end, label: `${end} ₽` },
         ];
         if (values[0] !== start) {
             marks.push({ value: values[0], label: values[0] });

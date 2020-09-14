@@ -238,7 +238,7 @@ export const OrderItem: React.FC<Props> = props => {
                         <TextField
                             label="From"
                             variant="filled"
-                            value={item.target}
+                            value={itemTarget ? itemTarget.displayName : ''}
                             size="small"
                             className={classes.input}
                             inputProps={{
