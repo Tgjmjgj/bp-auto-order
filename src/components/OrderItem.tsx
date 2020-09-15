@@ -11,6 +11,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 import { MenuContext } from '../providers/MenuProvider';
+import { NumberTextField } from './NumberTextField';
 import { FreeSelect } from './FreeSelect'
 import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
 
@@ -144,11 +145,9 @@ export const OrderItem: React.FC<Props> = props => {
         }
     }, [item.id, onChangePrice]);
 
-    const changeQuantity = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const changeQuantity = React.useCallback((value: number) => {
         if (onChangeQuantity) {
-            const numVal = Number(e.target.value);
-            const newQuantity = Number.isNaN(numVal) ? 1 : numVal < 1 ? 1 : numVal;
-            onChangeQuantity(newQuantity, item.id);
+            onChangeQuantity(value, item.id);
         }
     }, [item.id, onChangeQuantity]);
 
@@ -214,13 +213,13 @@ export const OrderItem: React.FC<Props> = props => {
                     className={classes.input}
                     inputProps={(onChangePrice && !refItem) ? undefined : { readOnly: true }}
                 />
-                <TextField
+                <NumberTextField
                     label="Quantity"
-                    type="number"
                     variant="filled"
+                    size="small"
+                    min={1}
                     value={item.quantity}
                     onChange={changeQuantity}
-                    size="small"
                     className={classes.input}
                     inputProps={onChangeQuantity ? undefined : { readOnly: true }}
                 />

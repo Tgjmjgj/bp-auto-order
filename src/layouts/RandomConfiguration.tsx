@@ -10,6 +10,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { ThreeValuesSlider } from '../components/ThreeValueSlider';
+import { NumberTextField } from '../components/NumberTextField';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -31,8 +32,8 @@ const useStyles = makeStyles((theme: Theme) =>
 export const RandomConfiguration: React.FC = () => {
     const classes = useStyles();
     const configState = useContext(ConfigStateContext);
-    const [costValues, setCostValues] = React.useState<[number, number, number]>([270, 300, 340]);
     const config = configState.state.randomConfigs.find(cfg => cfg.id === configState.state.selectedConfig);
+    const [costValues, setCostValues] = React.useState<[number, number, number]>([270, 300, 340]);
 
     const onSelectRandomConfig = React.useCallback((e: React.ChangeEvent<{ name?: string | undefined; value: unknown }>) => {
         configState.updateState(produce(configState.state, state => {
@@ -50,6 +51,24 @@ export const RandomConfiguration: React.FC = () => {
         });
     }, [configState]);
 
+    const onChangeTotalMinItems = React.useCallback((value: number) => {
+        if (config) {
+            configState.updateState(produce(configState.state, state => {
+                const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
+                selectedCfg.config.total.minItems = value;
+            }));
+        }
+    }, [configState, config]);
+
+    const onChangeTotalMaxItems = React.useCallback((value: number) => {
+        if (config) {
+            configState.updateState(produce(configState.state, state => {
+                const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
+                selectedCfg.config.total.maxItems = value;
+            }));
+        }
+    }, [configState, config]);
+
     return (
         <Grid container spacing={4} direction="column">
             <Grid item className={classes.gridRow}>
@@ -64,18 +83,43 @@ export const RandomConfiguration: React.FC = () => {
                 </Select>
             </Grid>
             <Divider />
-            <Grid item>
-                <ThreeValuesSlider
-                    className={classes.costSlider}
-                    values={costValues}
-                    setValues={setCostValues}
-                    start={0}
-                    end={500}
-                />
-                <Typography align="center">
-                    Acceptable cost
-                </Typography>
-            </Grid>
+            {config && (
+                <>
+                    <Grid item>
+                        <ThreeValuesSlider
+                            className={classes.costSlider}
+                            values={costValues}
+                            setValues={setCostValues}
+                            start={0}
+                            end={500}
+                        />
+                        <Typography align="center">
+                            Acceptable cost
+                        </Typography>
+                    </Grid>
+                    <Grid item className={classes.gridRow}>
+                        <Typography>
+                            Number of dishes
+                        </Typography>
+                        <Typography>
+                            From
+                        </Typography>
+                        <NumberTextField
+                            value={config.config.total.minItems}
+                            onChange={onChangeTotalMinItems}
+                            size="small"
+                        />
+                        <Typography>
+                            up to
+                        </Typography>
+                        <NumberTextField
+                            value={config.config.total.maxItems}
+                            onChange={onChangeTotalMaxItems}
+                            size="small"
+                        />
+                    </Grid>
+                </>
+            )}
         </Grid>
     );
 };
