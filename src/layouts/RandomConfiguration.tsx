@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import cn from 'classnames';
 import produce from 'immer';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -19,12 +20,30 @@ const useStyles = makeStyles((theme: Theme) =>
             alignItems: 'flex-end',
             height: 80,
         },
+        sectionContainer: {
+            flexFlow: 'row nowrap',
+            [theme.breakpoints.down('sm')]: {
+                flexFlow: 'column nowrap',
+                alignItems: 'flex-start'
+            },
+        },
         label: {
             marginRight: 20,
         },
         costSlider: {
             marginTop: theme.spacing(4),
             marginBottom: theme.spacing(2),
+        },
+        headerRowTitle: {
+            marginRight: theme.spacing(5),
+        },
+        rowTextField: {
+            margin: `0 ${theme.spacing(2)}px`,
+            width: 50,
+            '& input': {
+                textAlign: 'center',
+                paddingBottom: 2,
+            },
         },
     }),
 );
@@ -97,26 +116,36 @@ export const RandomConfiguration: React.FC = () => {
                             Acceptable cost
                         </Typography>
                     </Grid>
-                    <Grid item className={classes.gridRow}>
-                        <Typography>
-                            Number of dishes
-                        </Typography>
-                        <Typography>
-                            From
-                        </Typography>
-                        <NumberTextField
-                            value={config.config.total.minItems}
-                            onChange={onChangeTotalMinItems}
-                            size="small"
-                        />
-                        <Typography>
-                            up to
-                        </Typography>
-                        <NumberTextField
-                            value={config.config.total.maxItems}
-                            onChange={onChangeTotalMaxItems}
-                            size="small"
-                        />
+                    <Grid item className={cn(classes.gridRow, classes.sectionContainer)}>
+                        <div className={classes.gridRow}>
+                            <Typography className={classes.headerRowTitle}>
+                                Number of dishes:
+                            </Typography>
+                        </div>
+                        <div className={classes.gridRow}>
+                            <Typography>
+                                from
+                            </Typography>
+                            <NumberTextField
+                                value={config.config.total.minItems}
+                                onChange={onChangeTotalMinItems}
+                                className={classes.rowTextField}
+                                size="small"
+                                placeholder="Minimal number"
+                            />
+                        </div>
+                        <div className={classes.gridRow}>
+                            <Typography>
+                                up to
+                            </Typography>
+                            <NumberTextField
+                                value={config.config.total.maxItems}
+                                onChange={onChangeTotalMaxItems}
+                                className={classes.rowTextField}
+                                size="small"
+                                placeholder="Maximal number"
+                            />
+                        </div>
                     </Grid>
                 </>
             )}
