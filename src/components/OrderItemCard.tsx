@@ -108,7 +108,7 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export const OrderItem: React.FC<Props> = props => {
+export const OrderItemCard: React.FC<Props> = props => {
     const {
         item,
         savedTargets,
@@ -121,9 +121,9 @@ export const OrderItem: React.FC<Props> = props => {
     } = props;
     const classes = useStyles();
     const menuState = React.useContext(MenuContext);
-    const itemTarget = savedTargets.find(target => target.id === item.target);
-    const menu = menuState[item.target];
-    const refItem = menu && menu.find(menuItem => menuItem.id === item.ref);
+    const itemTarget = savedTargets.find(target => target.id === item.targetId);
+    const menu = menuState[item.targetId];
+    const refItem = menu && menu.find(menuItem => menuItem.id === item.menuItemId);
 
     const targetOptions = savedTargets.map(target => ({
         key: target.id,
@@ -228,7 +228,7 @@ export const OrderItem: React.FC<Props> = props => {
                         <FreeSelect
                             label="From"
                             options={targetOptions}
-                            value={item.target}
+                            value={item.targetId}
                             onChange={changeTarget}
                             className={classes.input}
                             addNewItem={addNewTargetItem}

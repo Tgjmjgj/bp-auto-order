@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import List from '@material-ui/core/List';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { ThreeValuesSlider } from '../components/ThreeValueSlider';
@@ -38,12 +39,15 @@ const useStyles = makeStyles((theme: Theme) =>
             marginRight: theme.spacing(5),
         },
         rowTextField: {
-            margin: `0 ${theme.spacing(2)}px`,
+            margin: theme.spacing(0, 2),
             width: 50,
             '& input': {
                 textAlign: 'center',
                 paddingBottom: 2,
             },
+        },
+        listTitle: {
+            margin: theme.spacing(4, 0, 2),
         },
     }),
 );
@@ -146,6 +150,28 @@ export const RandomConfiguration: React.FC = () => {
                                 placeholder="Maximal number"
                             />
                         </div>
+                    </Grid>
+                    <Grid container spacing={2}>
+                        <Grid item md={6} xs={12}>
+                            <Typography variant="h6" className={classes.listTitle}>
+                                Categories blacklist
+                            </Typography>
+                            <div>
+                                <List>
+
+                                </List>
+                            </div>
+                        </Grid>
+                        <Grid item md={6} xs={12}>
+                            <Typography variant="h6" className={classes.listTitle}>
+                                Items blacklist
+                            </Typography>
+                            <div>
+                                <List>
+
+                                </List>
+                            </div>
+                        </Grid>
                     </Grid>
                 </>
             )}

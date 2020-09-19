@@ -22,10 +22,10 @@ import SearchIcon from '@material-ui/icons/Search';
 import CloseIcon from '@material-ui/icons/Close';
 import FilterListRoundedIcon from '@material-ui/icons/FilterListRounded';
 
-import { TargetMenuItem } from '../../types/autoOrderMenus';
+import { AnyMenuItem } from '../../types/autoOrderMenus';
 
 type Props = {
-    items: TargetMenuItem[]
+    items: AnyMenuItem[]
     selectItem: (itemId: string) => void
     selectedItems?: string[]
 };
@@ -164,17 +164,19 @@ export const MenuItemSelector: React.FC<Props> = (props) => {
 
     const filteredItems = React.useMemo(() => {
         return items.filter(item => {
-            return item.name.toLowerCase().includes(searchString.toLowerCase()) &&
-                (filter.onlyAvailable ? item.enabled : true);
+            return (
+                item.name.toLowerCase().includes(searchString.toLowerCase()) ||
+                item.category.toLowerCase().includes(searchString.toLowerCase())
+            ) && (filter.onlyAvailable ? item.enabled : true);
         });
     }, [items, searchString, filter]);
 
-    const getItemKey = React.useCallback((i: number, data: TargetMenuItem[]) => {
+    const getItemKey = React.useCallback((i: number, data: AnyMenuItem[]) => {
         return data[i].id;
     }, []);
 
     const renderListItem = React.useCallback((props: ListChildComponentProps) => {
-        const item = props.data[props.index] as TargetMenuItem;
+        const item = props.data[props.index] as AnyMenuItem;
         return (
             <ListItem
                 key={item.id}
@@ -192,12 +194,12 @@ export const MenuItemSelector: React.FC<Props> = (props) => {
                     <Avatar
                         className={cn(
                             classes.targetAvatar, {
-                                [classes.kumir]: item.target === 'kumir',
+                                [classes.kumir]: item.targetId === 'kumir',
                                 [classes.targetAvatarUnavailable]: !item.enabled,
                             },
                         )}
                     >
-                        {targetAvatar[item.target]}
+                        {targetAvatar[item.targetId]}
                     </Avatar>
                 </ListItemAvatar>
                 <div className={classes.listItemContent}>

@@ -1,15 +1,19 @@
 import flatten from 'lodash/flatten';
 import cheerio from 'cheerio';
+import { DateTime } from 'luxon';
 import got from 'got';
-import { ScrapedMenu, ScrapedMenuItem } from '../../types/autoOrderMenus';
-import { throwError } from './utils';
+
+import { log, throwError } from '../utils';
+import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
 const kumirBaseUrl = 'https://ku-mir.ru';
-const kumirMenuUrl = kumirBaseUrl + '/menu';
+const kumirMenuUrl = kumirBaseUrl + '/menu/?date=';
 
-export const scrapKumirMenu = async (): Promise<ScrapedMenu> => {
+export const scrapKumirMenu = async (enUsDate: string): Promise<ScrapedMenu> => {
+    log(`#Call: scrapKumirMenu(enUsDate = ${enUsDate})`);
     try {
-        const response = await got(kumirMenuUrl);
+        const formattedDate = DateTime.fromFormat(enUsDate, 'dd/MM/yyyy').toFormat('dd-MM-yyyy');
+        const response = await got(kumirMenuUrl + formattedDate);
         const $ = cheerio.load(response.body);
         const menu: ScrapedMenu = flatten($('.table-menu-items tbody').map((i1, el1) => {
             const category = $(el1).find('tr:first-child > td').text().trim()
@@ -17,6 +21,7 @@ export const scrapKumirMenu = async (): Promise<ScrapedMenu> => {
                 const imageUrl = $(el2).find('.tr-item-img img').data('original');
                 return {
                     name: $(el2).find('.name-dish').text().trim(),
+                    additional: '',
                     price: Number($(el2).find('.nb-price.tr-item-price').text()),
                     imageUrl: imageUrl ? kumirBaseUrl + imageUrl : null,
                     category,

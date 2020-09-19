@@ -12,3 +12,7 @@ export const throwError = (code: functions.https.FunctionsErrorCode, message: st
     }
     throw new functions.https.HttpsError(code, message, e);
 };
+
+export const log = (data: any): void => {
+    functions.logger.info(data, {structuredData: true});
+};

@@ -31,7 +31,7 @@ const defaultPreset = {
     id: randomId(),
     name: 'Default preset',
     items: [
-        { id: randomId(), name: 'Cувлаки', price: 140, quantity: 2, target: defaultChanakhiTarget.id },
+        { id: randomId(), name: 'Cувлаки', price: 140, quantity: 2, targetId: defaultChanakhiTarget.id },
     ],
 };
 
@@ -130,7 +130,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
 
     useEffect(() => {
         if (authContext.uid) {
-            const docRef = firebase.firestore().collection('auto-order-configs').doc(authContext.uid);
+            const docRef = firebase.firestore().collection('auto-order-user-configs').doc(authContext.uid);
             docRef.get().then(data => {
                 if (!data.exists) {
                     docRef.set(prepareConfigForServer({
@@ -179,7 +179,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
 
                         console.log('@Send to server: ', preparedData);
 
-                        firebase.firestore().collection('auto-order-configs').doc(authContext.uid)
+                        firebase.firestore().collection('auto-order-user-configs').doc(authContext.uid)
                         .update(preparedData)
                         .then(() => {
                             setSaved(s => ++s);

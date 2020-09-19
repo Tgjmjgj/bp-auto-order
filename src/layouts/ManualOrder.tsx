@@ -26,8 +26,9 @@ import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { DateForContext } from '../providers/DateForProvider';
 import { getRandomOrder, placeOrder as placeOrderCall } from '../service/functions';
-import { OrderItem } from '../components/OrderItem';
+import { OrderItemCard } from '../components/OrderItemCard';
 import { getI, randomId } from '../utils';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 
@@ -135,6 +136,7 @@ type PlaceOrderStep = typeof placeOrderSteps[number];
 export const ManualOrder: React.FC = () => {
 
     const configState = React.useContext(ConfigStateContext);
+    const { dateFor } = React.useContext(DateForContext);
     const [selectedPreset, setSelectedPreset] = React.useState('');
     const [items, setItems] = React.useState<OrderItemData[]>([]);
     const [loading, setLoading] = React.useState(false);
@@ -190,7 +192,7 @@ export const ManualOrder: React.FC = () => {
         setItems([]);
         try {
             setLoading(true);
-            const {data} = await getRandomOrder(targetKeyForRandom);
+            const {data} = await getRandomOrder(targetKeyForRandom, dateFor);
             if (data) {
                 console.log('@Items: ', data);
                 setItems(data);
@@ -200,13 +202,13 @@ export const ManualOrder: React.FC = () => {
             console.error('Error: getRandomOrder: ', e);
             setLoading(false);
         }
-    }, [targetKeyForRandom]);
+    }, [targetKeyForRandom, dateFor]);
 
     const randomizeOneItem = React.useCallback(async () => {
         setSelectedPreset('');
         try {
             setItemLoading(true);
-            const {data} = await getRandomOrder(targetKeyForRandom, items);
+            const {data} = await getRandomOrder(targetKeyForRandom, dateFor, items);
             if (data) {
                 console.log('@Items: ', data);
                 setItems(data);
@@ -216,7 +218,7 @@ export const ManualOrder: React.FC = () => {
             console.error('Error: getRandomOrder with items: ', e);
             setItemLoading(false);
         }
-    }, [targetKeyForRandom, items]);
+    }, [targetKeyForRandom, items, dateFor]);
 
     React.useEffect(() => {
         setPresetLabel(selectedPreset ? 'Preset' : 'Choose from preset');
@@ -274,6 +276,7 @@ export const ManualOrder: React.FC = () => {
             setPlaceOrderStep('loading');
             await placeOrderCall({
                 items,
+                forDate: dateFor,
                 spreadsheetId: configState.state.spreadsheetId,
                 targets: configState.state.savedTargets,
                 customName: configState.state.customName,
@@ -290,13 +293,13 @@ export const ManualOrder: React.FC = () => {
                 setPlaceOrderError(e.message || 'Unknown Error. Please, contact the developer');
             }
         }
-    }, [items, configState]);
+    }, [items, configState, dateFor]);
 
     const itemsUI = React.useMemo(() => {
         console.log('@displayItems: ', items);
         return items.map(item => (
             <Grid item key={item.id}>
-                <OrderItem
+                <OrderItemCard
                     item={item}
                     savedTargets={configState.state.savedTargets}
                     onChangeQuantity={selectedPreset ? undefined : changeQuantity}

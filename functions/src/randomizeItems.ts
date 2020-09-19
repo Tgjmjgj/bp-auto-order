@@ -1,8 +1,8 @@
 import get from 'lodash/get';
 
-import { randomId, throwError } from './utils';
+import { randomId, log, throwError } from './utils';
 import { RandomConfigData, OrderItem } from '../../types/autoOrderConfigs';
-import { Menu, TargetMenuItem } from '../../types/autoOrderMenus';
+import { AnyMenuItem } from '../../types/autoOrderMenus';
 
 const defaultMinCost = 250;
 const defaultMaxCost = 320;
@@ -20,24 +20,26 @@ interface OrderItemWithCategory extends OrderItem {
  * @param conf Random algorithm configuration
  * @param items If there are items - function will add only 1 new item to them
  */
-export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomConfigData, items?: OrderItem[]): OrderItem[] => {
-
+export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf: RandomConfigData, items?: OrderItem[]): OrderItem[] => {
+    log(`#Call: randomizeItems(targetMenus, conf, items = ${JSON.stringify(items)})`);
     try {
-        const filteredMergedMenu = conf.selectFromTargets.reduce<TargetMenuItem[]>((all, target) => {
+        const filteredMergedMenu = conf.selectFromTargets.reduce<AnyMenuItem[]>((all, target) => {
             targetMenus[target].forEach(item => {
-                const categoryWeight = get(conf.targetsData[target].categories, `[${item.category}].weight`) as number | undefined;
-                const itemWeight = get(conf.targetsData[target].items, `[${item.name}].weight`) as number | undefined;
+                const categoryWeight = get(conf.targetsData[target].categories, `[${item.category}].weight`) as unknown as number | undefined;
+                const itemWeight = get(conf.targetsData[target].items, `[${item.name}].weight`) as unknown as number | undefined;
+                const categoryMaxItems = get(conf.targetsData[target].categories, `[${item.category}].maxItems`) as unknown as number | undefined;
+                const itemMaxItems = get(conf.targetsData[target].items, `[${item.name}].maxItems`) as unknown as number | undefined;
                 if (
                     !item.enabled ||
-                    get(conf.targetsData[target].categories, `[${item.category}].maxItems`) === 0 ||
+                    categoryMaxItems === 0 ||
                     categoryWeight === 0 ||
-                    get(conf.targetsData[target].items, `[${item.name}].maxItems`) === 0 ||
+                    itemMaxItems === 0 ||
                     itemWeight === 0
                 ) {
                     return;
                 }
                 for (let j = 0; j < Math.ceil((categoryWeight || 1) * (itemWeight || 1)); ++j) {
-                    all.push({ ...item, target });
+                    all.push(item);
                 }
             });
             return all;
@@ -46,8 +48,8 @@ export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomCo
         const maxCost = get(conf.total, 'cost.max') || defaultMaxCost;
 
         const orderItems: OrderItemWithCategory[] = !items ? [] : items.map(item => {
-            const targetMenu = targetMenus[item.target];
-            const refItem = targetMenu && targetMenu.find(menuItem => menuItem.id === item.ref);
+            const targetMenu = targetMenus[item.targetId];
+            const refItem = targetMenu && targetMenu.find(menuItem => menuItem.id === item.menuItemId);
             const itemCategory = (refItem && refItem.category) || '';
             return {
                 ...item,
@@ -61,12 +63,12 @@ export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomCo
             const nextItem = filteredMergedMenu[Math.floor(Math.random() * filteredMergedMenu.length)];
             const nextCost = totalCost + nextItem.price;
             const sameCategoryItemsNumber = orderItems.reduce((sum, orderItem) => {
-                if (nextItem.target === orderItem.target && nextItem.category === orderItem.category) {
+                if (nextItem.targetId === orderItem.targetId && nextItem.category === orderItem.category) {
                     return sum + orderItem.quantity;
                 }
                 return sum;
             }, 0);
-            const maxItemsFromThisCategory = get(conf.targetsData[nextItem.target].categories, `[${nextItem.category}].maxItems`, undefined) as number | undefined;
+            const maxItemsFromThisCategory = get(conf.targetsData[nextItem.targetId].categories, `[${nextItem.category}].maxItems`, undefined) as number | undefined;
 
             if (nextCost < maxCost && (maxItemsFromThisCategory === undefined || sameCategoryItemsNumber < maxItemsFromThisCategory)) {
                 const existingItem = orderItems.find(item => item.name === nextItem.name);
@@ -79,8 +81,8 @@ export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomCo
                         name: nextItem.name,
                         price: nextItem.price,
                         quantity: 1,
-                        target: nextItem.target,
-                        ref: nextItem.id,
+                        targetId: nextItem.targetId,
+                        menuItemId: nextItem.id,
                         category: nextItem.category,
                     });
                 }
@@ -93,13 +95,14 @@ export const randomizeItems = (targetMenus: Record<string, Menu>, conf: RandomCo
         if (i === maxLoopIterations) {
             throwError('deadline-exceeded', 'Random order generator exceeded the maximum iteration number!');
         }
+        log(`@randomizeItems: ${i} iterations`);
         return orderItems.map(item => ({
             id: item.id,
             name: item.name,
             price: item.price,
             quantity: item.quantity,
-            target: item.target,
-            ref: item.ref,
+            targetId: item.targetId,
+            menuItemId: item.menuItemId,
         }));
     } catch (e) {
         console.log(e);

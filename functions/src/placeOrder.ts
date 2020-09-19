@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import { google, sheets_v4 } from 'googleapis';
 import cyrillicToTranslit from 'cyrillic-to-translit-js';
 import levenshtein from 'js-levenshtein'
+import { DateTime } from 'luxon';
 import faker from 'faker';
 import capitalize from 'lodash/capitalize';
 import groupBy from 'lodash/groupBy';
@@ -9,12 +10,14 @@ import chunk from 'lodash/chunk';
 import uniq from 'lodash/uniq';
 import get from 'lodash/get';
 
-import { throwError } from './utils';
-import { PlaceOrderData } from '../../types/autoOrderConfigs';
+import { firestore } from './firebase';
+import { log, randomId, throwError } from './utils';
+import { OrderHistory, OrderHistoryItem, PlaceOrderData } from '../../types/autoOrderConfigs';
 
 const randomName = () => `${capitalize(faker.hacker.adjective())} ${capitalize(faker.hacker.noun())}`;
 
 const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): Promise<number> => {
+    log(`#Call: getLastFilledRow(spreadsheetId = ${spreadsheetId})`);
     try {
         const bulkSize = 300;
         let foundRow = 0;
@@ -103,6 +106,7 @@ const maxNamesAllowed = 40;
 const ijColumnTargets = ['всего', 'total'];
 
 const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], lastRowNumber: number, spreadsheetId: string): Promise<RowNames | null> => {
+    log(`#Call: checkExistedOrder(names = ${names}, lastRowNumber = ${lastRowNumber}, spreadsheetId = ${spreadsheetId})`);
     try {
         const {data} = await api.spreadsheets.get({
             spreadsheetId,
@@ -183,9 +187,10 @@ const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], lastRow
 };
 
 const transformRawDataToTableRows = (order: PlaceOrderData): string[][] => {
+    log(`#Call: checkExistedOrder(order = ${JSON.stringify(order)})`);
     try {
         const tableRows =
-            (Object.values(groupBy(order.items, item => item.target))
+            (Object.values(groupBy(order.items, item => item.targetId))
             .map(targetItems => {
                 const validTargetItems = targetItems.filter(item => item.name);
                 if (!validTargetItems.length) {
@@ -208,9 +213,9 @@ const transformRawDataToTableRows = (order: PlaceOrderData): string[][] => {
                     return ['', '', '↑', ...itemGroup, '', '', ''];
                 });
                 const relatedTarget = order.targets && order.targets.length &&
-                    order.targets.find(target => target.id === validTargetItems[0].target);
+                    order.targets.find(target => target.id === validTargetItems[0].targetId);
                 const targetName = relatedTarget ? relatedTarget.displayName : '';
-                const totalCostIndex = validTargetItems[0].target === 'chanakhi' ? 9 : validTargetItems[0].target === 'kumir' ? 10 : 11;
+                const totalCostIndex = validTargetItems[0].targetId === 'chanakhi' ? 9 : validTargetItems[0].targetId === 'kumir' ? 10 : 11;
                 const totalCostValue = validTargetItems.reduce((sum, item) => {
                     const addition = Number(item.price!) * Number(item.quantity!);
                     return sum + (Number.isNaN(addition) ? 0 : addition);
@@ -234,6 +239,7 @@ const transformRawDataToTableRows = (order: PlaceOrderData): string[][] => {
 };
 
 const writeTableRows = async (api: sheets_v4.Sheets, spreadsheetId: string, tableRows: string[][], rowNumber: number) => {
+    log(`#Call: writeTableRows(spreadsheetId = ${spreadsheetId}, tableRows = ${JSON.stringify(tableRows)}, rowNumber = ${rowNumber})`);
     const range = `B${rowNumber}:M${rowNumber + tableRows.length - 1}`;
     const res = await api.spreadsheets.values.update({
         spreadsheetId,
@@ -252,6 +258,7 @@ const writeTableRows = async (api: sheets_v4.Sheets, spreadsheetId: string, tabl
 };
 
 const writeOrderToLastRow = async (api: sheets_v4.Sheets, orderData: PlaceOrderData, lastRowNumber: number) => {
+    log(`#Call: writeOrderToLastRow(orderData = ${JSON.stringify(orderData)}, lastRowNumber = ${lastRowNumber})`);
     try {
         const tableRows = transformRawDataToTableRows(orderData);
         await writeTableRows(api, orderData.spreadsheetId, tableRows, lastRowNumber);
@@ -262,6 +269,7 @@ const writeOrderToLastRow = async (api: sheets_v4.Sheets, orderData: PlaceOrderD
 };
 
 const clearRows = async (api: sheets_v4.Sheets, spreadsheetId: string, fromRow: number, toRow: number) => {
+    log(`#Call: clearRows(spreadsheetId = ${spreadsheetId}, fromRow = ${fromRow}, toRow = ${toRow})`);
     const range = `B${fromRow}:M${toRow}`;
     console.log(`Cleare rows on range ${range}`);
     const res = await api.spreadsheets.values.update({
@@ -280,6 +288,7 @@ const clearRows = async (api: sheets_v4.Sheets, spreadsheetId: string, fromRow: 
 };
 
 const overwriteOrderToRow = async (api: sheets_v4.Sheets, orderData: PlaceOrderData, foundRow: RowNames, lastRowNumber: number) => {
+    log(`#Call: clearRows(orderData = ${JSON.stringify(orderData)}, foundRow = ${foundRow}, lastRowNumber = ${lastRowNumber})`);
     try {
         const tableRows = transformRawDataToTableRows(orderData);
         await clearRows(api, orderData.spreadsheetId, foundRow.row, foundRow.row + foundRow.lines);
@@ -296,7 +305,33 @@ const overwriteOrderToRow = async (api: sheets_v4.Sheets, orderData: PlaceOrderD
     return -1;
 };
 
-export const placeOrder = async (data: PlaceOrderData): Promise<number> => {
+const saveOrderToHistory = async (userId: string, orderData: PlaceOrderData, insertionRow: number) => {
+    log(`#Call: saveOrderToHistory(userId = ${userId}, orderData = ${JSON.stringify(orderData)}, insertionRow: ${insertionRow})`);
+    try {
+        const historyTableRef = firestore.collection('auto-order-history').doc(userId);
+        const historyData = await historyTableRef.get();
+        const datetime = DateTime.local().toUTC().toISO({suppressMilliseconds: true, suppressSeconds: true});
+        const newHistoryItem: OrderHistoryItem = {
+            id: randomId(),
+            datetime,
+            itemsRatings: [],
+            orderData,
+            row: insertionRow,
+        };
+        if (historyData.exists) {
+            const existingHistory = historyData.data() as OrderHistory;
+            existingHistory[datetime] = newHistoryItem;
+            await historyTableRef.update(existingHistory);
+        } else {
+            await historyTableRef.set({ datetime: newHistoryItem });
+        }
+    } catch (e) {
+        throwError('unknown', 'Something went wrong with updating the orders history');
+    }
+};
+
+export const placeOrder = async (userId: string, data: PlaceOrderData): Promise<number> => {
+    log(`#Call: placeOrder(data = ${JSON.stringify(data)})`);
     const spreadsheetId = data.spreadsheetId;
     if (!spreadsheetId) {
         throwError('invalid-argument', 'No spreadsheetId in the request');
@@ -324,6 +359,9 @@ export const placeOrder = async (data: PlaceOrderData): Promise<number> => {
     } else {
         await writeOrderToLastRow(api, data, lastRow);
         writtenToRow = lastRow;
+    }
+    if (writtenToRow > 0) {
+        await saveOrderToHistory(userId, data, writtenToRow);
     }
     return writtenToRow;
 };

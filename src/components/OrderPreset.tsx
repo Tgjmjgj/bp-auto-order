@@ -16,7 +16,7 @@ import CloseIcon from '@material-ui/icons/Close';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { MenuContext } from '../providers/MenuProvider';
-import { OrderItem } from './OrderItem';
+import { OrderItemCard } from './OrderItemCard';
 import { randomId, getI } from '../utils';
 import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
 import { MenuItemSelector } from './MenuItemSelector';
@@ -99,7 +99,7 @@ const newOrderItem = (): OrderItemData => ({
     name: '',
     price: 0,
     quantity: 1,
-    target: '',
+    targetId: '',
 });
 
 export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePreset}) => {
@@ -201,14 +201,14 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                     const presetItems = state.presets[presetIndex].items;
                     const item = presetItems.find(item => item.id === orderItemId);
                     if (item) {
-                        item.target = targetId;
+                        item.targetId = targetId;
                     }
                 }));
             }
         }
     }, [presetIndex, configState]);
 
-    const addNewTargetAndSelectIt = React.useCallback((orderItemId: string, newTarget: string) => {
+    const addNewTargetAndSelectIt = React.useCallback((newTarget: string, orderItemId: string) => {
         if (presetIndex !== -1) {
             configState.updateState(produce(configState.state, state => {
                 const presetItems = state.presets[presetIndex].items;
@@ -220,7 +220,7 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                         displayName: newTarget,
                         isSystem: false,
                     });
-                    item.target = newTargetId;
+                    item.targetId = newTargetId;
                 }
             }));
         }
@@ -241,8 +241,8 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                     name: menuItem.name,
                     price: menuItem.price,
                     quantity: 1,
-                    target: pendingChangeTarget!.targetId,
-                    ref: menuItem.id,
+                    targetId: pendingChangeTarget!.targetId,
+                    menuItemId: menuItem.id,
                 };
             }));
         }
@@ -254,7 +254,7 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
     const presetItemsUI = React.useMemo(() => {
         return preset ? preset.items.map(item => (
             <Grid item key={item.id}>
-                <OrderItem
+                <OrderItemCard
                     item={item}
                     savedTargets={savedTargets}
                     onChangeName={changeOrderItemName}

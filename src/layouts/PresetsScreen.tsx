@@ -53,7 +53,7 @@ export const PresetsScreen: React.FC = () => {
             id: randomId(),
             name: 'New Preset ' + nameIndex,
             items: [
-                { id: randomId(), name: '', quantity: 1, price: 0, target: '' },
+                { id: randomId(), name: '', quantity: 1, price: 0, targetId: '' },
             ],
         };
     }, [presets]);

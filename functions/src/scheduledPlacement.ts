@@ -1,20 +1,25 @@
 import * as functions from 'firebase-functions';
-import * as FirebaseAdmin from 'firebase-admin';
 import sample from 'lodash/sample';
+import { DateTime } from 'luxon';
 
+import { firestore } from './firebase';
 import { placeOrder } from './placeOrder';
 import { randomizeItems } from './randomizeItems';
 import { getAllUpdatedMenus } from './getUpdatedMenu';
 import { defaultRandomConfigData } from './defaults';
+import { log } from './utils';
 
 import { ConfigState } from '../../types/autoOrderConfigs';
 
 export const scheduledPlacement = async () => {
-
-    const targetMenus = await getAllUpdatedMenus();
-    const tableData = await FirebaseAdmin.firestore().collection('auto-order-configs').get();
+    log(`#Call: scheduledPlacement()`);
+    const tomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat('MM/dd/yyyy');
+    const [targetMenus, allUserConfigs] = await Promise.all([
+        getAllUpdatedMenus(tomorrow),
+        firestore.collection('auto-order-user-configs').get(),
+    ]);
     const operations: Array<() => Promise<void>> = []
-    tableData.forEach(entry => {
+    allUserConfigs.forEach(entry => {
         operations.push(async () => {
             const data = entry.data() as ConfigState;
             if (data.enabled) {
@@ -24,8 +29,9 @@ export const scheduledPlacement = async () => {
                     try {
                         const items = await randomizeItems(targetMenus, defaultRandomConfigData);
                         if (items) {
-                            result = await placeOrder({
+                            result = await placeOrder(entry.id, {
                                 spreadsheetId: data.spreadsheetId,
+                                forDate: tomorrow,
                                 systemName: data.systemName,
                                 customName: data.customName,
                                 targets: data.savedTargets,
@@ -40,8 +46,9 @@ export const scheduledPlacement = async () => {
                     try {
                         const presetId = sample(data.selectedPresets);
                         const chosenPreset = data.presets.find(preset => preset.id === presetId)!;
-                        result = await placeOrder({
+                        result = await placeOrder(entry.id, {
                             spreadsheetId: data.spreadsheetId,
+                            forDate: tomorrow,
                             systemName: data.systemName,
                             customName: data.customName,
                             targets: data.savedTargets,
