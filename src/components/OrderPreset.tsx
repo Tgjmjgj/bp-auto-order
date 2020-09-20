@@ -4,22 +4,15 @@ import produce from 'immer';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
 import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
-import CloseIcon from '@material-ui/icons/Close';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
-import { MenuContext } from '../providers/MenuProvider';
 import { OrderItemCard } from './OrderItemCard';
 import { randomId, getI } from '../utils';
-import { OrderItem as OrderItemData } from '../../types/autoOrderConfigs';
-import { MenuItemSelector } from './MenuItemSelector';
+import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
 
 type Props = {
     presetId: string
@@ -62,35 +55,6 @@ const useStyles = makeStyles((theme: Theme) =>
                 color: theme.palette.secondary.dark,
             },
         },
-        menuDialog: {
-            '& .MuiDialog-paperWidthSm': {
-                height: '80%',
-                maxWidth: 800,
-                width: 800,
-                [theme.breakpoints.down('sm')]: {
-                    margin: 0,
-                },
-            },
-        },
-        dialogTitle: {
-            margin: 0,
-            marginLeft: theme.spacing(2),
-            padding: theme.spacing(2),
-        },
-        dialogTitleText: {
-            fontSize: '1.3rem',
-        },
-        closeDialogButton: {
-            position: 'absolute',
-            right: theme.spacing(1),
-            top: theme.spacing(1),
-            color: theme.palette.grey[500],
-        },
-        dialogContent: {
-            [theme.breakpoints.down('xs')]: {
-                padding: 0,
-            },
-        },
     }),
 );
 
@@ -105,21 +69,10 @@ const newOrderItem = (): OrderItemData => ({
 export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePreset}) => {
     const classes = useStyles();
     const configState = React.useContext(ConfigStateContext);
-    const menuState = React.useContext(MenuContext);
-    const [pendingChangeTarget, setPendingChangeTarget] = React.useState<PendingChangeTarget | null>(null);
 
     const preset = configState.state.presets.find(preset => preset.id === presetId);
     const presetIndex = getI(configState.state.presets, presetId);
     const savedTargets = configState.state.savedTargets;
-    const menuItems = React.useMemo(() => {
-        if (!pendingChangeTarget) {
-            return [];
-        }
-        return menuState[pendingChangeTarget.targetId].map(menuItem => ({
-            ...menuItem,
-            target: pendingChangeTarget.targetId,
-        }));
-    }, [pendingChangeTarget, menuState]);
 
     const onChangePresetName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.value) {
@@ -152,102 +105,30 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
         }
     }, [presetIndex, configState]);
 
-    const changeOrderItemName = React.useCallback((newName: string, orderItemId: string) => {
-        if (presetIndex !== -1 && newName) {
-            configState.updateState(produce(configState.state, state => {
-                const presetItems = state.presets[presetIndex].items;
-                const item = presetItems.find(item => item.id === orderItemId);
-                if (item) {
-                    item.name = newName;
-                }
-            }));
-        }
-    }, [presetIndex, configState]);
-
-    const changeOrderItemPrice = React.useCallback((newPrice: number, orderItemId: string) => {
-        if (presetIndex !== -1 && !isNaN(newPrice) && newPrice >= 0) {
-            configState.updateState(produce(configState.state, state => {
-                const presetItems = state.presets[presetIndex].items;
-                const item = presetItems.find(item => item.id === orderItemId);
-                if (item) {
-                    item.price = newPrice;
-                }
-            }));
-        }
-    }, [presetIndex, configState]);
-
-    const changeOrderItemQuantity = React.useCallback((newQuantity: number, orderItemId: string) => {
-        if (presetIndex !== -1 && !isNaN(newQuantity) && newQuantity > 0) {
-            configState.updateState(produce(configState.state, state => {
-                const presetItems = state.presets[presetIndex].items;
-                const item = presetItems.find(item => item.id === orderItemId);
-                if (item) {
-                    item.quantity = newQuantity;
-                }
-            }));
-        }
-    }, [presetIndex, configState]);
-
-    const changeOrderItemTarget = React.useCallback((targetId: string, orderItemId: string) => {
-        const newTarget = configState.state.savedTargets.find(target => target.id === targetId);
-        if (presetIndex !== -1 && newTarget) {
-            if (newTarget.isSystem) {
-                setPendingChangeTarget({
-                    itemId: orderItemId,
-                    targetId,
-                });
-            } else {
+    const changeOrderItem = React.useCallback((updatedItem: OrderItemData) => {
+        if (presetIndex !== -1 ) {
+            const presetItems = configState.state.presets[presetIndex].items;
+            const itemIndex = getI(presetItems, updatedItem.id);
+            if (itemIndex !== - 1) {
                 configState.updateState(produce(configState.state, state => {
-                    const presetItems = state.presets[presetIndex].items;
-                    const item = presetItems.find(item => item.id === orderItemId);
-                    if (item) {
-                        item.targetId = targetId;
-                    }
+                    state.presets[presetIndex].items[itemIndex] = updatedItem;
                 }));
             }
         }
     }, [presetIndex, configState]);
 
-    const addNewTargetAndSelectIt = React.useCallback((newTarget: string, orderItemId: string) => {
+    const addNewTargetAndChangeItem = React.useCallback((newTarget: OrderTarget, updatedItem: OrderItemData) => {
         if (presetIndex !== -1) {
-            configState.updateState(produce(configState.state, state => {
-                const presetItems = state.presets[presetIndex].items;
-                const item = presetItems.find(item => item.id === orderItemId);
-                if (item) {
-                    const newTargetId = randomId();
-                    state.savedTargets.push({
-                        id: newTargetId,
-                        displayName: newTarget,
-                        isSystem: false,
-                    });
-                    item.targetId = newTargetId;
-                }
-            }));
+            const presetItems = configState.state.presets[presetIndex].items;
+            const itemIndex = getI(presetItems, updatedItem.id);
+            if (itemIndex !== - 1) {
+                configState.updateState(produce(configState.state, state => {
+                    state.savedTargets.push(newTarget);
+                    state.presets[presetIndex].items[itemIndex] = updatedItem;
+                }));
+            }
         }
     }, [presetIndex, configState]);
-
-    const onCloseMenuDialog = React.useCallback(() => {
-        setPendingChangeTarget(null);
-    }, []);
-
-    const selectTargetMenuItem = React.useCallback((menuItemId: string) => {
-        const menuItem = menuState[pendingChangeTarget!.targetId].find(menuItem => menuItem.id === menuItemId);
-        const itemIndex = getI(configState.state.presets[presetIndex].items, pendingChangeTarget!.itemId);
-        if (presetIndex !== -1 && menuItem && itemIndex !== -1) {
-            configState.updateState(produce(configState.state, state => {
-                const itemData = state.presets[presetIndex].items[itemIndex];
-                state.presets[presetIndex].items[itemIndex] = {
-                    id: itemData.id,
-                    name: menuItem.name,
-                    price: menuItem.price,
-                    quantity: 1,
-                    targetId: pendingChangeTarget!.targetId,
-                    menuItemId: menuItem.id,
-                };
-            }));
-        }
-        setPendingChangeTarget(null);
-    }, [presetIndex, configState, menuState, pendingChangeTarget]);
 
     console.log(`## Preset ${presetId} Items: `, preset ? preset.items : '');
 
@@ -257,11 +138,8 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                 <OrderItemCard
                     item={item}
                     savedTargets={savedTargets}
-                    onChangeName={changeOrderItemName}
-                    onChangePrice={changeOrderItemPrice}
-                    onChangeQuantity={changeOrderItemQuantity}
-                    onChangeTarget={changeOrderItemTarget}
-                    addNewTarget={addNewTargetAndSelectIt}
+                    changeItem={changeOrderItem}
+                    addNewTargetAndChangeItem={addNewTargetAndChangeItem}
                     onClose={preset.items.length > 1 ? deleteOrderItem : undefined}
                 />
             </Grid>
@@ -269,11 +147,8 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
     }, [
         preset,
         savedTargets,
-        changeOrderItemName,
-        changeOrderItemPrice,
-        changeOrderItemQuantity,
-        changeOrderItemTarget,
-        addNewTargetAndSelectIt,
+        changeOrderItem,
+        addNewTargetAndChangeItem,
         deleteOrderItem,
     ]);
 
@@ -303,33 +178,6 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                     </Tooltip>
                 </Grid>
             </Grid>
-
-            
-            <Dialog
-                open={pendingChangeTarget !== null}
-                onClose={onCloseMenuDialog}
-                disableBackdropClick
-                className={classes.menuDialog}
-            >
-                <DialogTitle disableTypography className={classes.dialogTitle}>
-                    <Typography className={classes.dialogTitleText}>
-                        Select menu item
-                    </Typography>
-                    <IconButton
-                        aria-label="Close"
-                        className={classes.closeDialogButton}
-                        onClick={onCloseMenuDialog}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </DialogTitle>
-                <DialogContent className={classes.dialogContent}>
-                    <MenuItemSelector
-                        items={menuItems}
-                        selectItem={selectTargetMenuItem}
-                    />
-                </DialogContent>
-            </Dialog>
         </>
     );
 };

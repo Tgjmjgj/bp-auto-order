@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DateTime } from 'luxon';
 
 type DateForContextValue = {
@@ -18,7 +18,7 @@ export const DateForProvider: React.FC = ({ children }) => {
         return { dateFor, setDateFor };
     }, [dateFor]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const timerId = setInterval(() => {
             const newTomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat('MM/dd/yyyy');
             if (newTomorrow !== dateFor) {

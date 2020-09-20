@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
+import isEqual from 'lodash/isEqual';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
@@ -11,23 +12,31 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 import { MenuContext } from '../providers/MenuProvider';
+import { DialogsContext } from '../providers/DialogsProvider';
+import { useDefferedCall } from '../hooks/useDefferedCall';
 import { NumberTextField } from './NumberTextField';
 import { FreeSelect } from './FreeSelect'
+import { randomId } from '../utils';
 import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
 
 import foodPlaceholder from '../images/food-placeholder.png';
 
-
 type Props = {
     item: OrderItemData
     savedTargets: OrderTarget[]
+    frozen?: boolean
+    editableQuantity?: boolean                                                  // to allow change quantity for FROZEN item
     onClose?: (itemId: string) => void
-    addNewTarget?: (newTargetName: string, itemId: string) => void
-    onChangeName?: (name: string, itemId: string) => void
-    onChangePrice?: (name: number, itemId: string) => void
-    onChangeQuantity?: (quantity: number, itemId: string) => void
-    onChangeTarget?: (targetId: string, itemId: string) => void
+    changeItem?: (updatedItem: OrderItemData) => void                           // used to change item in state
+    notifyNameChange?: (newName: string, itemId: string) => void                // just for notification parent component of changes
+    notifyPriceChange?: (newPrice: number, itemId: string) => void              // for notification
+    notifyQuantityChange?: (newQuantity: number, itemId: string) => void        // for notification
+    notifyTargetIdChange?: (newTargetId: string, itemId: string) => void        // for notification
+    addNewTargetAndChangeItem?: (newTarget: OrderTarget, updatedItem: OrderItemData) => void
 };
+
+const defferedUpdateTimeout = 1000;
+const readonlyProps = { readOnly: true };
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -108,65 +117,149 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export const OrderItemCard: React.FC<Props> = props => {
+export const OrderItemCard: React.FC<Props> = React.memo(props => {
     const {
         item,
         savedTargets,
+        frozen = false,
+        editableQuantity = false,
         onClose,
-        addNewTarget,
-        onChangeName,
-        onChangePrice,
-        onChangeQuantity,
-        onChangeTarget,
+        changeItem,
+        notifyNameChange,
+        notifyPriceChange,
+        notifyQuantityChange,
+        notifyTargetIdChange,
+        addNewTargetAndChangeItem,
     } = props;
     const classes = useStyles();
-    const menuState = React.useContext(MenuContext);
-    const itemTarget = savedTargets.find(target => target.id === item.targetId);
-    const menu = menuState[item.targetId];
-    const refItem = menu && menu.find(menuItem => menuItem.id === item.menuItemId);
+    const menuContext = React.useContext(MenuContext);
+    const dialogsContext = React.useContext(DialogsContext);
+    const [name, setName] = React.useState(item.name);
+    const [price, setPrice] = React.useState(item.price);
+    const [quantity, setQuantity] = React.useState(item.quantity);
+    const [targetId, setTargetId] = React.useState(item.targetId);
+    const [menuItemId, setMenuItemId] = React.useState(item.menuItemId);
+    const [pendingTargetId, setPendingTargetId] = React.useState<string | null>(null);
+
+    const itemId = item.id;
+    const itemTarget = React.useMemo(() => savedTargets.find(target => target.id === targetId), [savedTargets, targetId]);
+    const menu = menuContext[targetId];
+    const refItem = React.useMemo(() => menu && menu.find(menuItem => menuItem.id === menuItemId), [menu, menuItemId]);
+
+    const updateItem = React.useCallback(() => {
+        if (name === item.name && price === item.price && quantity === item.quantity && targetId === item.targetId && menuItemId === item.menuItemId) {
+            return;
+        }
+        changeItem && changeItem({
+            id: item.id,
+            name,
+            price,
+            quantity,
+            targetId,
+            ...( menuItemId ? { menuItemId } : undefined ),
+        });
+    }, [changeItem, item, name, price, quantity, targetId, menuItemId]);
+
+    useDefferedCall(defferedUpdateTimeout, updateItem);
 
     const targetOptions = savedTargets.map(target => ({
         key: target.id,
         displayValue: target.displayName,
     }));
 
-    const changeName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        if (onChangeName) {
-            onChangeName(e.target.value, item.id);
+    const onChangeName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        console.log('@ frozen: ', frozen);
+        console.log('@ refItem: ', refItem);
+        if (!frozen && !refItem) {
+            console.log('@ set name');
+            setName(e.target.value);
+            notifyNameChange && notifyNameChange(e.target.value, itemId);
         }
-    }, [item.id, onChangeName]);
+    }, [frozen, refItem, notifyNameChange, itemId]);
 
-    const changePrice = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        if (onChangePrice) {
-            const newValue = Number(e.target.value);
-            if (!Number.isNaN(newValue)) {
-                onChangePrice(newValue, item.id);
-            }
+    const onChangePrice = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const newPrice = Number(e.target.value);
+        if (!frozen && !refItem && !isNaN(newPrice) && newPrice >= 0) {
+            setPrice(newPrice);
+            notifyPriceChange && notifyPriceChange(newPrice, itemId);
         }
-    }, [item.id, onChangePrice]);
+    }, [frozen, refItem, notifyPriceChange, itemId]);
 
-    const changeQuantity = React.useCallback((value: number) => {
-        if (onChangeQuantity) {
-            onChangeQuantity(value, item.id);
+    const onChangeQuantity = React.useCallback((value: number) => {
+        if (!frozen || editableQuantity) {
+            setQuantity(value);
+            notifyQuantityChange && notifyQuantityChange(value, itemId);
         }
-    }, [item.id, onChangeQuantity]);
+    }, [frozen, editableQuantity, notifyQuantityChange, itemId]);
 
-    const changeTarget = React.useCallback((targetId: string) => {
-        if (onChangeTarget) {
+    const onChangeTargetId = React.useCallback((targetId: string) => {
+        if (!frozen) {
             const foundTarget = savedTargets.find(target => target.id === targetId);
             if (foundTarget) {
-                onChangeTarget(foundTarget.id, item.id);
+                if (foundTarget.isSystem) {
+                    setPendingTargetId(foundTarget.id);
+                } else {
+                    setTargetId(targetId);
+                    notifyTargetIdChange && notifyTargetIdChange(targetId, itemId);
+                }
             }
         }
-    }, [item.id, savedTargets, onChangeTarget]);
+    }, [frozen, savedTargets, notifyTargetIdChange, itemId]);
 
     const addNewTargetItem = React.useCallback((newTargetName: string) => {
-        if (addNewTarget && newTargetName) {
-            addNewTarget(newTargetName, item.id);
+        if (addNewTargetAndChangeItem && newTargetName) {
+            const newTargetId = randomId();
+            addNewTargetAndChangeItem(
+                {
+                    id: newTargetId,
+                    displayName: newTargetName,
+                    isSystem: false,
+                },
+                {
+                    id: itemId,
+                    name,
+                    price,
+                    quantity,
+                    targetId: newTargetId,
+                    ...( menuItemId ? { menuItemId } : undefined ),
+                },
+            );
+            setTargetId(newTargetId);
+            notifyTargetIdChange && notifyTargetIdChange(newTargetId, itemId);
         }
-    }, [item.id, addNewTarget]);
+    }, [addNewTargetAndChangeItem, notifyTargetIdChange, itemId, name, price, quantity, menuItemId]);
 
-    console.log(`### order item ${item.id} re-rendering`);
+    const selectTargetMenuItem = React.useCallback((targetId: string, newMenuItemId: string) => {
+        const menuItem = menuContext[targetId].find(menuItem => menuItem.id === newMenuItemId);
+        console.log('@ menuItem: ', menuItem);
+        if (menuItem) {
+            setName(menuItem.name);
+            setPrice(menuItem.price);
+            setQuantity(1);
+            setTargetId(targetId);
+            setMenuItemId(newMenuItemId);
+            setPendingTargetId(null);
+        }
+    }, [menuContext]);
+
+    const onCloseMenuDialog = React.useCallback(() => {
+        setPendingTargetId(null);
+    }, []);
+
+    React.useEffect(() => {
+        if (pendingTargetId) {
+            dialogsContext.setupDialog('selectMenuItem', {
+                open: pendingTargetId !== null,
+                targetId: [pendingTargetId],
+                onCloseDialog: onCloseMenuDialog,
+                selectTargetMenuItem,
+            });
+        } else {
+            dialogsContext.setupDialog(null, null);
+        }
+    }, [pendingTargetId, dialogsContext, onCloseMenuDialog, selectTargetMenuItem]);
+
+    console.log(`### order item ${itemId} re-rendering`);
 
     return (
         <Card variant="outlined" className={classes.card} elevation={3}>
@@ -180,7 +273,7 @@ export const OrderItemCard: React.FC<Props> = props => {
                         },
                     )}
                     image={(refItem && refItem.imageUrl) || foodPlaceholder}
-                    title={item.name}
+                    title={name}
                 />
                 {refItem && itemTarget && (
                     <div className={cn(classes.badge, classes.refBadge)}>
@@ -197,52 +290,50 @@ export const OrderItemCard: React.FC<Props> = props => {
                 <TextField
                     label="Dish name"
                     variant="filled"
-                    value={item.name}
-                    onChange={changeName}
+                    value={name}
+                    onChange={onChangeName}
                     multiline={true}
                     size="small"
                     className={classes.input}
-                    inputProps={(onChangeName && !refItem) ? undefined : { readOnly: true }}
+                    inputProps={(frozen || refItem) ? readonlyProps : undefined}
                 />
                 <TextField
                     label="Price, ₽"
                     variant="filled"
-                    value={item.price || ''}
-                    onChange={changePrice}
+                    value={price || ''}
+                    onChange={onChangePrice}
                     size="small"
                     className={classes.input}
-                    inputProps={(onChangePrice && !refItem) ? undefined : { readOnly: true }}
+                    inputProps={(frozen || refItem) ? readonlyProps : undefined}
                 />
                 <NumberTextField
                     label="Quantity"
                     variant="filled"
                     size="small"
                     min={1}
-                    value={item.quantity}
-                    onChange={changeQuantity}
+                    value={quantity}
+                    onChange={onChangeQuantity}
                     className={classes.input}
-                    inputProps={onChangeQuantity ? undefined : { readOnly: true }}
+                    inputProps={(frozen && !editableQuantity) ? readonlyProps : undefined}
                 />
-                {onChangeTarget
+                {frozen
                     ? (
-                        <FreeSelect
-                            label="From"
-                            options={targetOptions}
-                            value={item.targetId}
-                            onChange={changeTarget}
-                            className={classes.input}
-                            addNewItem={addNewTargetItem}
-                        />
-                    ) : (
                         <TextField
                             label="From"
                             variant="filled"
                             value={itemTarget ? itemTarget.displayName : ''}
                             size="small"
                             className={classes.input}
-                            inputProps={{
-                                readOnly: true,
-                            }}
+                            inputProps={readonlyProps}
+                        />
+                    ) : (
+                        <FreeSelect
+                            label="From"
+                            options={targetOptions}
+                            value={targetId}
+                            onChange={onChangeTargetId}
+                            className={classes.input}
+                            addNewItem={addNewTargetItem}
                         />
                     )
                 }
@@ -251,7 +342,7 @@ export const OrderItemCard: React.FC<Props> = props => {
             {onClose && (
                 <div className={classes.closeIcon}>
                     <Tooltip title="Delete item" aria-label="Delete item">
-                        <IconButton onClick={() => onClose(item.id)} size="small">
+                        <IconButton onClick={() => onClose(itemId)} size="small">
                             <CloseIcon />
                         </IconButton>
                     </Tooltip>
@@ -259,4 +350,10 @@ export const OrderItemCard: React.FC<Props> = props => {
             )}
         </Card>
     );
-};
+}, function propsAreEqual(prevProps, nextProps) {
+    return (
+        prevProps.item.id === nextProps.item.id &&
+        prevProps.editableQuantity !== nextProps.editableQuantity &&
+        isEqual(prevProps.savedTargets.map(target => target.id), nextProps.savedTargets.map(target => target.id))
+    );
+});

@@ -3,6 +3,7 @@ import { AuthAuthProvider } from './providers/AutoAuthProvider';
 import { MenuProvider } from './providers/MenuProvider';
 import { ConfigStateProvider } from './providers/ConfigStateProvider';
 import { DateForProvider } from './providers/DateForProvider';
+import { DialogsProvider } from './providers/DialogsProvider';
 import { Main } from './Main';
 
 export const App: React.FC = () => {
@@ -11,7 +12,9 @@ export const App: React.FC = () => {
             <DateForProvider>
                 <MenuProvider>
                     <ConfigStateProvider>
-                        <Main />
+                        <DialogsProvider>
+                            <Main />
+                        </DialogsProvider>
                     </ConfigStateProvider>
                 </MenuProvider>
             </DateForProvider>

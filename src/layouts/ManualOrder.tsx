@@ -237,9 +237,10 @@ export const ManualOrder: React.FC = () => {
     const deleteItem = React.useCallback((itemId: string) => {
         const delIndex = getI(items, itemId);
         if (delIndex !== -1) {
-            setItems(produce(items, state => {
+            const newItems = produce(items, state => {
                 state.splice(delIndex, 1);
-            }));
+            });
+            setItems(newItems);
         }
     }, [items]);
 
@@ -300,9 +301,11 @@ export const ManualOrder: React.FC = () => {
         return items.map(item => (
             <Grid item key={item.id}>
                 <OrderItemCard
+                    frozen
                     item={item}
                     savedTargets={configState.state.savedTargets}
-                    onChangeQuantity={selectedPreset ? undefined : changeQuantity}
+                    notifyQuantityChange={selectedPreset ? undefined : changeQuantity}
+                    editableQuantity={selectedPreset ? false : true}
                     onClose={selectedPreset ? undefined : deleteItem}
                 />
             </Grid>

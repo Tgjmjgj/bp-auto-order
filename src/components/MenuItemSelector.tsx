@@ -26,7 +26,7 @@ import { AnyMenuItem } from '../../types/autoOrderMenus';
 
 type Props = {
     items: AnyMenuItem[]
-    selectItem: (itemId: string) => void
+    selectItem: (targetId: string, itemId: string) => void
     selectedItems?: string[]
 };
 
@@ -188,7 +188,7 @@ export const MenuItemSelector: React.FC<Props> = (props) => {
                     { [classes.listItemUnavailable]: !item.enabled },
                 )}
                 selected={selectedItems && selectedItems.includes(item.id)}
-                onClick={() => selectItem(item.id)}
+                onClick={() => selectItem(item.targetId, item.id)}
             >
                 <ListItemAvatar>
                     <Avatar
