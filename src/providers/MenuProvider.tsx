@@ -1,9 +1,10 @@
 import React from 'react';
 import 'firebase/firestore';
+import produce from 'immer';
 
 import { getUpdatedMenu } from '../service/functions';
 import { AutoAuthContext } from './AutoAuthProvider';
-import { defaultConfigState } from './ConfigStateProvider';
+import { ConfigStateContext, defaultConfigState, pseudoIdPrefix } from './ConfigStateProvider';
 import { UpdatedMenu } from '../../types/autoOrderMenus';
 import { DateForContext } from './DateForProvider';
 
@@ -19,8 +20,10 @@ export const MenuContext = React.createContext<AllMenus>(defaultMenus);
 export const MenuProvider: React.FC = ({ children }) => {
 
     const authContext = React.useContext(AutoAuthContext);
+    const configState = React.useContext(ConfigStateContext);
     const { dateFor } = React.useContext(DateForContext);
     const [menusState, setMenusState] = React.useState<AllMenus>(defaultMenus);
+    const checkedMenuTargetsRef = React.useRef<string[]>([]);
 
     React.useEffect(() => {
         if (authContext.uid) {
@@ -35,6 +38,36 @@ export const MenuProvider: React.FC = ({ children }) => {
             });
         }
     }, [authContext.uid, dateFor]);
+
+    // fix item keys from default random config
+    React.useEffect(() => {
+        const targetKeys = Object.keys(menusState);
+        targetKeys.forEach(target => {
+            if (!checkedMenuTargetsRef.current.includes(target)) {
+                const targetMenu = menusState[target];
+                if (targetMenu.length) {
+                    configState.updateState(produce(configState.state, state => {
+                        state.randomConfigs.forEach(rndCfg => {
+                            const targetCfg = rndCfg.config.targetsData[target];
+                            if (targetCfg) {
+                                Object.entries(targetCfg.items).forEach(([itemKey, itemCfg]) => {
+                                    if (itemKey.startsWith(pseudoIdPrefix)) {
+                                        const itemName = itemKey.slice(pseudoIdPrefix.length);
+                                        const menuItem = targetMenu.find(item => item.name === itemName);
+                                        if (menuItem) {
+                                            delete targetCfg.items[itemKey];
+                                            targetCfg.items[menuItem.id] = itemCfg;
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }));
+                    checkedMenuTargetsRef.current.push(target);
+                }
+            }
+        });
+    }, [menusState, configState, checkedMenuTargetsRef]);
 
     return (
         <MenuContext.Provider value={ menusState }>

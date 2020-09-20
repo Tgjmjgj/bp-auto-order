@@ -17,6 +17,7 @@ import { useDefferedCall } from '../hooks/useDefferedCall';
 import { NumberTextField } from './NumberTextField';
 import { FreeSelect } from './FreeSelect'
 import { randomId } from '../utils';
+import { SelectedMenuItem } from './ItemsSubsetList';
 import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
 
 import foodPlaceholder from '../images/food-placeholder.png';
@@ -229,35 +230,35 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
         }
     }, [addNewTargetAndChangeItem, notifyTargetIdChange, itemId, name, price, quantity, menuItemId]);
 
-    const selectTargetMenuItem = React.useCallback((targetId: string, newMenuItemId: string) => {
-        const menuItem = menuContext[targetId].find(menuItem => menuItem.id === newMenuItemId);
-        console.log('@ menuItem: ', menuItem);
-        if (menuItem) {
-            setName(menuItem.name);
-            setPrice(menuItem.price);
-            setQuantity(1);
-            setTargetId(targetId);
-            setMenuItemId(newMenuItemId);
-            setPendingTargetId(null);
+    const onCloseMenuDialog = React.useCallback((selection: SelectedMenuItem[]) => {
+        if (selection.length) {
+            const menuItem = menuContext[targetId].find(menuItem => menuItem.id === selection[0].id);
+            console.log('@ select menuItem: ', menuItem);
+            if (menuItem) {
+                setName(menuItem.name);
+                setPrice(menuItem.price);
+                setQuantity(1);
+                setTargetId(targetId);
+                setMenuItemId(selection[0].id);
+                setPendingTargetId(null);
+            }
         }
-    }, [menuContext]);
-
-    const onCloseMenuDialog = React.useCallback(() => {
         setPendingTargetId(null);
-    }, []);
+    }, [menuContext, targetId]);
 
     React.useEffect(() => {
         if (pendingTargetId) {
             dialogsContext.setupDialog('selectMenuItem', {
                 open: pendingTargetId !== null,
-                targetId: [pendingTargetId],
+                variant: 'items',
+                targetsId: [ pendingTargetId ],
+                singleItem: true,
                 onCloseDialog: onCloseMenuDialog,
-                selectTargetMenuItem,
             });
         } else {
             dialogsContext.setupDialog(null, null);
         }
-    }, [pendingTargetId, dialogsContext, onCloseMenuDialog, selectTargetMenuItem]);
+    }, [pendingTargetId, dialogsContext, onCloseMenuDialog]);
 
     console.log(`### order item ${itemId} re-rendering`);
 

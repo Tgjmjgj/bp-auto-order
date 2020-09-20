@@ -51,14 +51,14 @@ export type RandomConfigData = {
     selectFromTargets: string[]
     targetsData: Record<string, {
         categories: Record<string, {
-            weight: number
-            maxItems: number
-            minItems: number
+            weight?: number
+            maxItems?: number
+            minItems?: number
         }>
         items: Record<string, {
-            weight: number
-            maxItems: number
-            minItems: number
+            weight?: number
+            maxItems?: number
+            minItems?: number
         }>
     }>
 };

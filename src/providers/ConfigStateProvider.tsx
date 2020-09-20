@@ -35,6 +35,8 @@ const defaultPreset = {
     ],
 };
 
+export const pseudoIdPrefix = 'pseudoid_';
+
 const defaultRandomConfig: RandomOrderConfig = {
     id: randomId(),
     name: 'Default Config',
@@ -42,7 +44,7 @@ const defaultRandomConfig: RandomOrderConfig = {
         total: {
             cost: { min: 270, mid: 300, max: 330 },
             minItems: 1,
-            maxItems: 5,
+            maxItems: 10,
         },
         selectFromTargets: [ defaultKumirTarget.id ],
         targetsData: {
@@ -56,13 +58,13 @@ const defaultRandomConfig: RandomOrderConfig = {
                     'Напитки': { weight: 0, minItems: 0, maxItems: 0 },
                 },
                 items: {
-                    '"Бульон мясной с сухариками" (300/25г)': { weight: 0, minItems: 0, maxItems: 0 },
-                    '"Сладкий Орешек" (240г)': { weight: 0, minItems: 0, maxItems: 0 },
-                    '"Сырник Шоколад" (220г)': { weight: 0, minItems: 0, maxItems: 0 },
-                    'Каша рисовая с яблоками и ванилью (250г)': { weight: 0, minItems: 0, maxItems: 0 },
-                    'Смузи клубнично-банановый (300г)': { weight: 0, minItems: 0, maxItems: 0, },
-                    'Хлебцы ржаные (100г)': { weight: 0, minItems: 0, maxItems: 0 },
-                    'Блинчики с мёдом (3/40/30г)': { weight: 0, minItems: 0, maxItems: 0 },
+                    [pseudoIdPrefix + '"Бульон мясной с сухариками" (300/25г)']: { weight: 0, minItems: 0, maxItems: 0 },
+                    [pseudoIdPrefix + '"Сладкий Орешек" (240г)']: { weight: 0, minItems: 0, maxItems: 0 },
+                    [pseudoIdPrefix + '"Сырник Шоколад" (220г)']: { weight: 0, minItems: 0, maxItems: 0 },
+                    [pseudoIdPrefix + 'Каша рисовая с яблоками и ванилью (250г)']: { weight: 0, minItems: 0, maxItems: 0 },
+                    [pseudoIdPrefix + 'Смузи клубнично-банановый (300г)']: { weight: 0, minItems: 0, maxItems: 0 },
+                    [pseudoIdPrefix + 'Хлебцы ржаные (100г)']: { weight: 0, minItems: 0, maxItems: 0 },
+                    [pseudoIdPrefix + 'Блинчики с мёдом (3/40/30г)']: { weight: 0, minItems: 0, maxItems: 0 },
                 },
             },
         },

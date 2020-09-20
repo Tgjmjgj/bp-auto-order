@@ -10,13 +10,13 @@ export const App: React.FC = () => {
     return (
         <AuthAuthProvider>
             <DateForProvider>
-                <MenuProvider>
-                    <ConfigStateProvider>
+                <ConfigStateProvider>
+                    <MenuProvider>
                         <DialogsProvider>
                             <Main />
                         </DialogsProvider>
-                    </ConfigStateProvider>
-                </MenuProvider>
+                    </MenuProvider>
+                </ConfigStateProvider>
             </DateForProvider>
         </AuthAuthProvider>
     );
