@@ -36,6 +36,7 @@ type Props = {
 
 const targetAvatar: Record<string, string> = {
     'kumir': 'K',
+    'namnym': 'H',
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -56,6 +57,10 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         kumir: {
             backgroundColor: '#7bb21f',
+            color: '#fff',
+        },
+        namnym: {
+            backgroundColor: '#ffad01',
             color: '#fff',
         },
         listItemText: {
@@ -125,7 +130,8 @@ export const ItemsSubsetList: React.FC<Props> = props => {
 
     const targetClasses = React.useMemo<Record<string, string>>(() => ({
         'kumir': classes.kumir,
-    }), [classes.kumir]);
+        'namnym': classes.namnym,
+    }), [classes.kumir, classes.namnym]);
 
     const renderListItem = React.useCallback((props: ListChildComponentProps) => {
         const item = props.data[props.index] as SelectedMenuItem;

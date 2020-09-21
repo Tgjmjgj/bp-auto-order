@@ -6,7 +6,6 @@ import { firestore } from './firebase';
 import { placeOrder } from './placeOrder';
 import { randomizeItems } from './randomizeItems';
 import { getAllUpdatedMenus } from './getUpdatedMenu';
-import { defaultRandomConfigData } from './defaults';
 import { log } from './utils';
 
 import { ConfigState } from '../../types/autoOrderConfigs';
@@ -27,18 +26,23 @@ export const scheduledPlacement = async () => {
                 let result: number | null = null;
                 if (data.mode === 'random') {
                     try {
-                        const items = await randomizeItems(targetMenus, defaultRandomConfigData);
-                        if (items) {
-                            result = await placeOrder(entry.id, {
-                                spreadsheetId: data.spreadsheetId,
-                                forDate: tomorrow,
-                                systemName: data.systemName,
-                                customName: data.customName,
-                                targets: data.savedTargets,
-                                overwrite: data.overwriteAlways,
-                                allowMultiple: data.allowMultipleOrders,
-                                items,
-                            });
+                        const userRndConfig = data.randomConfigs.find(cfg => cfg.id === data.selectedConfig);
+                        if (userRndConfig) {
+                            const items = await randomizeItems(targetMenus, userRndConfig.config);
+                            if (items) {
+                                result = await placeOrder(entry.id, {
+                                    spreadsheetId: data.spreadsheetId,
+                                    forDate: tomorrow,
+                                    systemName: data.systemName,
+                                    customName: data.customName,
+                                    targets: data.savedTargets,
+                                    overwrite: data.overwriteAlways,
+                                    allowMultiple: data.allowMultipleOrders,
+                                    items,
+                                });
+                            }
+                        } else {
+                            console.error(`User ${entry.id} has no selected random config!`);
                         }
                     } catch { }
                 }

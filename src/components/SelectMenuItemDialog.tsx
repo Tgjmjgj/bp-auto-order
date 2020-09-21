@@ -158,6 +158,10 @@ const useStyles = makeStyles((theme: Theme) =>
             backgroundColor: '#7bb21f',
             color: '#fff',
         },
+        namnym: {
+            backgroundColor: '#ffad01',
+            color: '#fff',
+        },
         unavailableChip: {
             display: 'inline-block',
             marginLeft: theme.spacing(2),
@@ -279,7 +283,8 @@ export const SelectMenuItemDialog: React.FC<SelectMenuItemDialogProps> = (props)
 
     const targetClasses = React.useMemo<Record<string, string>>(() => ({
         'kumir': classes.kumir,
-    }), [classes.kumir]);
+        'namnym': classes.namnym,
+    }), [classes.kumir, classes.namnym]);
 
     const renderListItem = React.useCallback((props: ListChildComponentProps) => {
         const item = props.data[props.index] as MenuSelectorItemData;

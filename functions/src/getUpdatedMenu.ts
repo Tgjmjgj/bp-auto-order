@@ -2,13 +2,15 @@ import { DateTime } from 'luxon';
 
 import { firestore } from './firebase';
 import { scrapKumirMenu } from './scrappers/scrapKumirMenu';
+import { scrapNamNymMenu } from './scrappers/scrapNamNymMenu';
 import { randomId, log, throwError } from './utils';
 import { UpdatedMenu, MenuItem, MenuItemsTable, ScrapedMenu } from '../../types/autoOrderMenus';
 
-const menuTargets = [ 'kumir' ];
+const menuTargets = [ 'kumir', 'namnym' ];
 
 const targetScrappers: Record<string, (date: string) => Promise<ScrapedMenu>> = {
     'kumir': scrapKumirMenu,
+    'namnym': scrapNamNymMenu,
 };
 
 const checkDate = (forDateEnUS: string) => {

@@ -15,6 +15,7 @@ export const scrapKumirMenu = async (enUsDate: string): Promise<ScrapedMenu> => 
         const formattedDate = DateTime.fromFormat(enUsDate, 'dd/MM/yyyy').toFormat('dd-MM-yyyy');
         const response = await got(kumirMenuUrl + formattedDate);
         const $ = cheerio.load(response.body);
+
         const menu: ScrapedMenu = flatten($('.table-menu-items tbody').map((i1, el1) => {
             const category = $(el1).find('tr:first-child > td').text().trim()
             return $(el1).find('tr:not(:first-child) > td').map((i2, el2): ScrapedMenuItem => {
@@ -28,6 +29,7 @@ export const scrapKumirMenu = async (enUsDate: string): Promise<ScrapedMenu> => 
                 };
             }).get();
         }).get());
+
         return menu;
     } catch (e) {
         throwError('unavailable', 'Error while scrapping KuMir menu',e);

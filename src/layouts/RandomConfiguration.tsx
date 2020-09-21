@@ -157,7 +157,10 @@ export const RandomConfiguration: React.FC = () => {
                     const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
                     if (selectedCfg) {
                         // remove all blacklist items
-                        Object.values(selectedCfg.config.targetsData).forEach(targetCfg => {
+                        Object.entries(selectedCfg.config.targetsData).forEach(([targetId, targetCfg]) => {
+                            if (!config.config.selectFromTargets.includes(targetId)) {
+                                return;
+                            }
                             Object.entries(targetCfg[variant]).forEach(([key, itemsCfg]) => {
                                 if (variant === 'items' && key.startsWith(pseudoIdPrefix)) {
                                     return;

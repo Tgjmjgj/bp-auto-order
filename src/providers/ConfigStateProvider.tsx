@@ -26,6 +26,7 @@ export type LocalConfigState = ConfigState & {
 
 const defaultKumirTarget = { id: 'kumir', displayName: 'Ку-мир', isSystem: true };
 const defaultChanakhiTarget = { id: 'chanakhi', displayName: 'Чанахи', isSystem: false };
+const defaultNamNymTarget = { id: 'namnym', displayName: 'Нам-ням', isSystem: true };
 
 const defaultPreset = {
     id: randomId(),
@@ -79,7 +80,7 @@ export const defaultConfigState: LocalConfigState = {
     mode: 'preset',
     selectedPresets: [ defaultPreset.id ],
     presets: [ defaultPreset ],
-    savedTargets: [ defaultKumirTarget, defaultChanakhiTarget ],
+    savedTargets: [ defaultKumirTarget, defaultChanakhiTarget, defaultNamNymTarget ],
     randomConfigs: [ defaultRandomConfig ],
     selectedConfig: defaultRandomConfig.id,
     overwriteAlways: false,
