@@ -68,6 +68,10 @@ const defaultRandomConfig: RandomOrderConfig = {
                     [pseudoIdPrefix + 'Блинчики с мёдом (3/40/30г)']: { weight: 0, minItems: 0, maxItems: 0 },
                 },
             },
+            [defaultNamNymTarget.id]: {
+                categories: {},
+                items: {},
+            },
         },
     },
 };

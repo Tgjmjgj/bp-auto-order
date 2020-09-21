@@ -6,7 +6,7 @@ import got from 'got';
 import { log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
-const namNymBaseUrl = 'https://www.nam-nyam.ru/';
+const namNymBaseUrl = 'https://www.nam-nyam.ru';
 const namNymMenuUrl = namNymBaseUrl + '/catering/?curDay=';
 
 export const scrapNamNymMenu = async (enUsDate: string): Promise<ScrapedMenu> => {
@@ -35,12 +35,12 @@ export const scrapNamNymMenu = async (enUsDate: string): Promise<ScrapedMenu> =>
                 const imageUrl = $(el2).find('meta[itemprop="image"]').attr("content")!.trim();
                 const description = $(el2).find('meta[itemprop="description"]').attr("content")!.trim();
                 const weight = $(el2).find('a[title] .catering_item_weight').text().trim();
-                const priceStr = $(el2).find('.catering_item_price > span.price').attr("content")!.trim();
+                const priceStr = $(el2).find('.catering_item_price > span.price').text().trim();
                 return {
                     name: $(el2).find('meta[itemprop="name"]').attr("content")!.trim(),
                     additional: weight + '. Состав: ' + description,
                     price: Number(priceStr.slice(0, priceStr.length - ' руб.'.length)),
-                    imageUrl: imageUrl ? namNymMenuUrl + imageUrl : null,
+                    imageUrl: imageUrl ? namNymBaseUrl + imageUrl : null,
                     category,
                 };
             }).get();
@@ -49,7 +49,7 @@ export const scrapNamNymMenu = async (enUsDate: string): Promise<ScrapedMenu> =>
 
         return menu;
     } catch (e) {
-        throwError('unavailable', 'Error while scrapping NamNym menu',e);
+        throwError('unavailable', 'Error while scrapping NamNym menu', e);
     }
     return [];
 };

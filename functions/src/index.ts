@@ -11,7 +11,7 @@ process.env.APIFY_MEMORY_MBYTES = '256';
 export const placeOrder = functions.region('europe-west1').https.onCall(async (data, context) => await placeOrderFn(get(context, 'auth.uid'), data));
 
 export const getRandomOrder = functions.region('europe-west1').https.onCall(async (data, context) => 
-    await getRandomOrderFn(get(context, 'auth.id'), data.target, data.date, data.items),
+    await getRandomOrderFn(get(context, 'auth.uid'), data.target, data.date, data.items),
 );
 
 export const getUpdatedMenu = functions.region('europe-west1').https.onCall(async (data, context) => await getUpdatedMenuFn(data.target, data.date));

@@ -10,12 +10,21 @@ import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import TextField from '@material-ui/core/TextField';
+import Chip from '@material-ui/core/Chip';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import { ConfigStateContext, pseudoIdPrefix } from '../providers/ConfigStateProvider';
 import { MenuContext } from '../providers/MenuProvider';
 import { ThreeValuesSlider } from '../components/ThreeValueSlider';
 import { NumberTextField } from '../components/NumberTextField';
 import { ItemsSubsetList, SelectedMenuItem } from '../components/ItemsSubsetList';
+import { getI } from '../utils';
+
+type TargetOption = {
+    value: string
+    key: string
+};
 
 const defaultItemConfig = {
     weight: 1,
@@ -39,6 +48,9 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         label: {
             marginRight: 20,
+        },
+        selectedTargets: {
+            minWidth: 300,
         },
         costSlider: {
             marginTop: theme.spacing(4),
@@ -85,6 +97,23 @@ export const RandomConfiguration: React.FC = () => {
         });
     }, [configState]);
 
+    const targetsOptions = React.useMemo<TargetOption[]>(() => {
+        return configState.state.savedTargets
+        .filter(target => target.isSystem)
+        .map(target => ({
+            value: target.displayName,
+            key: target.id,
+        }));
+    }, [configState]);
+
+    const selectedTargetOptions = React.useMemo<TargetOption[]>(() => {
+        if (!config) {
+            return [];
+        }
+        return config.config.selectFromTargets
+        .map(targetId => targetsOptions.find(option => option.key === targetId)!);
+    }, [config, targetsOptions]);
+
     const onChangeTotalMinItems = React.useCallback((value: number) => {
         if (config) {
             configState.updateState(produce(configState.state, state => {
@@ -93,6 +122,17 @@ export const RandomConfiguration: React.FC = () => {
             }));
         }
     }, [configState, config]);
+
+    const onSelectedTargetsChange = React.useCallback((e: React.ChangeEvent<{}>, value: TargetOption[]) => {
+        if (value.length) {
+            const configIndex = getI(configState.state.randomConfigs, configState.state.selectedConfig);
+            if (configIndex !== -1) {
+                configState.updateState(produce(configState.state, state => {
+                    state.randomConfigs[configIndex].config.selectFromTargets = value.map(option => option.key);
+                }));
+            }
+        }
+    }, [configState]);
 
     const onChangeTotalMaxItems = React.useCallback((value: number) => {
         if (config) {
@@ -220,6 +260,37 @@ export const RandomConfiguration: React.FC = () => {
             <Divider />
             {config && (
                 <>
+                    <Grid item className={classes.gridRow}>
+                        <Typography className={classes.label}>
+                            Mix from these menus:
+                        </Typography>
+                        <Autocomplete
+                            multiple
+                            disableClearable={true}
+                            value={selectedTargetOptions}
+                            onChange={onSelectedTargetsChange}
+                            className={classes.selectedTargets}
+                            options={targetsOptions}
+                            getOptionLabel={preset => preset.value}
+                            getOptionSelected={(opt1, opt2) => opt1.key === opt2.key}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="standard"
+                                    placeholder="Menus"
+                                />
+                            )}
+                            renderTags={(options, getTagProps) =>
+                                options.map((option, i) => (
+                                    <Chip
+                                        label={option.value}
+                                        {...getTagProps({ index: i })}
+                                        {...(options.length > 1 ? undefined : { onDelete: undefined })}
+                                    />
+                                ))
+                            }
+                        />
+                    </Grid>
                     <Grid item>
                         <ThreeValuesSlider
                             className={classes.costSlider}

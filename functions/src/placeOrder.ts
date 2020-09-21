@@ -23,6 +23,7 @@ const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): P
         let foundRow = 0;
         const sheetData = await api.spreadsheets.get({ spreadsheetId });
         const maxRow = get(sheetData, 'data.sheets[0].properties.gridProperties.rowCount');
+        console.log('@maxRow: ', maxRow);
         const range = `D${maxRow - bulkSize}:D${maxRow}`;
         const {data} = await api.spreadsheets.get({
             spreadsheetId,
@@ -52,7 +53,7 @@ const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): P
         } else {
             throwError('not-found', `Cannot find spreadsheet pages in the document with id ${spreadsheetId}`);
         }
-
+        console.log('@founRow iter1: ', foundRow);
         const packSize = 5;
         let rowShift = 0;
         do {
