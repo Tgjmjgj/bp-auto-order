@@ -2,11 +2,12 @@ import React from 'react';
 import 'firebase/firestore';
 import produce from 'immer';
 
-import { getUpdatedMenu } from '../service/functions';
 import { AutoAuthContext } from './AutoAuthProvider';
-import { ConfigStateContext, defaultConfigState, pseudoIdPrefix } from './ConfigStateProvider';
-import { UpdatedMenu } from '../../types/autoOrderMenus';
+import { ConfigStateContext } from './ConfigStateProvider';
 import { DateForContext } from './DateForProvider';
+import { getUpdatedMenu } from '../service/functions';
+import { defaultConfigState, pseudoIdPrefix } from '../initData'
+import { UpdatedMenu } from '../../types/autoOrderMenus';
 
 type AllMenus = Record<string, UpdatedMenu>;
 

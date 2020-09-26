@@ -65,7 +65,7 @@ const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): P
             iter++;
         } while (fromRow !== 1 && !foundRow);
 
-        console.log('@founRow iter1: ', foundRow);
+        console.log('@foundRow iter1: ', foundRow);
         const packSize = 5;
         let rowShift = 0;
         do {

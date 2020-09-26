@@ -14,11 +14,12 @@ import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-import { ConfigStateContext, pseudoIdPrefix } from '../providers/ConfigStateProvider';
+import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { MenuContext } from '../providers/MenuProvider';
 import { ThreeValuesSlider } from '../components/ThreeValueSlider';
 import { NumberTextField } from '../components/NumberTextField';
 import { ItemsSubsetList, SelectedMenuItem } from '../components/ItemsSubsetList';
+import { pseudoIdPrefix } from '../initData'
 import { getI } from '../utils';
 
 type TargetOption = {
