@@ -23,7 +23,7 @@ export type SelectedMenuItem = {
     name: string
     targetId: string
     secondary?: string
-}
+};
 
 type Props = {
     variant: 'categories' | 'items'
@@ -155,7 +155,7 @@ export const ItemsSubsetList: React.FC<Props> = props => {
                     className={classes.listItemText}
                 />
                 <div className={classes.removeButtonContainer}>
-                    <Tooltip title="Remove" aria-label="Remove">
+                    <Tooltip arrow placement="right" title="Remove" aria-label="Remove">
                         <IconButton edge="end" size="small" onClick={() => removeItem(item)}>
                             <RemoveIcon />
                         </IconButton>
@@ -178,7 +178,12 @@ export const ItemsSubsetList: React.FC<Props> = props => {
                 <Typography variant="h6" className={classes.listTitle}>
                     {title}
                 </Typography>
-                <Tooltip placement="right" title="Edit blacklist" aria-label="Edit blacklist">
+                <Tooltip
+                    arrow
+                    placement="right"
+                    title="Edit blacklist"
+                    aria-label="Edit blacklist"
+                >
                     <IconButton onClick={editList}>
                         <EditIcon />
                     </IconButton>

@@ -19,7 +19,8 @@ import { MenuContext } from '../providers/MenuProvider';
 import { ThreeValuesSlider } from '../components/ThreeValueSlider';
 import { NumberTextField } from '../components/NumberTextField';
 import { ItemsSubsetList, SelectedMenuItem } from '../components/ItemsSubsetList';
-import { pseudoIdPrefix } from '../initData'
+import { IndividualItemConfig, ItemConfig } from '../components/IndividualItemConfig';
+import { defaultMenuItemConfig, pseudoIdPrefix } from '../initData'
 import { getI } from '../utils';
 
 type TargetOption = {
@@ -116,134 +117,185 @@ export const RandomConfiguration: React.FC = () => {
     }, [config, targetsOptions]);
 
     const onChangeTotalMinItems = React.useCallback((value: number) => {
-        if (config) {
-            configState.updateState(produce(configState.state, state => {
-                const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
-                selectedCfg.config.total.minItems = value;
-            }));
+        if (!config) {
+            return;
         }
+        configState.updateState(produce(configState.state, state => {
+            const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
+            selectedCfg.config.total.minItems = value;
+        }));
     }, [configState, config]);
 
     const onSelectedTargetsChange = React.useCallback((e: React.ChangeEvent<{}>, value: TargetOption[]) => {
-        if (value.length) {
-            const configIndex = getI(configState.state.randomConfigs, configState.state.selectedConfig);
-            if (configIndex !== -1) {
-                configState.updateState(produce(configState.state, state => {
-                    state.randomConfigs[configIndex].config.selectFromTargets = value.map(option => option.key);
-                }));
-            }
+        if (!value.length) {
+            return;
+        }
+        const configIndex = getI(configState.state.randomConfigs, configState.state.selectedConfig);
+        if (configIndex !== -1) {
+            configState.updateState(produce(configState.state, state => {
+                state.randomConfigs[configIndex].config.selectFromTargets = value.map(option => option.key);
+            }));
         }
     }, [configState]);
 
     const onChangeTotalMaxItems = React.useCallback((value: number) => {
-        if (config) {
-            configState.updateState(produce(configState.state, state => {
-                const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
-                selectedCfg.config.total.maxItems = value;
-            }));
+        if (!config) {
+            return;
         }
+        configState.updateState(produce(configState.state, state => {
+            const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
+            selectedCfg.config.total.maxItems = value;
+        }));
     }, [configState, config]);
 
     const configCategoriesBlacklist = React.useMemo(() => {
-        if (config) {
-            return config.config.selectFromTargets.reduce<SelectedMenuItem[]>((all, targetId) => {
-                const targetCategories = config.config.targetsData[targetId].categories;
-                all.push(
-                    ...Object.entries(targetCategories)
-                    .filter(([categoryName, categoryConfig]) => {
-                        return categoryConfig.maxItems === 0 || categoryConfig.weight === 0;
-                    }).map<SelectedMenuItem>(([categoryName]) => ({
-                        id: `${targetId}_${categoryName}`,
-                        name: categoryName,
-                        targetId,
-                    })),
-                );
-                return all;
-            }, []);
+        if (!config) {
+            return [];
         }
-        return [];
+        return config.config.selectFromTargets.reduce<SelectedMenuItem[]>((all, targetId) => {
+            const targetCategories = config.config.targetsData[targetId].categories;
+            all.push(
+                ...Object.entries(targetCategories)
+                .filter(([categoryName, categoryConfig]) => {
+                    return categoryConfig.maxItems === 0 || categoryConfig.weight === 0;
+                }).map<SelectedMenuItem>(([categoryName]) => ({
+                    id: `${targetId}_${categoryName}`,
+                    name: categoryName,
+                    targetId,
+                })),
+            );
+            return all;
+        }, []);
     }, [config]);
 
     const configItemsBlacklist = React.useMemo(() => {
-        if (config) {
-            return config.config.selectFromTargets.reduce<SelectedMenuItem[]>((all, targetId) => {
-                const targetItems = config.config.targetsData[targetId].items;
-                const targetMenu = menuState[targetId];
-                if (targetMenu && targetMenu.length) {
-                    all.push(
-                        ...Object.entries(targetItems)
-                        .filter(([itemId, itemConfig]) => {
-                            return (itemConfig.maxItems === 0 || itemConfig.weight === 0) && !itemId.startsWith(pseudoIdPrefix);
-                        }).map<SelectedMenuItem>(([itemId]) => {
-                            const menuItem = targetMenu.find(item => item.id === itemId);
-                            return {
-                                id: itemId,
-                                name: menuItem ? menuItem.name : '',
-                                // secondary: menuItem ? menuItem.category : '',
-                                targetId,
-                            };
-                        }),
-                    );
-                }
-                return all;
-            }, []);
+        if (!config) {
+            return [];
         }
-        return [];
+        return config.config.selectFromTargets.reduce<SelectedMenuItem[]>((all, targetId) => {
+            const targetItems = config.config.targetsData[targetId].items;
+            const targetMenu = menuState[targetId];
+            if (targetMenu && targetMenu.length) {
+                all.push(
+                    ...Object.entries(targetItems)
+                    .filter(([itemId, itemConfig]) => {
+                        return (itemConfig.maxItems === 0 || itemConfig.weight === 0) && !itemId.startsWith(pseudoIdPrefix);
+                    }).map<SelectedMenuItem>(([itemId]) => {
+                        const menuItem = targetMenu.find(item => item.id === itemId);
+                        return {
+                            id: itemId,
+                            name: menuItem ? menuItem.name : '',
+                            // secondary: menuItem ? menuItem.category : '',
+                            targetId,
+                        };
+                    }),
+                );
+            }
+            return all;
+        }, []);
     }, [config, menuState]);
 
     const blacklistSetterBuilder = React.useCallback((variant: 'categories' | 'items') => {
         return (selection: SelectedMenuItem[]) => {
-            if (config) {
-                configState.updateState(produce(configState.state, state => {
-                    const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
-                    if (selectedCfg) {
-                        // remove all blacklist items
-                        Object.entries(selectedCfg.config.targetsData).forEach(([targetId, targetCfg]) => {
-                            if (!config.config.selectFromTargets.includes(targetId)) {
+            if (!config) {
+                return;
+            }
+            configState.updateState(produce(configState.state, state => {
+                const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
+                if (selectedCfg) {
+                    // remove all blacklist items
+                    Object.entries(selectedCfg.config.targetsData).forEach(([targetId, targetCfg]) => {
+                        if (!config.config.selectFromTargets.includes(targetId)) {
+                            return;
+                        }
+                        Object.entries(targetCfg[variant]).forEach(([key, itemsCfg]) => {
+                            if (variant === 'items' && key.startsWith(pseudoIdPrefix)) {
                                 return;
                             }
-                            Object.entries(targetCfg[variant]).forEach(([key, itemsCfg]) => {
-                                if (variant === 'items' && key.startsWith(pseudoIdPrefix)) {
-                                    return;
-                                }
-                                if (itemsCfg.maxItems === 0) {
-                                    delete itemsCfg.maxItems;
-                                }
-                                if (itemsCfg.weight === 0) {
-                                    itemsCfg.weight = defaultItemConfig.weight;
-                                }
-                                if (isEqual(itemsCfg, defaultItemConfig)) {
-                                    delete targetCfg[variant][key];
-                                }
-                            });
+                            if (itemsCfg.maxItems === 0) {
+                                delete itemsCfg.maxItems;
+                            }
+                            if (itemsCfg.weight === 0) {
+                                itemsCfg.weight = defaultItemConfig.weight;
+                            }
+                            if (isEqual(itemsCfg, defaultItemConfig)) {
+                                delete targetCfg[variant][key];
+                            }
                         });
-                        // set new blacklist items
-                        Object.entries(groupBy(selection, 'targetId')).forEach(([targetId, selected]) => {
-                            const targetConfigs = selectedCfg.config.targetsData[targetId][variant];
-                            selected.forEach(selectedItem => {
-                                const key = (variant === 'categories' ? 'name' : 'id');
-                                const existingCfg = targetConfigs[selectedItem[key]];
-                                if (existingCfg) {
-                                    if (existingCfg.maxItems) {
-                                        existingCfg.weight = 0;
-                                    } else {
-                                        existingCfg.maxItems = 0;
-                                    }
+                    });
+                    // set new blacklist items
+                    Object.entries(groupBy(selection, 'targetId')).forEach(([targetId, selected]) => {
+                        const targetConfigs = selectedCfg.config.targetsData[targetId][variant];
+                        selected.forEach(selectedItem => {
+                            const key = (variant === 'categories' ? 'name' : 'id');
+                            const existingCfg = targetConfigs[selectedItem[key]];
+                            if (existingCfg) {
+                                if (existingCfg.maxItems) {
+                                    existingCfg.weight = 0;
                                 } else {
-                                    targetConfigs[selectedItem[key]] = {
-                                        weight: 0,
-                                    };
+                                    existingCfg.maxItems = 0;
                                 }
-                            });
+                            } else {
+                                targetConfigs[selectedItem[key]] = {
+                                    weight: 0,
+                                };
+                            }
                         });
-                    }
-                }));
-            }
+                    });
+                }
+            }));
         };
     }, [config, configState]);
 
     const setCategoriesBlacklist = React.useMemo(() => blacklistSetterBuilder('categories'), [blacklistSetterBuilder]);
     const setItemsBlacklist = React.useMemo(() => blacklistSetterBuilder('items'), [blacklistSetterBuilder]);
+
+    const nonDefaultCategoriesConfigs = React.useMemo(() => {
+        if (!config) {
+            return [];
+        }
+        return config.config.selectFromTargets.reduce<ItemConfig[]>((all, targetId) => {
+            const categoriesItems = config.config.targetsData[targetId].categories;
+            all.push(
+                ...Object.entries(categoriesItems)
+                .filter(([categoryName, categoryConfig]) => !isEqual(categoryConfig, defaultMenuItemConfig))
+                .map<ItemConfig>(([categoryName, categoryConfig]) => {
+                    return {
+                        itemId: `${targetId}_${categoryName}`,
+                        name: categoryName,
+                        targetId,
+                        ...categoryConfig,
+                    };
+                }),
+            );
+            return all;
+        }, []);
+    }, [config]);
+
+    const setCategoryConfig = React.useCallback((configItem: ItemConfig) => {
+        if (!config) {
+            return;
+        }
+        configState.updateState(produce(configState.state, state => {
+            const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
+            if (!selectedCfg) {
+                return;
+            }
+            if (
+                configItem.weight === defaultMenuItemConfig.weight &&
+                configItem.minItems === defaultMenuItemConfig.minItems &&
+                configItem.maxItems === defaultMenuItemConfig.maxItems
+            ) {
+                delete selectedCfg.config.targetsData[configItem.targetId].categories[configItem.name];
+                return;
+            }
+            selectedCfg.config.targetsData[configItem.targetId].categories[configItem.name] = {
+                weight: configItem.weight,
+                ...(configItem.minItems === undefined ? undefined : { minItems: configItem.minItems }),
+                ...(configItem.maxItems === undefined ? undefined : { maxItems: configItem.maxItems }),
+            };
+        }));
+    }, [config, configState]);
 
     return (
         <Grid container spacing={4} direction="column">
@@ -338,24 +390,34 @@ export const RandomConfiguration: React.FC = () => {
                     <Grid container spacing={2}>
                         <Grid item md={6} xs={12}>
                             <ItemsSubsetList
+                                variant="categories"
                                 className={classes.blacklist}
                                 title="Categories blacklist"
                                 selectedItems={configCategoriesBlacklist}
                                 setSelectedItems={setCategoriesBlacklist}
                                 targetsId={config ? config.config.selectFromTargets : []}
-                                variant="categories"
                             />
                         </Grid>
                         <Grid item md={6} xs={12}>
                             <ItemsSubsetList
+                                variant="items"
                                 className={classes.blacklist}
                                 title="Items blacklist"
                                 selectedItems={configItemsBlacklist}
                                 setSelectedItems={setItemsBlacklist}
                                 targetsId={config ? config.config.selectFromTargets : []}
-                                variant="items"
                             />
                         </Grid>
+                    </Grid>
+                    <Grid item>
+                        <IndividualItemConfig
+                            variant="categories"
+                            title="Categories individual configuration"
+                            editTooltip="Edit individual category"
+                            items={nonDefaultCategoriesConfigs}
+                            setItemConfig={setCategoryConfig}
+                            targetsId={config ? config.config.selectFromTargets : []}
+                        />
                     </Grid>
                 </>
             )}

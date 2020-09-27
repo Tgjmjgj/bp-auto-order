@@ -38,6 +38,12 @@ export type OrderItem = {
     menuItemId?: string
 };
 
+export type MenuItemConfig = {
+    weight: number
+    maxItems?: number
+    minItems?: number
+};
+
 export type RandomConfigData = {
     total: {
         cost: {
@@ -45,21 +51,13 @@ export type RandomConfigData = {
             mid: number
             max: number
         }
-        maxItems: number
         minItems: number
+        maxItems: number
     }
     selectFromTargets: string[]
     targetsData: Record<string, {
-        categories: Record<string, {
-            weight?: number
-            maxItems?: number
-            minItems?: number
-        }>
-        items: Record<string, {
-            weight?: number
-            maxItems?: number
-            minItems?: number
-        }>
+        categories: Record<string, MenuItemConfig>
+        items: Record<string, MenuItemConfig>
     }>
 };
 

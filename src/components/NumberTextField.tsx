@@ -20,7 +20,7 @@ interface OutlinedNumberTextFieldProps extends Omit<OutlinedTextFieldProps, 'val
 type NumberTextFieldProps = StandardNumberTextFieldProps | FilledNumberTextFieldProps | OutlinedNumberTextFieldProps
 
 export const NumberTextField: React.FC<NumberTextFieldProps> = (props) => {
-    const {value, onChange, min = 0, ...other} = props
+    const {value, onChange, min = 0, disabled = false, ...other} = props
     const [localValue, setLocalValue] = React.useState<string>(value.toString());
 
     const onChangeTextFieldValue = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,9 +42,10 @@ export const NumberTextField: React.FC<NumberTextFieldProps> = (props) => {
     return (
         <TextField
             type="number"
-            value={localValue}
+            value={disabled ? '' : localValue}
             onChange={onChangeTextFieldValue}
             onKeyDown={onNumberFieldKeyDown}
+            disabled={disabled}
             {...other}
         />
     );

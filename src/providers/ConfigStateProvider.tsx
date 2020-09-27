@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import * as firebase from 'firebase/app';
 import 'firebase/firestore';
 import pickBy from 'lodash/pickBy';
-import eq from 'fast-deep-equal';
+import isEqual from 'lodash/isEqual';
 
 import { AutoAuthContext } from './AutoAuthProvider';
 import { defaultConfigState } from '../initData';
@@ -115,7 +115,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                     console.log('server state: ', serverConfigStateRef.current);
 
                     const preparedData = prepareConfigForServer(configState);
-                    if (!eq(preparedData, serverConfigStateRef.current)) {
+                    if (!isEqual(preparedData, serverConfigStateRef.current)) {
 
                         console.log('@Send to server: ', preparedData);
 

@@ -47,7 +47,7 @@ const CustomLabel = (props: CustomLabelProps) => {
     const { children, open, value } = props;
     return (
         <Tooltip open={open} enterTouchDelay={0} placement="top" title={value}>
-          {children}
+            {children}
         </Tooltip>
     );
 };

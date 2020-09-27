@@ -342,7 +342,7 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
 
             {onClose && (
                 <div className={classes.closeIcon}>
-                    <Tooltip title="Delete item" aria-label="Delete item">
+                    <Tooltip arrow title="Delete item" aria-label="Delete item">
                         <IconButton onClick={() => onClose(itemId)} size="small">
                             <CloseIcon />
                         </IconButton>

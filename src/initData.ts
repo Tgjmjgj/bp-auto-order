@@ -1,6 +1,10 @@
 import { LocalConfigState } from './providers/ConfigStateProvider';
 import { randomId } from './utils';
-import { RandomOrderConfig } from '../types/autoOrderConfigs';
+import { MenuItemConfig, RandomOrderConfig } from '../types/autoOrderConfigs';
+
+export const defaultMenuItemConfig: MenuItemConfig = {
+    weight: 1,
+};
 
 const defaultKumirTarget = { id: 'kumir', displayName: 'Ку-мир', isSystem: true };
 const defaultChanakhiTarget = { id: 'chanakhi', displayName: 'Чанахи', isSystem: false };

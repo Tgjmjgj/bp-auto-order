@@ -409,7 +409,7 @@ export const SelectMenuItemDialog: React.FC<SelectMenuItemDialogProps> = (props)
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <Tooltip title="Search" aria-label="Search">
+                                            <Tooltip arrow title="Search" aria-label="Search">
                                                 <IconButton>
                                                     <SearchIcon />
                                                 </IconButton>
@@ -418,7 +418,7 @@ export const SelectMenuItemDialog: React.FC<SelectMenuItemDialogProps> = (props)
                                     ),
                                     endAdornment: (searchString && (
                                         <InputAdornment position="end">
-                                            <Tooltip title="Clear search" aria-label="Clear search">
+                                            <Tooltip arrow title="Clear search" aria-label="Clear search">
                                                 <IconButton
                                                     size="small"
                                                     disableFocusRipple
@@ -436,6 +436,7 @@ export const SelectMenuItemDialog: React.FC<SelectMenuItemDialogProps> = (props)
                             />
                             { variant === 'items' && (
                                 <Tooltip
+                                    arrow
                                     title={showFilterPanel ? 'Show filter panel' : 'Hide filter panel'}
                                     aria-label={showFilterPanel ? 'Show filter panel' : 'Hide filter panel'}
                                 >

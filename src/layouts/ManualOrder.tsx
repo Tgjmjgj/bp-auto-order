@@ -385,7 +385,7 @@ export const ManualOrder: React.FC = () => {
                     {itemsUI}
                     { !selectedPreset && !loading && (
                         <Grid item className={classes.centered}>
-                            <Tooltip title="Add one random item" aria-label="Add one randome item">
+                            <Tooltip arrow title="Add one random item" aria-label="Add one randome item">
                                 <IconButton
                                     className={cn(classes.addItemButton, { [classes.leftMargin]: !items.length })}
                                     onClick={randomizeOneItem}
@@ -496,6 +496,7 @@ export const ManualOrder: React.FC = () => {
                                 No
                             </Button>
                             <Tooltip
+                                arrow
                                 placement="top"
                                 title="You privious order will be lost"
                                 aria-label="Your previous order will be lost"

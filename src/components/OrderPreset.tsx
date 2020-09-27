@@ -161,7 +161,7 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
                     onChange={onChangePresetName}
                 />
                 { allowDelete && (
-                    <Tooltip title="Delete Preset" aria-label="Delete Preset">
+                    <Tooltip arrow title="Delete Preset" aria-label="Delete Preset">
                         <IconButton className={classes.deletePresetButton} onClick={deletePreset}>
                             <DeleteIcon />
                         </IconButton>
@@ -171,7 +171,7 @@ export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePrese
             <Grid container spacing={2} direction="row" className={classes.grid}>
                 { presetItemsUI }
                 <Grid item className={classes.centered}>
-                    <Tooltip title="Add item" aria-label="Add item">
+                    <Tooltip arrow title="Add item" aria-label="Add item">
                         <IconButton className={classes.addItemButton} onClick={addOrderItem}>
                             <AddIcon />
                         </IconButton>
