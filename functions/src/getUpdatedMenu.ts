@@ -103,7 +103,6 @@ export const getUpdatedMenu = async (targetId: string, forDateEnUS: string): Pro
                 ),
                 firestore.collection('auto-order-menu-availability').doc(forDateEnUS)[availabilitySetOrUpdate](
                     { targetId: latestMenuItems },
-                    { merge: true },
                 ),
             ]);
         }
