@@ -6,8 +6,10 @@ type DateForContextValue = {
     setDateFor: React.Dispatch<React.SetStateAction<string>>
 };
 
+const customDateFormat = 'yyyy-MM-dd';
+
 const dateCheckTimeout = 300000; // 5 minuts
-const tomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat('MM/dd/yyyy');
+const tomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat(customDateFormat);
 
 export const DateForContext = React.createContext<DateForContextValue>({ dateFor: tomorrow, setDateFor: () => {} });
 
@@ -20,7 +22,7 @@ export const DateForProvider: React.FC = ({ children }) => {
 
     React.useEffect(() => {
         const timerId = setInterval(() => {
-            const newTomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat('MM/dd/yyyy');
+            const newTomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat(customDateFormat);
             if (newTomorrow !== dateFor) {
                 setDateFor(newTomorrow);
             }

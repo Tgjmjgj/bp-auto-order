@@ -13,9 +13,11 @@ const targetScrappers: Record<string, (date: string) => Promise<ScrapedMenu>> = 
     'namnym': scrapNamNymMenu,
 };
 
-const checkDate = (forDateEnUS: string) => {
+export const customDateFormat = 'yyyy-MM-dd'
+
+const checkDate = (forDate: string) => {
     try {
-        const date = DateTime.fromFormat(forDateEnUS, 'MM/dd/yyyy');
+        const date = DateTime.fromFormat(forDate, customDateFormat);
         if (!date.isValid) {
             throw Error();
         }
@@ -27,15 +29,15 @@ const checkDate = (forDateEnUS: string) => {
             throwError('invalid-argument', 'You can retrieve menu only for future periods no longer than 1 week from today.');
         }
     } catch (e) {
-        throwError('invalid-argument', 'Date is invalid. Expected string format: "MM/dd/yyyy"', e);
+        throwError('invalid-argument', `Date is invalid. Expected string format: "${customDateFormat}"`, e);
     }
 };
 
-export const getAllUpdatedMenus = async (forDateEnUS: string) => {
-    log(`#Call: getAllUpdatedMenus(forDateEnUS = ${forDateEnUS})`);
-    checkDate(forDateEnUS);
+export const getAllUpdatedMenus = async (forDate: string) => {
+    log(`#Call: getAllUpdatedMenus(forDate = ${forDate})`);
+    checkDate(forDate);
     const result = await Promise.allSettled(menuTargets.map(target => {
-        return getUpdatedMenu(target, forDateEnUS);
+        return getUpdatedMenu(target, forDate);
     }));
     return Object.fromEntries(
         result.map((data, i) => {
@@ -48,21 +50,21 @@ export const getAllUpdatedMenus = async (forDateEnUS: string) => {
     );
 };
 
-export const getUpdatedMenu = async (targetId: string, forDateEnUS: string): Promise<UpdatedMenu> => {
-    log(`#Call: getUpdatedMenu(target = ${targetId}, forDateEnUS = ${forDateEnUS})`);
-    checkDate(forDateEnUS);
+export const getUpdatedMenu = async (targetId: string, forDate: string): Promise<UpdatedMenu> => {
+    log(`#Call: getUpdatedMenu(target = ${targetId}, forDate = ${forDate})`);
+    checkDate(forDate);
     try {
         const itemsTableRef = firestore.collection('auto-order-menu-items').doc(targetId);
-        const availabilityTableRef = firestore.collection('auto-order-menu-availability').doc(forDateEnUS);
+        const availabilityTableRef = firestore.collection('auto-order-menu-availability').doc(forDate);
         const [itemsData, availabilityData] = await Promise.all([
             itemsTableRef.get(),
             availabilityTableRef.get(),
         ]);
 
-        let latestMenuItems: MenuItem[] = [];
+        let allMenuItems: MenuItem[] = [];
         let latestAvailableMenu: string[] = [];
         if (itemsData.exists) {
-            latestMenuItems = (itemsData.data() as MenuItemsTable).menuItems;
+            allMenuItems = (itemsData.data() as MenuItemsTable).menuItems;
         }
         if (availabilityData.exists) {
             const availableMenu = availabilityData.get(targetId) as string[] | undefined;
@@ -70,12 +72,12 @@ export const getUpdatedMenu = async (targetId: string, forDateEnUS: string): Pro
                 latestAvailableMenu = availableMenu;
             }
         }
-        if (!latestMenuItems.length || !latestAvailableMenu.length) {
+        if (!allMenuItems.length || !latestAvailableMenu.length) {
 
-            const todayMenuData = await targetScrappers[targetId](forDateEnUS);
+            const todayMenuData = await targetScrappers[targetId](forDate);
             latestAvailableMenu = [];
             todayMenuData.forEach(item => {
-                const sameNameItem = latestMenuItems.find(oldItem => oldItem.name === item.name);
+                const sameNameItem = allMenuItems.find(oldItem => oldItem.name === item.name);
                 let itemId;
                 if (sameNameItem) {
                     sameNameItem.additional = item.additional;
@@ -85,7 +87,7 @@ export const getUpdatedMenu = async (targetId: string, forDateEnUS: string): Pro
                     itemId = sameNameItem.id;
                 } else {
                     itemId = randomId();
-                    latestMenuItems.push({
+                    allMenuItems.push({
                         id: itemId,
                         targetId,
                         ...item,
@@ -99,15 +101,15 @@ export const getUpdatedMenu = async (targetId: string, forDateEnUS: string): Pro
 
             await Promise.all([
                 firestore.collection('auto-order-menu-items').doc(targetId)[itemsSetOrUpdate](
-                    { menuItems: latestMenuItems },
+                    { menuItems: allMenuItems },
                 ),
-                firestore.collection('auto-order-menu-availability').doc(forDateEnUS)[availabilitySetOrUpdate](
-                    { targetId: latestMenuItems },
+                firestore.collection('auto-order-menu-availability').doc(forDate)[availabilitySetOrUpdate](
+                    { [targetId]: latestAvailableMenu },
                 ),
             ]);
         }
 
-        return latestMenuItems.map(menuItem => {
+        return allMenuItems.map(menuItem => {
             const isEnabled = latestAvailableMenu.includes(menuItem.id);
             return {
                 ...menuItem,

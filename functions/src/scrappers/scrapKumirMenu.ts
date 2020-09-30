@@ -3,16 +3,17 @@ import cheerio from 'cheerio';
 import { DateTime } from 'luxon';
 import got from 'got';
 
+import { customDateFormat } from '../getUpdatedMenu';
 import { log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
 const kumirBaseUrl = 'https://ku-mir.ru';
 const kumirMenuUrl = kumirBaseUrl + '/menu/?date=';
 
-export const scrapKumirMenu = async (enUsDate: string): Promise<ScrapedMenu> => {
-    log(`#Call: scrapKumirMenu(enUsDate = ${enUsDate})`);
+export const scrapKumirMenu = async (forDate: string): Promise<ScrapedMenu> => {
+    log(`#Call: scrapKumirMenu(forDate = ${forDate})`);
     try {
-        const formattedDate = DateTime.fromFormat(enUsDate, 'dd/MM/yyyy').toFormat('dd-MM-yyyy');
+        const formattedDate = DateTime.fromFormat(forDate, customDateFormat).toFormat('dd-MM-yyyy');
         const response = await got(kumirMenuUrl + formattedDate);
         const $ = cheerio.load(response.body);
 

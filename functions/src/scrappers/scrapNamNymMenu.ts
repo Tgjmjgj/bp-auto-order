@@ -3,16 +3,17 @@ import cheerio from 'cheerio';
 import { DateTime } from 'luxon';
 import got from 'got';
 
+import { customDateFormat } from '../getUpdatedMenu';
 import { log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
 const namNymBaseUrl = 'https://www.nam-nyam.ru';
 const namNymMenuUrl = namNymBaseUrl + '/catering/?curDay=';
 
-export const scrapNamNymMenu = async (enUsDate: string): Promise<ScrapedMenu> => {
-    log(`#Call: scrapNamNymMenu(enUsDate = ${enUsDate})`);
+export const scrapNamNymMenu = async (forDate: string): Promise<ScrapedMenu> => {
+    log(`#Call: scrapNamNymMenu(forDate = ${forDate})`);
     try {
-        const formattedDate = DateTime.fromFormat(enUsDate, 'dd/MM/yyyy').toFormat('dd.MM.yyyy');
+        const formattedDate = DateTime.fromFormat(forDate, customDateFormat).toFormat('dd.MM.yyyy');
         const response = await got(namNymMenuUrl + formattedDate);
         const $ = cheerio.load(response.body);
 

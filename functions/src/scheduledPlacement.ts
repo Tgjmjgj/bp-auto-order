@@ -5,14 +5,14 @@ import { DateTime } from 'luxon';
 import { firestore } from './firebase';
 import { placeOrder } from './placeOrder';
 import { randomizeItems } from './randomizeItems';
-import { getAllUpdatedMenus } from './getUpdatedMenu';
+import { customDateFormat, getAllUpdatedMenus } from './getUpdatedMenu';
 import { log } from './utils';
 
 import { ConfigState } from '../../types/autoOrderConfigs';
 
 export const scheduledPlacement = async () => {
     log(`#Call: scheduledPlacement()`);
-    const tomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat('MM/dd/yyyy');
+    const tomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat(customDateFormat);
     const [targetMenus, allUserConfigs] = await Promise.all([
         getAllUpdatedMenus(tomorrow),
         firestore.collection('auto-order-user-configs').get(),
