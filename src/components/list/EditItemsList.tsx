@@ -84,13 +84,14 @@ export const EditItemsList: React.FC<Props> = props => {
         }
     }, [selectedItems, setSelectedItems]);
 
-    const renderItem = React.useCallback((item: AnyMenuItem) => {
+    const renderItem = React.useCallback((item: AnyMenuItem, searchText: string) => {
         const selected = !!selectedItems.find(mItem => mItem.id === item.id);
         return (
             <MenuItem
                 item={item}
                 key={item.id}
                 selected={selected}
+                searchText={searchText}
                 onClick={onClickItem}
             />
         );

@@ -6,10 +6,10 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 
+import { DialogsContext } from '../../providers/DialogsProvider';
 import { ItemConfigChip } from '../ItemConfigChip';
 import { EditItemConfigPopover } from '../EditItemConfigPopover';
 import { ConfigItem, ConfigItemData } from './items/ConfigItem';
-import { DialogsContext } from '../../providers/DialogsProvider';
 import { ListDialogFilter } from './ListDialog';
 
 type Props = {
@@ -72,21 +72,19 @@ export const EditItemConfigs: React.FC<Props> = props => {
         dialogsContext.closeDialog();
     }, [dialogsContext]);
 
-    console.log('@ item configs: ', nonDefaultItems);
-
     const clickOnItem = React.useCallback((item: ConfigItemData, e: React.MouseEvent<HTMLElement, MouseEvent>) => {
-        console.log('@clickOnItem. e.currentTarget: ', e.currentTarget, ', item: ', item);
         setClickedItemElement(e.currentTarget);
         setClickedItem(item);
     }, []);
 
-    const renderItem = React.useCallback((item: ConfigItemData) => {
+    const renderItem = React.useCallback((item: ConfigItemData, searchText: string) => {
         return (
             <ConfigItem
                 item={item}
                 key={item.id}
-                onClick={clickOnItem}
                 selected={false}
+                searchText={searchText}
+                onClick={clickOnItem}
             />
         );
     }, [clickOnItem]);

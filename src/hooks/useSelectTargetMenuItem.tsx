@@ -33,11 +33,12 @@ export const useSelectTargetMenuItem = (callback: (item: AnyMenuItem | null) => 
         callback(item);
     }, [callback]);
 
-    const renderItem = React.useCallback((item: AnyMenuItem) => (
+    const renderItem = React.useCallback((item: AnyMenuItem, searchText: string) => (
         <MenuItem
             item={item}
             key={item.id}
             selected={false}
+            searchText={searchText}
             onClick={onClickItem}
         />
     ), [onClickItem]);

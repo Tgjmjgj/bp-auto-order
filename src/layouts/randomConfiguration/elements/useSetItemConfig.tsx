@@ -20,7 +20,7 @@ export const useSetItemConfig = (variant: 'categories' | 'items') => {
 
     return React.useCallback((itemConfig: ConfigItemData) => {
         const key = (variant === 'categories' ? 'name' : 'id');
-        console.log('@@@ Set: ', itemConfig);
+
         if (!config || configsAreEqual(itemConfig, config.config.targetsData[itemConfig.targetId][variant][itemConfig[key]] || defaultMenuItemConfig)) {
             return;
         }

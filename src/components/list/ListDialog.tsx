@@ -37,7 +37,7 @@ export type ItemBase = {
 export type ListDialogProps<Item extends ItemBase> = {
     filter: ListDialogFilter
     title: string
-    renderItem: (item: Item) => JSX.Element
+    renderItem: (item: Item, searchText: string) => JSX.Element
     filterItems: (filter: ListDialogFilter) => Item[]
     onCloseDialog: () => void
 };
@@ -152,10 +152,10 @@ export function ListDialog<Item extends ItemBase>(props: ListDialogProps<Item>) 
         const item = props.data[props.index] as Item;
         return (
             <div style={props.style}>
-                { renderItem(item) }
+                { renderItem(item, filter.search) }
             </div>
         );
-    }, [renderItem]);
+    }, [renderItem, filter.search]);
 
     const filteredItems = React.useMemo(() => {
         return filterItems(filter);

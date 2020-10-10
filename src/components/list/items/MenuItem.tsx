@@ -9,8 +9,9 @@ import Typography from '@material-ui/core/Typography';
 import Chip from '@material-ui/core/Chip';
 
 import { targetAvatar, targetPalette } from '../../../cosmetic/targets';
-import { ItemProps } from './ItemProps';
 import { AnyMenuItem } from '../../../../types/autoOrderMenus';
+import { ItemProps } from './ItemProps';
+import { highlightSearch } from './common';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -74,10 +75,12 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export const MenuItem: React.FC<ItemProps<AnyMenuItem>> = (props) => {
-    const { item, selected, onClick } = props;
+    const { item, selected, searchText, onClick } = props;
     const classes = useStyles();
 
     const onClickHandler = React.useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => onClick(item, e), [onClick, item]);
+    const itemName = React.useMemo(() => highlightSearch(item.name, searchText), [item.name, searchText]);
+    const categoryName = React.useMemo(() => highlightSearch(item.category, searchText), [item.category, searchText]);
 
     return (
         <ListItem
@@ -104,14 +107,14 @@ export const MenuItem: React.FC<ItemProps<AnyMenuItem>> = (props) => {
                     <Typography className={cn({
                         [classes.listItemTextPrimaryUnavailable]: !item.enabled,
                     })}>
-                        {item.name}
+                        {itemName}
                     </Typography>
                     <div>
                         <Typography
                             variant="body2"
                             className={classes.listItemCategory}
                         >
-                            {item.category}
+                            {categoryName}
                         </Typography>
                         {!item.enabled && (
                             <Chip

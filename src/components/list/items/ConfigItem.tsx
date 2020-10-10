@@ -9,6 +9,7 @@ import Divider from '@material-ui/core/Divider';
 
 import { targetAvatar, targetPalette } from '../../../cosmetic/targets';
 import { ItemProps } from './ItemProps';
+import { highlightSearch } from './common';
 
 export type ConfigItemData = {
     id: string
@@ -74,10 +75,12 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export const ConfigItem: React.FC<ItemProps<ConfigItemData>> = (props) => {
-    const { item, selected, onClick } = props;
+    const { item, selected, searchText, onClick } = props;
     const classes = useStyles();
 
     const onClickHandler = React.useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => onClick(item, e), [onClick, item]);
+    const itemName = React.useMemo(() => highlightSearch(item.name, searchText), [item.name, searchText]);
+    const categoryName = React.useMemo(() => highlightSearch(item.category || '', searchText), [item.category, searchText]);
 
     return (
         <ListItem
@@ -99,15 +102,15 @@ export const ConfigItem: React.FC<ItemProps<ConfigItemData>> = (props) => {
             <div className={classes.listItemContent}>
                 <div>
                     <Typography>
-                        {item.name}
+                        {itemName}
                     </Typography>
-                    { !!item.category && (
+                    { !!categoryName && (
                         <div>
                             <Typography
                                 variant="body2"
                                 className={classes.listItemCategory}
                             >
-                                {item.category}
+                                {categoryName}
                             </Typography>
                         </div>
                     )}

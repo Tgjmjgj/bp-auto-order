@@ -88,13 +88,14 @@ export const EditCategoriesList: React.FC<Props> = props => {
         }
     }, [selectedCategories, setSelectedCategories]);
 
-    const renderItem = React.useCallback((item: CategoryItemData) => {
+    const renderItem = React.useCallback((item: CategoryItemData, searchText: string) => {
         const selected = !!selectedCategories.find(category => category.id === item.id);
         return (
             <CategoryItem
                 item={item}
                 key={item.id}
                 selected={selected}
+                searchText={searchText}
                 onClick={onClickItem}
             />
         );

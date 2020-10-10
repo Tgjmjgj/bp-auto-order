@@ -8,6 +8,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 
 import { targetAvatar, targetPalette } from '../../../cosmetic/targets';
 import { ItemProps } from './ItemProps';
+import { highlightSearch } from './common';
 
 export type CategoryItemData = {
     id: string
@@ -29,10 +30,11 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export const CategoryItem: React.FC<ItemProps<CategoryItemData>> = (props) => {
-    const { item, selected, onClick } = props;
+    const { item, selected, searchText, onClick } = props;
     const classes = useStyles();
 
     const onClickHandler = React.useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => onClick(item, e), [item, onClick]);
+    const categoryName = React.useMemo(() => highlightSearch(item.name, searchText), [item.name, searchText]);
 
     return (
         <ListItem
@@ -52,7 +54,7 @@ export const CategoryItem: React.FC<ItemProps<CategoryItemData>> = (props) => {
                 </Avatar>
             </ListItemAvatar>
             <ListItemText
-                primary={item.name}
+                primary={categoryName}
             />
         </ListItem>
     );

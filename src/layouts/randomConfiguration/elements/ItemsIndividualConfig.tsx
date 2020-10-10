@@ -6,8 +6,8 @@ import { MenuContext } from '../../../providers/MenuProvider';
 import { EditItemConfigs } from '../../../components/list/EditItemConfigs';
 import { ConfigItemData } from '../../../components/list/items/ConfigItem';
 import { defaultMenuItemConfig } from '../../../initData';
-import { useSetItemConfig } from './useSetItemConfig';
 import { MenuItemConfig } from '../../../../types/autoOrderConfigs';
+import { useSetItemConfig } from './useSetItemConfig';
 
 
 export const ItemsIndividualConfig: React.FC = () => {
