@@ -6,25 +6,23 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 
-import { ItemConfigChip } from './ItemConfigChip';
-import { EditItemConfigPopover } from './EditItemConfigPopover';
-
-export type ItemConfig = {
-    itemId: string
-    name: string
-    targetId: string
-    weight: number
-    minItems?: number
-    maxItems?: number
-};
+import { ItemConfigChip } from '../ItemConfigChip';
+import { EditItemConfigPopover } from '../EditItemConfigPopover';
+import { ConfigItem, ConfigItemData } from './items/ConfigItem';
+import { DialogsContext } from '../../providers/DialogsProvider';
+import { ListDialogFilter } from './ListDialog';
 
 type Props = {
-    variant: 'categories' | 'items'
     title: string
     editTooltip?: string
-    targetsId: string[]
-    items: ItemConfig[]
-    setItemConfig: (itemConfig: ItemConfig) => void
+    allItems: ConfigItemData[]
+    nonDefaultItems: ConfigItemData[]
+    setItemConfig: (itemConfig: ConfigItemData) => void
+};
+
+const initialFilterValue = {
+    search: '',
+    switches: {},
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -57,36 +55,83 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export const IndividualItemConfig: React.FC<Props> = props => {
-    const { variant, title, editTooltip, targetsId, items, setItemConfig } = props;
+export const EditItemConfigs: React.FC<Props> = props => {
+    const { title, editTooltip, allItems, nonDefaultItems, setItemConfig } = props;
     const classes = useStyles();
-    const [clickedItem, setClickedItem] = React.useState<ItemConfig | null>(null);
+    const dialogsContext = React.useContext(DialogsContext);
+    const [clickedItem, setClickedItem] = React.useState<ConfigItemData | null>(null);
     const [clickedItemElement, setClickedItemElement] = React.useState<Element | null>(null);
+    const [openEditDialog, setOpenEditDialog] = React.useState(false);
 
-    const editItemsConfigs = React.useCallback(() => {}, []);
+    const editItemsConfigs = React.useCallback(() => {
+        setOpenEditDialog(true);
+    }, []);
 
-    console.log('@ item configs: ', items);
-    
-    const clickOnItem = React.useCallback((event: React.MouseEvent<HTMLLIElement, MouseEvent>, item: ItemConfig) => {
-        setClickedItemElement(event.currentTarget);
+    const onCloseDialog = React.useCallback(() => {
+        setOpenEditDialog(false);
+        dialogsContext.closeDialog();
+    }, [dialogsContext]);
+
+    console.log('@ item configs: ', nonDefaultItems);
+
+    const clickOnItem = React.useCallback((item: ConfigItemData, e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        console.log('@clickOnItem. e.currentTarget: ', e.currentTarget, ', item: ', item);
+        setClickedItemElement(e.currentTarget);
         setClickedItem(item);
     }, []);
 
-    const onCloseEditConfigPopover = React.useCallback((editedItem: ItemConfig) => {
+    const renderItem = React.useCallback((item: ConfigItemData) => {
+        return (
+            <ConfigItem
+                item={item}
+                key={item.id}
+                onClick={clickOnItem}
+                selected={false}
+            />
+        );
+    }, [clickOnItem]);
+
+    const filterItems = React.useCallback((filter: ListDialogFilter) => {
+        return allItems
+        .filter(item => (
+            item.name.toLowerCase().includes(filter.search.toLowerCase()) ||
+            (item.category && item.category.toLowerCase().includes(filter.search.toLowerCase()))
+        ))
+    }, [allItems]);
+
+    React.useEffect(() => {
+        if (openEditDialog) {
+            dialogsContext.setupDialog<ConfigItemData>({
+                onCloseDialog,
+                title: 'Edit item random configurations',
+                renderItem,
+                filter: initialFilterValue,
+                filterItems,
+            });
+        }
+    }, [
+        dialogsContext,
+        openEditDialog,
+        onCloseDialog,
+        renderItem,
+        filterItems,
+    ]);
+
+    const onCloseEditConfigPopover = React.useCallback((editedItem: ConfigItemData) => {
         setClickedItemElement(null);
         setClickedItem(null);
         setItemConfig(editedItem);
     }, [setItemConfig]);
 
     const itemsChips = React.useMemo(() => {
-        return items.map(item => (
+        return nonDefaultItems.map(item => (
             <ItemConfigChip
-                key={item.itemId}
+                key={item.id}
                 item={item}
-                onClick={e => clickOnItem(e, item)}
+                onClick={e => clickOnItem(item, e)}
             />
         ));
-    }, [items, clickOnItem]);
+    }, [nonDefaultItems, clickOnItem]);
 
     return (
         <>

@@ -28,7 +28,7 @@ import { ConfigStateContext } from './providers/ConfigStateProvider';
 import { MainOptions } from './layouts/MainOptions';
 import { DeveloperSettings } from './layouts/DeveloperSettings';
 import { PresetsScreen } from './layouts/PresetsScreen';
-import { RandomConfiguration } from './layouts/RandomConfiguration';
+import { RandomConfiguration } from './layouts/randomConfiguration/RandomConfiguration';
 import { ManualOrder } from './layouts/ManualOrder';
 
 const menuCategories = ['Main Options', 'Presets', 'Random Configuration', 'Manual Order', 'Developer Settings'] as const;

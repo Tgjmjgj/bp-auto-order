@@ -13,12 +13,12 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import CheckIcon from '@material-ui/icons/Check';
 
-import { ItemConfig } from './IndividualItemConfig';
 import { NumberTextField } from './NumberTextField';
+import { ConfigItemData } from './list/items/ConfigItem';
 
 interface Props extends Omit<PopoverProps, 'onClose'> {
-    item: ItemConfig
-    onClose: (itemConfig: ItemConfig) => void
+    item: ConfigItemData
+    onClose: (itemConfig: ConfigItemData) => void
 };
 
 const fpRegexp = /^(\d+(?:\.\d*)?)?$/;
@@ -86,9 +86,10 @@ export const EditItemConfigPopover: React.FC<Props> = props => {
     const handleClose = React.useCallback(() => {
         let weightNum = Number(weight === '' ? undefined : weight[weight.length - 1] === '.' ? weight + '0' : weight);
         onClose({
-            itemId: item.itemId,
+            id: item.id,
             name: item.name,
             targetId: item.targetId,
+            category: item.category,
             weight: isNaN(weightNum) ? item.weight : weightNum,
             minItems: enableMinItems ? minItems : undefined,
             maxItems: enableMaxItems ? maxItems : undefined,

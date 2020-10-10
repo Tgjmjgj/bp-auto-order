@@ -12,12 +12,12 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 import { MenuContext } from '../providers/MenuProvider';
-import { DialogsContext } from '../providers/DialogsProvider';
 import { useDefferedCall } from '../hooks/useDefferedCall';
+import { useSelectTargetMenuItem } from '../hooks/useSelectTargetMenuItem';
 import { NumberTextField } from './NumberTextField';
 import { FreeSelect } from './FreeSelect'
 import { randomId } from '../utils';
-import { SelectedMenuItem } from './ItemsSubsetList';
+import { AnyMenuItem } from '../../types/autoOrderMenus';
 import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
 
 import foodPlaceholder from '../images/food-placeholder.png';
@@ -134,13 +134,11 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
     } = props;
     const classes = useStyles();
     const menuContext = React.useContext(MenuContext);
-    const dialogsContext = React.useContext(DialogsContext);
     const [name, setName] = React.useState(item.name);
     const [price, setPrice] = React.useState(item.price);
     const [quantity, setQuantity] = React.useState(item.quantity);
     const [targetId, setTargetId] = React.useState(item.targetId);
     const [menuItemId, setMenuItemId] = React.useState(item.menuItemId);
-    const [pendingTargetId, setPendingTargetId] = React.useState<string | null>(null);
 
     const itemId = item.id;
     const itemTarget = React.useMemo(() => savedTargets.find(target => target.id === targetId), [savedTargets, targetId]);
@@ -193,19 +191,32 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
         }
     }, [frozen, editableQuantity, notifyQuantityChange, itemId]);
 
+    const onCloseMenuDialog = React.useCallback((item: AnyMenuItem | null) => {
+        if (item) {
+            console.log('@ select menuItem: ', item);
+            setName(item.name);
+            setPrice(item.price);
+            setQuantity(1);
+            setTargetId(item.targetId);
+            setMenuItemId(item.id);
+        }
+    }, []);
+
+    const openDialog = useSelectTargetMenuItem(onCloseMenuDialog);
+
     const onChangeTargetId = React.useCallback((targetId: string) => {
         if (!frozen) {
             const foundTarget = savedTargets.find(target => target.id === targetId);
             if (foundTarget) {
                 if (foundTarget.isSystem) {
-                    setPendingTargetId(foundTarget.id);
+                    openDialog(foundTarget.id);
                 } else {
                     setTargetId(targetId);
                     notifyTargetIdChange && notifyTargetIdChange(targetId, itemId);
                 }
             }
         }
-    }, [frozen, savedTargets, notifyTargetIdChange, itemId]);
+    }, [frozen, savedTargets, itemId, notifyTargetIdChange, openDialog]);
 
     const addNewTargetItem = React.useCallback((newTargetName: string) => {
         if (addNewTargetAndChangeItem && newTargetName) {
@@ -229,36 +240,6 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
             notifyTargetIdChange && notifyTargetIdChange(newTargetId, itemId);
         }
     }, [addNewTargetAndChangeItem, notifyTargetIdChange, itemId, name, price, quantity, menuItemId]);
-
-    const onCloseMenuDialog = React.useCallback((selection: SelectedMenuItem[]) => {
-        if (selection.length) {
-            const menuItem = menuContext[targetId].find(menuItem => menuItem.id === selection[0].id);
-            console.log('@ select menuItem: ', menuItem);
-            if (menuItem) {
-                setName(menuItem.name);
-                setPrice(menuItem.price);
-                setQuantity(1);
-                setTargetId(targetId);
-                setMenuItemId(selection[0].id);
-                setPendingTargetId(null);
-            }
-        }
-        setPendingTargetId(null);
-    }, [menuContext, targetId]);
-
-    React.useEffect(() => {
-        if (pendingTargetId) {
-            dialogsContext.setupDialog('selectMenuItem', {
-                open: pendingTargetId !== null,
-                variant: 'items',
-                targetsId: [ pendingTargetId ],
-                singleItem: true,
-                onCloseDialog: onCloseMenuDialog,
-            });
-        } else {
-            dialogsContext.setupDialog(null, null);
-        }
-    }, [pendingTargetId, dialogsContext, onCloseMenuDialog]);
 
     console.log(`### order item ${itemId} re-rendering`);
 

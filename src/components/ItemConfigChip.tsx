@@ -8,10 +8,10 @@ import Avatar from '@material-ui/core/Avatar';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 
-import { ItemConfig } from './IndividualItemConfig';
+import { ConfigItemData } from './list/items/ConfigItem';
 
 type Props = {
-    item: ItemConfig
+    item: ConfigItemData
     onClick?: (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => void
 };
 
@@ -92,7 +92,7 @@ export const ItemConfigChip: React.FC<Props> = React.memo(({ item, onClick }) =>
 
     return (
         <ListItem
-            key={item.itemId}
+            key={item.id}
             className={classes.item}
             style={{backgroundColor: targetColors[item.targetId].background}}
             onClick={onClick}
@@ -133,7 +133,7 @@ export const ItemConfigChip: React.FC<Props> = React.memo(({ item, onClick }) =>
     );
 }, function isPropsTheSame(prevProps, nextProps) {
     return (
-        prevProps.item.itemId === nextProps.item.itemId &&
+        prevProps.item.id === nextProps.item.id &&
         prevProps.item.weight === nextProps.item.weight &&
         prevProps.item.minItems === nextProps.item.minItems &&
         prevProps.item.maxItems === nextProps.item.maxItems
