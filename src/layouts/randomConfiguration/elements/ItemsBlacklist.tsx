@@ -23,7 +23,7 @@ export const ItemsBlacklist: React.FC<Props> = props => {
         }
         return config.config.selectFromTargets.reduce<AnyMenuItem[]>((all, targetId) => {
             const targetItems = config.config.targetsData[targetId].items;
-            const targetMenu = menuState[targetId];
+            const targetMenu = menuState[targetId].menu;
             if (targetMenu && targetMenu.length) {
                 all.push(
                     ...Object.entries(targetItems)

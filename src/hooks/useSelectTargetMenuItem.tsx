@@ -1,4 +1,6 @@
 import React from 'react';
+import get from 'lodash/get';
+
 import { AnyMenuItem } from '../../types/autoOrderMenus';
 import { MenuItem } from '../components/list/items/MenuItem';
 import { ListDialogFilter } from '../components/list/ListDialog';
@@ -17,7 +19,7 @@ const initialFilterValue = {
 
 export const useSelectTargetMenuItem = (callback: (item: AnyMenuItem | null) => void) => {
     const dialogsContext = React.useContext(DialogsContext);
-    const menuContext = React.useContext(MenuContext);
+    const menuState = React.useContext(MenuContext);
     const [pendingTargetId, setPendingTargetId] = React.useState<string>('');
 
     const onCloseDialog = React.useCallback(() => {
@@ -26,7 +28,7 @@ export const useSelectTargetMenuItem = (callback: (item: AnyMenuItem | null) => 
         callback(null);
     }, [callback, dialogsContext]);
 
-    const items = React.useMemo(() => menuContext[pendingTargetId] || [], [menuContext, pendingTargetId]);
+    const items = React.useMemo(() => get(menuState[pendingTargetId], 'menu') || [], [menuState, pendingTargetId]);
 
     const onClickItem = React.useCallback((item: AnyMenuItem) => {
         setPendingTargetId('');

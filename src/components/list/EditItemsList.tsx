@@ -65,7 +65,7 @@ export const EditItemsList: React.FC<Props> = props => {
 
     const allItems = React.useMemo(() => {
         return targetIds.flatMap(targetId => {
-            return menuContext[targetId] || [];
+            return menuContext[targetId].menu || [];
         });
     }, [targetIds, menuContext]);
 

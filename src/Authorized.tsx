@@ -25,11 +25,13 @@ import AssignmentIcon from '@material-ui/icons/Assignment';
 import CasinoIcon from '@material-ui/icons/Casino';
 
 import { ConfigStateContext } from './providers/ConfigStateProvider';
+import { MenuContext } from './providers/MenuProvider';
 import { MainOptions } from './layouts/MainOptions';
 import { DeveloperSettings } from './layouts/DeveloperSettings';
 import { PresetsScreen } from './layouts/PresetsScreen';
 import { RandomConfiguration } from './layouts/randomConfiguration/RandomConfiguration';
 import { ManualOrder } from './layouts/ManualOrder';
+import { MenuLoader } from './components/MenuLoader';
 
 const menuCategories = ['Main Options', 'Presets', 'Random Configuration', 'Manual Order', 'Developer Settings'] as const;
 type MenuCategories = typeof menuCategories[number];
@@ -100,12 +102,16 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export const Authorized: React.FC = () => {
 
+    const classes = useStyles();
     const configState = React.useContext(ConfigStateContext);
+    const menuState = React.useContext(MenuContext);
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [saveMessageShows, setSaveMessageShows] = React.useState(false);
     const [selectedMenuItem, setSelectMenuItem] = React.useState<MenuCategories>('Main Options');
     const enabled = configState.state.enabled;
-    const classes = useStyles();
+    const isAllMenuLoaded = React.useMemo(() => {
+        return Object.values(menuState).every(menuData => menuData.loadStatus !== 'not-loaded');
+    }, [menuState]);
 
     const toggleEnabled = React.useCallback(() => {
         configState.updateState({ enabled: !enabled });
@@ -126,22 +132,22 @@ export const Authorized: React.FC = () => {
             icon: <SettingsIcon />,
         },
         'Presets': {
-            component: <PresetsScreen />,
+            component: (isAllMenuLoaded ? <PresetsScreen /> : <MenuLoader />),
             icon: <BookmarksIcon htmlColor={configState.state.mode === 'preset' ? '#e4a918' : undefined} />,
         },
         'Random Configuration': {
-            component: <RandomConfiguration />,
+            component: (isAllMenuLoaded ? <RandomConfiguration /> : <MenuLoader />),
             icon: <CasinoIcon htmlColor={configState.state.mode === 'random' ? '#da0b0b' : undefined} />,
         },
         'Manual Order': {
-            component: <ManualOrder />,
+            component: (isAllMenuLoaded ? <ManualOrder /> : <MenuLoader />),
             icon: <AssignmentIcon />,
         },
         'Developer Settings': {
             component: <DeveloperSettings />,
             icon: <BuildIcon />,
         },
-    }), [configState.state.mode]);
+    }), [configState.state.mode, isAllMenuLoaded]);
 
     const menu = React.useMemo(() => (
         <div>

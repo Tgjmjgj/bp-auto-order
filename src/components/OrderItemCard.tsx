@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import isEqual from 'lodash/isEqual';
+import get from 'lodash/get';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
@@ -17,7 +18,7 @@ import { useSelectTargetMenuItem } from '../hooks/useSelectTargetMenuItem';
 import { NumberTextField } from './NumberTextField';
 import { FreePresetSelect } from './FreePresetSelect';
 import { randomId } from '../utils';
-import { AnyMenuItem } from '../../types/autoOrderMenus';
+import { AnyMenuItem, UpdatedMenu } from '../../types/autoOrderMenus';
 import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
 
 import foodPlaceholder from '../images/food-placeholder.png';
@@ -133,7 +134,7 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
         addNewTargetAndChangeItem,
     } = props;
     const classes = useStyles();
-    const menuContext = React.useContext(MenuContext);
+    const menuState = React.useContext(MenuContext);
     const [name, setName] = React.useState(item.name);
     const [price, setPrice] = React.useState(item.price);
     const [quantity, setQuantity] = React.useState(item.quantity);
@@ -142,7 +143,7 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
 
     const itemId = item.id;
     const itemTarget = React.useMemo(() => savedTargets.find(target => target.id === targetId), [savedTargets, targetId]);
-    const menu = menuContext[targetId];
+    const menu = React.useMemo<UpdatedMenu | undefined>(() => get(menuState[targetId], 'menu'), [menuState, targetId]);
     const refItem = React.useMemo(() => menu && menu.find(menuItem => menuItem.id === menuItemId), [menu, menuItemId]);
 
     const updateItem = React.useCallback(() => {

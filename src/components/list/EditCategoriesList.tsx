@@ -62,7 +62,7 @@ export const EditCategoriesList: React.FC<Props> = props => {
 
     const allItems = React.useMemo(() => {
         return targetIds.flatMap(targetId => {
-            const targetMenu = menuContext[targetId] || [];
+            const targetMenu = menuContext[targetId].menu || [];
             return uniq(
                 targetMenu.map<string>(menuItem => menuItem.category)
             ).map<CategoryItemData>(category => ({

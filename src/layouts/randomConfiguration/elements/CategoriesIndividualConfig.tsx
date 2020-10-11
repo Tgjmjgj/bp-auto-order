@@ -44,7 +44,7 @@ export const CategoriesIndividualConfig: React.FC = () => {
         }
         return config.config.selectFromTargets.reduce<ConfigItemData[]>((all, targetId) => {
             const categoriesItems = config.config.targetsData[targetId].categories;
-            const targetMenu = menuState[targetId];
+            const targetMenu = menuState[targetId].menu;
             if (targetMenu && targetMenu.length) {
                 all.push(
                     ...uniq(

@@ -21,7 +21,7 @@ export const ItemsIndividualConfig: React.FC = () => {
         }
         return config.config.selectFromTargets.reduce<ConfigItemData[]>((all, targetId) => {
             const itemConfigs = config.config.targetsData[targetId].items;
-            const targetMenu = menuState[targetId];
+            const targetMenu = menuState[targetId].menu;
             if (targetMenu && targetMenu.length) {
                 all.push(
                     ...Object.entries(itemConfigs)
@@ -51,7 +51,7 @@ export const ItemsIndividualConfig: React.FC = () => {
         }
         return config.config.selectFromTargets.reduce<ConfigItemData[]>((all, targetId) => {
             const itemConfigs = config.config.targetsData[targetId].items;
-            const targetMenu = menuState[targetId];
+            const targetMenu = menuState[targetId].menu;
             if (targetMenu && targetMenu.length) {
                 all.push(
                     ...targetMenu

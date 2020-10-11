@@ -9,11 +9,18 @@ import { getUpdatedMenu } from '../service/functions';
 import { defaultConfigState, pseudoIdPrefix } from '../initData'
 import { UpdatedMenu } from '../../types/autoOrderMenus';
 
-type AllMenus = Record<string, UpdatedMenu>;
+type LoadStatus = 'not-loaded' | 'loaded' | 'error';
+
+type AllMenus = {
+    [targetId: string]: {
+        menu: UpdatedMenu
+        loadStatus: LoadStatus
+    }
+};
 
 const menuTargets = defaultConfigState.savedTargets.filter(target => target.isSystem);
 const defaultMenus: AllMenus = Object.fromEntries(
-    menuTargets.map(target => [target.id, []]),
+    menuTargets.map(target => [target.id, { menu: [], loadStatus: 'not-loaded' }]),
 );
 
 export const MenuContext = React.createContext<AllMenus>(defaultMenus);
@@ -32,9 +39,20 @@ export const MenuProvider: React.FC = ({ children }) => {
                 getUpdatedMenu(target.id, dateFor).then(menuData => {
                     setMenusState(state => ({
                         ...state,
-                        [target.id]: menuData.data,
+                        [target.id]: {
+                            menu: menuData.data,
+                            loadStatus: 'loaded',
+                        },
                     }));
                     console.log(`@ '${target.id}' menu for ${dateFor}: `, menuData.data);
+                }).catch(() => {
+                    setMenusState(state => ({
+                        ...state,
+                        [target.id]: {
+                            menu: [],
+                            loadStatus: 'error',
+                        },
+                    }));
                 });
             });
         }
@@ -45,7 +63,7 @@ export const MenuProvider: React.FC = ({ children }) => {
         const targetKeys = Object.keys(menusState);
         targetKeys.forEach(target => {
             if (!checkedMenuTargetsRef.current.includes(target)) {
-                const targetMenu = menusState[target];
+                const targetMenu = menusState[target].menu;
                 if (targetMenu.length) {
                     configState.updateState(produce(configState.state, state => {
                         state.randomConfigs.forEach(rndCfg => {
