@@ -27,7 +27,7 @@ type Props = {
     label?: string
 };
 
-export const FreeSelect: React.FC<Props> = props => {
+export const FreePresetSelect: React.FC<Props> = props => {
     const { options, value, onChange, className, label, addNewItem } = props
     const [open, toggleOpen] = React.useState(false);
     const [newValue, setNewValue] = React.useState('');

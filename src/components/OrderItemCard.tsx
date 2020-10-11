@@ -15,7 +15,7 @@ import { MenuContext } from '../providers/MenuProvider';
 import { useDefferedCall } from '../hooks/useDefferedCall';
 import { useSelectTargetMenuItem } from '../hooks/useSelectTargetMenuItem';
 import { NumberTextField } from './NumberTextField';
-import { FreeSelect } from './FreeSelect'
+import { FreePresetSelect } from './FreePresetSelect';
 import { randomId } from '../utils';
 import { AnyMenuItem } from '../../types/autoOrderMenus';
 import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
@@ -309,7 +309,7 @@ export const OrderItemCard: React.FC<Props> = React.memo(props => {
                             inputProps={readonlyProps}
                         />
                     ) : (
-                        <FreeSelect
+                        <FreePresetSelect
                             label="From"
                             options={targetOptions}
                             value={targetId}
