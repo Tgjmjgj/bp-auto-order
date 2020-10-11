@@ -49,16 +49,18 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
     const serverConfigStateRef = React.useRef<ConfigState>(defaultConfigState);
     const timerIdRef = React.useRef(0);
 
+    const updateState = React.useCallback((stateUpdate: Partial<ConfigState>) => {
+        setConfigState(state => ({
+            ...state,
+            ...stateUpdate,
+            saveOnServer: true,
+        }));
+    }, []);
+
     const configContextValue = React.useMemo(() => {
         return {
             state: configState,
-            updateState: (stateUpdate: Partial<ConfigState>) => {
-                setConfigState({
-                    ...configState,
-                    ...stateUpdate,
-                    saveOnServer: true,
-                });
-            },
+            updateState,
             saved,
             dataLoaded,
         };
@@ -105,7 +107,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
     }, [authContext.uid, authContext.displayName]);
 
     useEffect(() => {
-        if (authContext.uid) {
+        if (authContext.uid && dataLoaded) {
             if (configState.saveOnServer) {
                 clearTimeout(timerIdRef.current);
 
@@ -129,7 +131,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                 }, saveConfigInactivityTimeout);
             }
         }
-    }, [configState, authContext.uid, serverConfigStateRef]);
+    }, [configState, dataLoaded, authContext.uid, serverConfigStateRef]);
 
     return (
         <ConfigStateContext.Provider value={ configContextValue }>

@@ -9,15 +9,15 @@ import { Main } from './Main';
 export const App: React.FC = () => {
     return (
         <AuthAuthProvider>
-            <DateForProvider>
-                <ConfigStateProvider>
+            <ConfigStateProvider>
+                <DateForProvider>
                     <MenuProvider>
                         <DialogsProvider>
                             <Main />
                         </DialogsProvider>
                     </MenuProvider>
-                </ConfigStateProvider>
-            </DateForProvider>
+                </DateForProvider>
+            </ConfigStateProvider>
         </AuthAuthProvider>
     );
 };
