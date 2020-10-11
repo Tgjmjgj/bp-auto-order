@@ -36,7 +36,8 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export const PresetsScreen: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
-    const [presetIdForDeletion, setPresetIdForDeletion] = React.useState<string | null>(null);  // also used to determine when to show "Delete preset" dialog
+    // also used to determine when to show "Delete preset" dialog
+    const [presetIdForDeletion, setPresetIdForDeletion] = React.useState<string | null>(null);
     const uniqDialogIdRef = React.useRef('delete-preset-dialog-' + randomId())
     const classes = useStyles();
     const presets = configState.state.presets;

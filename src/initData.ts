@@ -79,7 +79,7 @@ export const defaultEmptyRandomConfigData: RandomConfigData = {
         minItems: 1,
         maxItems: 10,
     },
-    selectFromTargets: [],
+    selectFromTargets: [ defaultNamNymTarget.id ],
     targetsData: {
         [defaultKumirTarget.id]: {
             categories: {},

@@ -12,6 +12,12 @@ import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
+import Tooltip from '@material-ui/core/Tooltip';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogActions from '@material-ui/core/DialogActions';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import { ConfigStateContext } from '../../providers/ConfigStateProvider';
@@ -48,6 +54,14 @@ const useStyles = makeStyles((theme: Theme) =>
                 color: theme.palette.primary.main,
                 borderColor: theme.palette.primary.main,
                 backgroundColor: 'rgb(22, 2, 232, .04)',
+            },
+        },
+        deleteConfigButton: {
+            marginBottom: -6,
+            marginLeft: theme.spacing(2),
+            transition: 'color .2s ease-out',
+            '&:hover': {
+                color: theme.palette.secondary.dark,
             },
         },
         sectionContainer: {
@@ -91,32 +105,54 @@ export const RandomConfiguration: React.FC = () => {
     const config = configState.state.randomConfigs.find(cfg => cfg.id === configState.state.selectedConfig);
     const [costValues, setCostValues] = React.useState<[number, number, number]>([270, 300, 340]);
     const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+    const uniqDialogIdRef = React.useRef('random-configuration-dialog-' + randomId());
+
+    const allowDelete = React.useMemo(() => configState.state.randomConfigs.length > 1, [configState]);
 
     const onNewConfigClick = React.useCallback(() => setDialogOpen(true), []);
 
-    const onCloseDialog = React.useCallback((newConfigData: NewConfigData | null) => {
+    const onCloseNewConfigDialog = React.useCallback((newConfigData: NewConfigData | null) => {
         setDialogOpen(false);
-        if (newConfigData) {
-            configState.updateState(produce(configState.state, state => {
-                const newConfigId = randomId();
-                const currentlySelectedConfig = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
-                if (newConfigData.useCurrentAsTemplate && currentlySelectedConfig) {
-                    state.randomConfigs.push({
-                        id: newConfigId,
-                        name: newConfigData.name,
-                        config: cloneDeep(currentlySelectedConfig.config),
-                    });
-                } else {
-                    state.randomConfigs.push({
-                        id: newConfigId,
-                        name: newConfigData.name,
-                        config: cloneDeep(defaultEmptyRandomConfigData),
-                    });
-                }
-                state.selectedConfig = newConfigId;
-            }));
+        if (!newConfigData) {
+            return;
         }
+        configState.updateState(produce(configState.state, state => {
+            const newConfigId = randomId();
+            const currentlySelectedConfig = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
+            if (newConfigData.useCurrentAsTemplate && currentlySelectedConfig) {
+                state.randomConfigs.push({
+                    id: newConfigId,
+                    name: newConfigData.name,
+                    config: cloneDeep(currentlySelectedConfig.config),
+                });
+            } else {
+                state.randomConfigs.push({
+                    id: newConfigId,
+                    name: newConfigData.name,
+                    config: cloneDeep(defaultEmptyRandomConfigData),
+                });
+            }
+            state.selectedConfig = newConfigId;
+        }));
     }, [configState]);
+
+    const onDeleteConfigClick = React.useCallback(() => setShowDeleteDialog(true), []);
+
+    const onCloseDeleteConfigDialog = React.useCallback(() => setShowDeleteDialog(false), []);
+
+    const onDeleteDialogSubmit = React.useCallback((e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setShowDeleteDialog(false);
+        if (configState.state.randomConfigs.length < 2 && config) {
+            return;
+        }
+        configState.updateState(produce(configState.state, state => {
+            const delIndex = state.randomConfigs.findIndex(cfg => cfg.id === state.selectedConfig);
+            state.randomConfigs.splice(delIndex, 1);
+            state.selectedConfig = state.randomConfigs[state.randomConfigs.length - 1].id;
+        }));
+    }, [configState, config]);
 
     const onSelectRandomConfig = React.useCallback((e: React.ChangeEvent<{ name?: string | undefined; value: unknown }>) => {
         configState.updateState(produce(configState.state, state => {
@@ -206,6 +242,13 @@ export const RandomConfiguration: React.FC = () => {
                         >
                             Create new configuration preset
                         </Button>
+                        { allowDelete && (
+                            <Tooltip arrow title="Delete Config" aria-label="Delete Config">
+                                <IconButton className={classes.deleteConfigButton} onClick={onDeleteConfigClick}>
+                                    <DeleteIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
                     </div>
                 </Grid>
                 <Divider />
@@ -305,8 +348,26 @@ export const RandomConfiguration: React.FC = () => {
 
             { dialogOpen && (
                 <NewConfigDialog
-                    onClose={onCloseDialog}
+                    onClose={onCloseNewConfigDialog}
                 />
+            )}
+            
+            { config && (
+                <Dialog open={showDeleteDialog} onClose={onCloseDeleteConfigDialog} aria-labelledby={uniqDialogIdRef.current}>
+                    <form onSubmit={onDeleteDialogSubmit}>
+                        <DialogTitle id={uniqDialogIdRef.current}>
+                            {`Delete "${config.name}" random config?`}
+                        </DialogTitle>
+                        <DialogActions>
+                            <Button onClick={onCloseDeleteConfigDialog}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" color="secondary">
+                                Delete
+                            </Button>
+                        </DialogActions>
+                    </form>
+                </Dialog>
             )}
         </>
     );

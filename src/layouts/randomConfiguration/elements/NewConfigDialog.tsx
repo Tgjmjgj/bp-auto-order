@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export const NewConfigDialog: React.FC<Props> = ({ onClose }) => {
     const classes = useStyles();
-    const uniqDialogIdRef = React.useRef('random-configuration-dialog-' + randomId());
+    const uniqDialogIdRef = React.useRef('new-config-dialog-' + randomId());
     const [newConfigName, setNewConfigName] = React.useState('New Config');
     const [isUseCurrentAsTemplate, setUseCurrentAsTemplate] = React.useState(true);
 
