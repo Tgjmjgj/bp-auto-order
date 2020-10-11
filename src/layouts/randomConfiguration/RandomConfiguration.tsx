@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import cn from 'classnames';
 import produce from 'immer';
+import cloneDeep from 'lodash/cloneDeep';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -10,6 +11,7 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
+import Button from '@material-ui/core/Button';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import { ConfigStateContext } from '../../providers/ConfigStateProvider';
@@ -19,7 +21,10 @@ import { CategoriesBlacklist } from './elements/CategoriesBlacklist';
 import { ItemsBlacklist } from './elements/ItemsBlacklist';
 import { CategoriesIndividualConfig } from './elements/CategoriesIndividualConfig';
 import { ItemsIndividualConfig } from './elements/ItemsIndividualConfig';
-import { getI } from '../../utils';
+import { NewConfigData, NewConfigDialog } from './elements/NewConfigDialog';
+
+import { defaultEmptyRandomConfigData } from '../../initData';
+import { getI, randomId } from '../../utils';
 
 type TargetOption = {
     value: string
@@ -28,10 +33,22 @@ type TargetOption = {
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
+        controlRow: {
+            display: 'flex',
+            justifyContent: 'space-between',
+        },
         gridRow: {
             display: 'flex',
             alignItems: 'flex-end',
             height: 80,
+        },
+        newConfigButton: {
+            transition: 'color .2s ease-out, border-color .2s ease-out, background-color .2s ease-out',
+            '&:hover': {
+                color: theme.palette.primary.main,
+                borderColor: theme.palette.primary.main,
+                backgroundColor: 'rgb(22, 2, 232, .04)',
+            },
         },
         sectionContainer: {
             flexFlow: 'row nowrap',
@@ -73,6 +90,33 @@ export const RandomConfiguration: React.FC = () => {
     const configState = useContext(ConfigStateContext);
     const config = configState.state.randomConfigs.find(cfg => cfg.id === configState.state.selectedConfig);
     const [costValues, setCostValues] = React.useState<[number, number, number]>([270, 300, 340]);
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+
+    const onNewConfigClick = React.useCallback(() => setDialogOpen(true), []);
+
+    const onCloseDialog = React.useCallback((newConfigData: NewConfigData | null) => {
+        setDialogOpen(false);
+        if (newConfigData) {
+            configState.updateState(produce(configState.state, state => {
+                const newConfigId = randomId();
+                const currentlySelectedConfig = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
+                if (newConfigData.useCurrentAsTemplate && currentlySelectedConfig) {
+                    state.randomConfigs.push({
+                        id: newConfigId,
+                        name: newConfigData.name,
+                        config: cloneDeep(currentlySelectedConfig.config),
+                    });
+                } else {
+                    state.randomConfigs.push({
+                        id: newConfigId,
+                        name: newConfigData.name,
+                        config: cloneDeep(defaultEmptyRandomConfigData),
+                    });
+                }
+                state.selectedConfig = newConfigId;
+            }));
+        }
+    }, [configState]);
 
     const onSelectRandomConfig = React.useCallback((e: React.ChangeEvent<{ name?: string | undefined; value: unknown }>) => {
         configState.updateState(produce(configState.state, state => {
@@ -140,111 +184,130 @@ export const RandomConfiguration: React.FC = () => {
     }, [configState, config]);
 
     return (
-        <Grid container spacing={4} direction="column">
-            <Grid item className={classes.gridRow}>
-                <Typography className={classes.label}>
-                    Selected Configuration:
-                </Typography>
-                <Select
-                    value={configState.state.selectedConfig}
-                    onChange={onSelectRandomConfig}
-                >
-                    {configOptions}
-                </Select>
-            </Grid>
-            <Divider />
-            {config && (
-                <>
-                    <Grid item className={classes.gridRow}>
+        <>
+            <Grid container spacing={4} direction="column">
+                <Grid item className={classes.controlRow}>
+                    <div className={classes.gridRow}>
                         <Typography className={classes.label}>
-                            Mix from these menus:
+                            Selected Configuration:
                         </Typography>
-                        <Autocomplete
-                            multiple
-                            disableClearable={true}
-                            value={selectedTargetOptions}
-                            onChange={onSelectedTargetsChange}
-                            className={classes.selectedTargets}
-                            options={targetsOptions}
-                            getOptionLabel={preset => preset.value}
-                            getOptionSelected={(opt1, opt2) => opt1.key === opt2.key}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    variant="standard"
-                                    placeholder="Menus"
-                                />
-                            )}
-                            renderTags={(options, getTagProps) =>
-                                options.map((option, i) => (
-                                    <Chip
-                                        label={option.value}
-                                        {...getTagProps({ index: i })}
-                                        {...(options.length > 1 ? undefined : { onDelete: undefined })}
+                        <Select
+                            value={configState.state.selectedConfig}
+                            onChange={onSelectRandomConfig}
+                        >
+                            {configOptions}
+                        </Select>
+                    </div>
+                    <div className={classes.gridRow}>
+                        <Button
+                            variant="outlined"
+                            className={classes.newConfigButton}
+                            onClick={onNewConfigClick}
+                        >
+                            Create new configuration preset
+                        </Button>
+                    </div>
+                </Grid>
+                <Divider />
+                {config && (
+                    <>
+                        <Grid item className={classes.gridRow}>
+                            <Typography className={classes.label}>
+                                Mix from these menus:
+                            </Typography>
+                            <Autocomplete
+                                multiple
+                                disableClearable={true}
+                                value={selectedTargetOptions}
+                                onChange={onSelectedTargetsChange}
+                                className={classes.selectedTargets}
+                                options={targetsOptions}
+                                getOptionLabel={preset => preset.value}
+                                getOptionSelected={(opt1, opt2) => opt1.key === opt2.key}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        variant="standard"
+                                        placeholder="Menus"
                                     />
-                                ))
-                            }
-                        />
-                    </Grid>
-                    <Grid item>
-                        <ThreeValuesSlider
-                            className={classes.costSlider}
-                            values={costValues}
-                            setValues={setCostValues}
-                            start={0}
-                            end={500}
-                        />
-                        <Typography align="center">
-                            Acceptable cost
-                        </Typography>
-                    </Grid>
-                    <Grid item className={cn(classes.gridRow, classes.sectionContainer)}>
-                        <div className={classes.gridRow}>
-                            <Typography className={classes.headerRowTitle}>
-                                Number of dishes:
-                            </Typography>
-                        </div>
-                        <div className={classes.gridRow}>
-                            <Typography>
-                                from
-                            </Typography>
-                            <NumberTextField
-                                value={config.config.total.minItems}
-                                onChange={onChangeTotalMinItems}
-                                className={classes.rowTextField}
-                                size="small"
-                                placeholder="Minimal number"
+                                )}
+                                renderTags={(options, getTagProps) =>
+                                    options.map((option, i) => (
+                                        <Chip
+                                            label={option.value}
+                                            {...getTagProps({ index: i })}
+                                            {...(options.length > 1 ? undefined : { onDelete: undefined })}
+                                        />
+                                    ))
+                                }
                             />
-                        </div>
-                        <div className={classes.gridRow}>
-                            <Typography>
-                                up to
-                            </Typography>
-                            <NumberTextField
-                                value={config.config.total.maxItems}
-                                onChange={onChangeTotalMaxItems}
-                                className={classes.rowTextField}
-                                size="small"
-                                placeholder="Maximal number"
+                        </Grid>
+                        <Grid item>
+                            <ThreeValuesSlider
+                                className={classes.costSlider}
+                                values={costValues}
+                                setValues={setCostValues}
+                                start={0}
+                                end={500}
                             />
-                        </div>
-                    </Grid>
-                    <Grid container spacing={2}>
-                        <Grid item md={6} xs={12}>
-                            <CategoriesBlacklist className={classes.blacklist} />
+                            <Typography align="center">
+                                Acceptable cost
+                            </Typography>
                         </Grid>
-                        <Grid item md={6} xs={12}>
-                            <ItemsBlacklist className={classes.blacklist} />
+                        <Grid item className={cn(classes.gridRow, classes.sectionContainer)}>
+                            <div className={classes.gridRow}>
+                                <Typography className={classes.headerRowTitle}>
+                                    Number of dishes:
+                                </Typography>
+                            </div>
+                            <div className={classes.gridRow}>
+                                <Typography>
+                                    from
+                                </Typography>
+                                <NumberTextField
+                                    value={config.config.total.minItems}
+                                    onChange={onChangeTotalMinItems}
+                                    className={classes.rowTextField}
+                                    size="small"
+                                    placeholder="Minimal number"
+                                />
+                            </div>
+                            <div className={classes.gridRow}>
+                                <Typography>
+                                    up to
+                                </Typography>
+                                <NumberTextField
+                                    value={config.config.total.maxItems}
+                                    onChange={onChangeTotalMaxItems}
+                                    className={classes.rowTextField}
+                                    size="small"
+                                    placeholder="Maximal number"
+                                />
+                            </div>
                         </Grid>
-                    </Grid>
-                    <Grid item>
-                        <CategoriesIndividualConfig />
-                    </Grid>
-                    <Grid item>
-                        <ItemsIndividualConfig />
-                    </Grid>
-                </>
+                        <Grid container spacing={2}>
+                            <Grid item md={6} xs={12}>
+                                <CategoriesBlacklist className={classes.blacklist} />
+                            </Grid>
+                            <Grid item md={6} xs={12}>
+                                <ItemsBlacklist className={classes.blacklist} />
+                            </Grid>
+                        </Grid>
+                        <Grid item>
+                            <CategoriesIndividualConfig />
+                        </Grid>
+                        <Grid item>
+                            <ItemsIndividualConfig />
+                        </Grid>
+                    </>
+                )}
+            </Grid>
+
+            { dialogOpen && (
+                <NewConfigDialog
+                    onClose={onCloseDialog}
+                />
             )}
-        </Grid>
+        </>
     );
 };

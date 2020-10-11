@@ -7,8 +7,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
-import TextField from '@material-ui/core/TextField';
 import DialogActions from '@material-ui/core/DialogActions';
+import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 
 import {randomId} from '../utils';
@@ -31,8 +31,8 @@ export const FreePresetSelect: React.FC<Props> = props => {
     const { options, value, onChange, className, label, addNewItem } = props
     const [open, toggleOpen] = React.useState(false);
     const [newValue, setNewValue] = React.useState('');
-    const uniqControlIdRef = React.useRef('free-select-' + randomId())
-    const uniqDialogIdRef = React.useRef('free-select-dialog-' + randomId())
+    const uniqControlIdRef = React.useRef('free-select-' + randomId());
+    const uniqDialogIdRef = React.useRef('free-select-dialog-' + randomId());
 
     const selectItems = React.useMemo(() => options.map(option => {
         return (
@@ -58,10 +58,10 @@ export const FreePresetSelect: React.FC<Props> = props => {
     const onSubmitDialog = React.useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (addNewItem) {
-            addNewItem(newValue);
+            addNewItem((e.target as any).presetName.value);
         }
         onCloseDialog();
-    }, [newValue, addNewItem, onCloseDialog]);
+    }, [addNewItem, onCloseDialog]);
 
     const onChangeNewValue = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setNewValue(e.target.value);
@@ -86,7 +86,7 @@ export const FreePresetSelect: React.FC<Props> = props => {
                     )}
                 </Select>
             </FormControl>
-            
+
             <Dialog open={open} onClose={onCloseDialog} aria-labelledby={uniqDialogIdRef.current}>
                 <form onSubmit={onSubmitDialog}>
                     <DialogTitle id={uniqDialogIdRef.current}>
@@ -94,6 +94,7 @@ export const FreePresetSelect: React.FC<Props> = props => {
                     </DialogTitle>
                     <DialogContent>
                         <TextField
+                            name="presetName"
                             autoFocus
                             margin="dense"
                             value={newValue}
@@ -115,4 +116,4 @@ export const FreePresetSelect: React.FC<Props> = props => {
             </Dialog>
         </>
     );
-}
+};

@@ -1,6 +1,6 @@
 import { LocalConfigState } from './providers/ConfigStateProvider';
 import { randomId } from './utils';
-import { MenuItemConfig, RandomOrderConfig } from '../types/autoOrderConfigs';
+import { MenuItemConfig, RandomConfigData, RandomOrderConfig } from '../types/autoOrderConfigs';
 
 export const defaultMenuItemConfig: MenuItemConfig = {
     weight: 1,
@@ -25,7 +25,7 @@ const defaultRandomConfig: RandomOrderConfig = {
     name: 'Default Config',
     config: {
         total: {
-            cost: { min: 270, mid: 300, max: 330 },
+            cost: { min: 260, mid: 290, max: 310 },
             minItems: 1,
             maxItems: 10,
         },
@@ -71,4 +71,23 @@ export const defaultConfigState: LocalConfigState = {
     selectedConfig: defaultRandomConfig.id,
     overwriteAlways: false,
     allowMultipleOrders: false,
+};
+
+export const defaultEmptyRandomConfigData: RandomConfigData = {
+    total: {
+        cost: { min: 260, mid: 290, max: 310 },
+        minItems: 1,
+        maxItems: 10,
+    },
+    selectFromTargets: [],
+    targetsData: {
+        [defaultKumirTarget.id]: {
+            categories: {},
+            items: {},
+        },
+        [defaultNamNymTarget.id]: {
+            categories: {},
+            items: {},
+        },
+    },
 };
