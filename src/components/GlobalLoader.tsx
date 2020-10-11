@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export const Loader: React.FC = () => {
+export const GlobalLoader: React.FC = () => {
     const classes = useStyles();
     return (
         <Backdrop className={classes.backdrop} open={true}>

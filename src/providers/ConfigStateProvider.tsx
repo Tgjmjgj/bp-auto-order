@@ -64,7 +64,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
             saved,
             dataLoaded,
         };
-    }, [configState, saved, dataLoaded]);
+    }, [configState, updateState, saved, dataLoaded]);
 
     React.useEffect(() => {
         console.log('@ new state: ', configState);
