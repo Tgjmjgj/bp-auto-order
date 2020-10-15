@@ -32,8 +32,16 @@ import { PresetsScreen } from './layouts/PresetsScreen';
 import { RandomConfiguration } from './layouts/randomConfiguration/RandomConfiguration';
 import { ManualOrder } from './layouts/ManualOrder';
 import { MenuLoader } from './components/MenuLoader';
+import { NotificationBar } from './components/NotificationBar';
 
-const menuCategories = ['Main Options', 'Presets', 'Random Configuration', 'Manual Order', 'Developer Settings'] as const;
+const menuCategories = [
+    'Main Options',
+    'Presets',
+    'Random Configuration',
+    'Manual Order',
+    'Developer Settings',
+] as const;
+
 type MenuCategories = typeof menuCategories[number];
 
 const drawerWidth = 260;
@@ -74,12 +82,21 @@ const useStyles = makeStyles((theme: Theme) =>
             marginTop: '60px',
             width: drawerWidth,
         },
-        content: {
+        contentWrapper: {
+            position: 'relative',
             flexGrow: 1,
-            padding: theme.spacing(3),
             [theme.breakpoints.up('sm')]: {
                 marginLeft: drawerWidth,
             },
+        },
+        content: {
+            padding: theme.spacing(3),
+        },
+        notification: {
+            position: 'absolute',
+            top: 0,
+            width: '100%',
+            backgroundColor: '#efefb0',
         },
         contentContainer: {
             margin: `${theme.spacing(3)}px 0`,
@@ -230,10 +247,15 @@ export const Authorized: React.FC = () => {
                         </Drawer>
                     </Hidden>
                 </nav>
-                <main className={classes.content}>
-                    <Container className={classes.contentContainer}>
-                        {menuCategoriesData[selectedMenuItem].component}
-                    </Container>
+                <main className={classes.contentWrapper}>
+                    <div className={classes.content}>
+                        <Container className={classes.contentContainer}>
+                            {menuCategoriesData[selectedMenuItem].component}
+                        </Container>
+                    </div>
+                    <div className={classes.notification}>
+                        <NotificationBar />
+                    </div>
                 </main>
 
                 <Snackbar

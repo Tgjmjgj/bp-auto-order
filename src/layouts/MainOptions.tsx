@@ -1,4 +1,5 @@
 import React from 'react';
+import cn from 'classnames';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -7,9 +8,12 @@ import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { NotificationContext } from '../providers/NotificationProvider';
 import { AutoOrderMode } from '../../types/autoOrderConfigs';
 
 type AutoOrderOption = {
@@ -29,8 +33,14 @@ const useStyles = makeStyles((theme: Theme) =>
             alignItems: 'flex-end',
             height: 80,
         },
+        gridRowSwitch: {
+            paddingBottom: '4px !important',
+        },
         label: {
             marginRight: 20,
+        },
+        labelSwitch: {
+            marginLeft: 0,
         },
         selectedPresets: {
             minWidth: 300,
@@ -44,16 +54,29 @@ const autoOrderModeOptions: AutoOrderOption[] = [
 ];
 
 export const MainOptions: React.FC = () => {
+    const classes = useStyles();
     const configState = React.useContext(ConfigStateContext);
+    const { pushNotification } = React.useContext(NotificationContext);
     const [selectedPresets, setSelectedPresets] = React.useState<PresetOption[]>(() => {
         return configState.state.selectedPresets.map(presetId => {
             const realPreset = configState.state.presets.find(preset => preset.id === presetId);
             return realPreset ? { key: presetId, value: realPreset.name } : null;
         }).filter(option => option) as PresetOption[];
     });
-    const classes = useStyles();
     const customName = configState.state.customName;
     const mode = configState.state.mode;
+    const enabled = configState.state.enabled;
+
+    React.useEffect(() => {
+        pushNotification({
+            message: 'Time upon the next order: ',
+        });
+        return () => pushNotification(null);
+    }, [pushNotification]);
+
+    const toggleEnabled = React.useCallback(() => {
+        configState.updateState({ enabled: !enabled });
+    }, [configState, enabled]);
 
     React.useEffect(() => {
         const realPresetIds = configState.state.presets.map(preset => preset.id);
@@ -98,60 +121,77 @@ export const MainOptions: React.FC = () => {
     }), []);
 
     return (
-        <Grid container spacing={4} direction="column">
-            <Grid item className={classes.gridRow}>
-                <Typography className={classes.label}>
-                    Custom display name:
-                </Typography>
-                <TextField
-                    value={customName || ''}
-                    onChange={changeCustomName}
-                />
-            </Grid>
-            <Grid item className={classes.gridRow}>
-                <Typography className={classes.label}>
-                    Mode:
-                </Typography>
-                <Select
-                    value={mode}
-                    onChange={changeMode}
-                >
-                    { modeOptions }
-                </Select>
-            </Grid>
-            { mode === 'preset' && (
-                <Grid item className={classes.gridRow}>
-                    <Typography className={classes.label}>
-                        Random selection from these presets:
-                    </Typography>
-                    <Autocomplete
-                        multiple
-                        disableClearable={true}
-                        value={selectedPresets}
-                        onChange={onSelectedPresetsChange}
-                        className={classes.selectedPresets}
-                        options={presetsOptions}
-                        getOptionLabel={preset => preset.value}
-                        getOptionSelected={(opt1, opt2) => opt1.key === opt2.key}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                variant="standard"
-                                placeholder="Presets"
+        <>
+            <Grid container spacing={4} direction="column">
+                <Grid item className={cn(classes.gridRow, classes.gridRowSwitch)}>
+                    <FormControlLabel
+                        label="Auto ordering: "
+                        labelPlacement="start"
+                        className={classes.labelSwitch}
+                        control={
+                            <Switch
+                                color="primary"
+                                size="medium"
+                                checked={enabled}
+                                onChange={toggleEnabled}
                             />
-                        )}
-                        renderTags={(options, getTagProps) =>
-                            options.map((option, i) => (
-                                <Chip
-                                    label={option.value}
-                                    {...getTagProps({ index: i })}
-                                    {...(options.length > 1 ? undefined : { onDelete: undefined })}
-                                />
-                            ))
                         }
                     />
                 </Grid>
-            )}
-        </Grid>
+                <Grid item className={classes.gridRow}>
+                    <Typography className={classes.label}>
+                        Custom display name:
+                    </Typography>
+                    <TextField
+                        value={customName || ''}
+                        onChange={changeCustomName}
+                    />
+                </Grid>
+                <Grid item className={classes.gridRow}>
+                    <Typography className={classes.label}>
+                        Mode:
+                    </Typography>
+                    <Select
+                        value={mode}
+                        onChange={changeMode}
+                    >
+                        { modeOptions }
+                    </Select>
+                </Grid>
+                { mode === 'preset' && (
+                    <Grid item className={classes.gridRow}>
+                        <Typography className={classes.label}>
+                            Random selection from these presets:
+                        </Typography>
+                        <Autocomplete
+                            multiple
+                            disableClearable={true}
+                            value={selectedPresets}
+                            onChange={onSelectedPresetsChange}
+                            className={classes.selectedPresets}
+                            options={presetsOptions}
+                            getOptionLabel={preset => preset.value}
+                            getOptionSelected={(opt1, opt2) => opt1.key === opt2.key}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="standard"
+                                    placeholder="Presets"
+                                />
+                            )}
+                            renderTags={(options, getTagProps) =>
+                                options.map((option, i) => (
+                                    <Chip
+                                        label={option.value}
+                                        {...getTagProps({ index: i })}
+                                        {...(options.length > 1 ? undefined : { onDelete: undefined })}
+                                    />
+                                ))
+                            }
+                        />
+                    </Grid>
+                )}
+            </Grid>
+        </>
     );
 };
