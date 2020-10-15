@@ -125,7 +125,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                         .update(preparedData)
                         .then(() => {
                             setSaved(s => ++s);
-                            serverConfigStateRef.current = configState;
+                            serverConfigStateRef.current = preparedData;
                         });
                     }
                 }, saveConfigInactivityTimeout);
