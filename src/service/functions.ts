@@ -11,3 +11,6 @@ export const getRandomOrder = (target: string, date: string, items?: OrderItem[]
 
 export const getUpdatedMenu = (target: string, date: string): Promise<{ data: AnyMenuItem[] }> =>
     firebase.app().functions('europe-west1').httpsCallable('getUpdatedMenu')({target, date});
+
+export const getAvailableMenu = (target: string, date: string): Promise<{ data: string[] }> =>
+    firebase.app().functions('europe-west1').httpsCallable('getAvailableMenu')({target, date});

@@ -1,36 +1,14 @@
-import { DateTime } from 'luxon';
-
 import { firestore } from './firebase';
 import { scrapKumirMenu } from './scrappers/scrapKumirMenu';
 import { scrapNamNymMenu } from './scrappers/scrapNamNymMenu';
-import { randomId, log, throwError } from './utils';
+import { randomId, log, throwError, checkDate } from './utils';
 import { UpdatedMenu, MenuItem, MenuItemsTable, ScrapedMenu } from '../../types/autoOrderMenus';
 
 const menuTargets = [ 'kumir', 'namnym' ];
 
-const targetScrappers: Record<string, (date: string) => Promise<ScrapedMenu>> = {
+export const targetScrappers: Record<string, (date: string) => Promise<ScrapedMenu>> = {
     'kumir': scrapKumirMenu,
     'namnym': scrapNamNymMenu,
-};
-
-export const customDateFormat = 'yyyy-MM-dd'
-
-const checkDate = (forDate: string) => {
-    try {
-        const date = DateTime.fromFormat(forDate, customDateFormat);
-        if (!date.isValid) {
-            throw Error();
-        }
-        const dateDiff = date.diffNow(['month', 'day']);
-        if (dateDiff.months < 0) {
-            throwError('invalid-argument', 'You can retrieve menu only for past priods no longer than 1 month from today.');
-        }
-        if (dateDiff.months > 0 || dateDiff.days > 7) {
-            throwError('invalid-argument', 'You can retrieve menu only for future periods no longer than 1 week from today.');
-        }
-    } catch (e) {
-        throwError('invalid-argument', `Date is invalid. Expected string format: "${customDateFormat}"`, e);
-    }
 };
 
 export const getAllUpdatedMenus = async (forDate: string) => {
@@ -62,21 +40,20 @@ export const getUpdatedMenu = async (targetId: string, forDate: string): Promise
         ]);
 
         let allMenuItems: MenuItem[] = [];
-        let latestAvailableMenu: string[] = [];
+        let availableMenuForDate: string[] = [];
         if (itemsData.exists) {
             allMenuItems = (itemsData.data() as MenuItemsTable).menuItems;
         }
         if (availabilityData.exists) {
             const availableMenu = availabilityData.get(targetId) as string[] | undefined;
             if (availableMenu && availableMenu.length) {
-                latestAvailableMenu = availableMenu;
+                availableMenuForDate = availableMenu;
             }
         }
-        if (!allMenuItems.length || !latestAvailableMenu.length) {
+        if (!allMenuItems.length || !availableMenuForDate.length) {
 
-            const todayMenuData = await targetScrappers[targetId](forDate);
-            latestAvailableMenu = [];
-            todayMenuData.forEach(item => {
+            const menuDataForDate = await targetScrappers[targetId](forDate);
+            availableMenuForDate = menuDataForDate.map(item => {
                 const sameNameItem = allMenuItems.find(oldItem => oldItem.name === item.name);
                 let itemId;
                 if (sameNameItem) {
@@ -93,7 +70,7 @@ export const getUpdatedMenu = async (targetId: string, forDate: string): Promise
                         ...item,
                     });
                 }
-                latestAvailableMenu.push(itemId);
+                return itemId;
             });
 
             const itemsSetOrUpdate = itemsData.exists ? 'update' : 'set';
@@ -104,13 +81,13 @@ export const getUpdatedMenu = async (targetId: string, forDate: string): Promise
                     { menuItems: allMenuItems },
                 ),
                 firestore.collection('auto-order-menu-availability').doc(forDate)[availabilitySetOrUpdate](
-                    { [targetId]: latestAvailableMenu },
+                    { [targetId]: availableMenuForDate },
                 ),
             ]);
         }
 
         return allMenuItems.map(menuItem => {
-            const isEnabled = latestAvailableMenu.includes(menuItem.id);
+            const isEnabled = availableMenuForDate.includes(menuItem.id);
             return {
                 ...menuItem,
                 enabled: isEnabled,
