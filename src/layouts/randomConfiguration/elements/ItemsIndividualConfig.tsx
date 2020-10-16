@@ -71,7 +71,7 @@ export const ItemsIndividualConfig: React.FC = () => {
         }, []);
     }, [config, menuState]);
 
-    const setCategoryConfig = useSetItemConfig('categories');
+    const setCategoryConfig = useSetItemConfig('items');
 
     return (
         <EditItemConfigs
