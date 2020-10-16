@@ -1,26 +1,31 @@
 import React from 'react';
 import cn from 'classnames';
 
-import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import Collapse from '@material-ui/core/Collapse';
-import Alert from '@material-ui/lab/Alert'
+import Alert from '@material-ui/lab/Alert';
 
-import { NotificationContext } from '../providers/NotificationProvider'
-
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-    }),
-);
+import { NotificationContext, NotificationData } from '../providers/NotificationProvider';
 
 export const NotificationBar: React.FC = () => {
-    const classes = useStyles();
-    const { notificationData: data } = React.useContext(NotificationContext)
+    const { notificationData: data } = React.useContext(NotificationContext);
+    const lastDataRef = React.useRef<NotificationData | null>(null);
+    const saveData = ((!data && lastDataRef.current) ? lastDataRef.current : data) || {}
+
+    console.log('PrevData: ', lastDataRef.current)
+    console.log('Data: ', data)
+
+    React.useEffect(() => {
+        if (data) {
+            lastDataRef.current = data
+        }
+    }, [data, lastDataRef]);
 
     return (
         <Collapse in={!!data}>
-            <Alert className={cn(data && data.className)}>
-                {data && data.message}
-            </Alert>
+            <Alert
+                className={cn(saveData.className)}
+                {...saveData}
+            />
         </Collapse>
     );
 };

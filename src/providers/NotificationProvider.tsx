@@ -1,10 +1,8 @@
 import React from 'react';
-
-import { AlertProps } from '@material-ui/lab/Alert'
+import { AlertProps } from '@material-ui/lab/Alert';
 
 export interface NotificationData extends AlertProps {
     lifetime?: number
-    message: string
 }
 
 type NotificationContextValue = {
@@ -15,7 +13,7 @@ type NotificationContextValue = {
 const emptyNotificationContextValue: NotificationContextValue = {
     notificationData: null,
     pushNotification: () => {},
-}
+};
 
 export const NotificationContext = React.createContext<NotificationContextValue>(emptyNotificationContextValue);
 
@@ -26,7 +24,7 @@ export const NotificationProvider: React.FC = ({ children }) => {
     const notificationContextValue = React.useMemo(() => ({
         notificationData,
         pushNotification: setNotificationData,
-    }), [notificationData])
+    }), [notificationData]);
 
     return (
         <NotificationContext.Provider value={ notificationContextValue }>

@@ -14,6 +14,7 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import { ConfigStateContext } from '../providers/ConfigStateProvider';
 import { NotificationContext } from '../providers/NotificationProvider';
+import { TimeUntilNextOrder } from '../components/TimeUntilNextOrder';
 import { AutoOrderMode } from '../../types/autoOrderConfigs';
 
 type AutoOrderOption = {
@@ -45,6 +46,10 @@ const useStyles = makeStyles((theme: Theme) =>
         selectedPresets: {
             minWidth: 300,
         },
+        timeUponLabel: {
+            marginLeft: theme.spacing(2),
+            marginRight: theme.spacing(3),
+        },
     }),
 );
 
@@ -69,10 +74,19 @@ export const MainOptions: React.FC = () => {
 
     React.useEffect(() => {
         pushNotification({
-            message: 'Time upon the next order: ',
+            children: (
+                <>
+                    <span className={classes.timeUponLabel}>
+                        Time until the next order:
+                    </span>
+                    <TimeUntilNextOrder />
+                </>
+            ),
+            icon: <div />,
+            severity: 'info',
         });
         return () => pushNotification(null);
-    }, [pushNotification]);
+    }, [pushNotification, classes.timeUponLabel]);
 
     const toggleEnabled = React.useCallback(() => {
         configState.updateState({ enabled: !enabled });
