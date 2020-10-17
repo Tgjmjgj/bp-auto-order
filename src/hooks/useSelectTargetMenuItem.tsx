@@ -32,6 +32,7 @@ export const useSelectTargetMenuItem = (callback: (item: AnyMenuItem | null) => 
 
     const onClickItem = React.useCallback((item: AnyMenuItem) => {
         setPendingTargetId('');
+        dialogsContext.closeDialog();
         callback(item);
     }, [callback]);
 
