@@ -1,4 +1,7 @@
 import React from 'react';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
+import LuxonUtils from '@date-io/luxon';
+
 import { AuthAuthProvider } from './providers/AutoAuthProvider';
 import { MenuProvider } from './providers/MenuProvider';
 import { ConfigStateProvider } from './providers/ConfigStateProvider';
@@ -9,18 +12,20 @@ import { Main } from './Main';
 
 export const App: React.FC = () => {
     return (
-        <AuthAuthProvider>
-            <ConfigStateProvider>
-                <DateForProvider>
-                    <MenuProvider>
-                        <DialogsProvider>
-                            <NotificationProvider>
-                                <Main />
-                            </NotificationProvider>
-                        </DialogsProvider>
-                    </MenuProvider>
-                </DateForProvider>
-            </ConfigStateProvider>
-        </AuthAuthProvider>
+        <MuiPickersUtilsProvider utils={LuxonUtils}>
+            <AuthAuthProvider>
+                <ConfigStateProvider>
+                    <DateForProvider>
+                        <MenuProvider>
+                            <DialogsProvider>
+                                <NotificationProvider>
+                                    <Main />
+                                </NotificationProvider>
+                            </DialogsProvider>
+                        </MenuProvider>
+                    </DateForProvider>
+                </ConfigStateProvider>
+            </AuthAuthProvider>
+        </MuiPickersUtilsProvider>
     );
 };

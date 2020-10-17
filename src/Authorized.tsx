@@ -1,10 +1,6 @@
 import React from 'react';
-import cn from 'classnames';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
-import AppBar from '@material-ui/core/AppBar';
-import Switch from '@material-ui/core/Switch';
-import Toolbar from '@material-ui/core/Toolbar';
 import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
@@ -12,13 +8,10 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Hidden from '@material-ui/core/Hidden';
 import Drawer from '@material-ui/core/Drawer';
-import IconButton from '@material-ui/core/IconButton';
 import Snackbar from '@material-ui/core/Snackbar';
 import Container from '@material-ui/core/Container';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import MuiAlert from '@material-ui/lab/Alert';
 import SettingsIcon from '@material-ui/icons/Settings';
-import MenuIcon from '@material-ui/icons/Menu';
 import BuildIcon from '@material-ui/icons/Build';
 import BookmarksIcon from '@material-ui/icons/Bookmarks';
 import AssignmentIcon from '@material-ui/icons/Assignment';
@@ -33,6 +26,7 @@ import { RandomConfiguration } from './layouts/randomConfiguration/RandomConfigu
 import { ManualOrder } from './layouts/ManualOrder';
 import { MenuLoader } from './components/MenuLoader';
 import { NotificationBar } from './components/NotificationBar';
+import { Header } from './components/Header';
 
 const menuCategories = [
     'Main Options',
@@ -57,27 +51,6 @@ const useStyles = makeStyles((theme: Theme) =>
                 flexShrink: 0,
             },
         },
-        appBar: {
-            [theme.breakpoints.up('sm')]: {
-                width: `calc(100% - ${drawerWidth}px)`,
-                marginLeft: drawerWidth,
-            },
-        },
-        menuButton: {
-            left: 0,
-            marginLeft: theme.spacing(1),
-            position: 'absolute',
-            [theme.breakpoints.up('sm')]: {
-                display: 'none',
-            },
-        },
-        // necessary for content to be below app bar
-        toolbar: {
-            justifyContent: 'flex-end',
-            [theme.breakpoints.up('sm')]: {
-                justifyContent: 'center',
-            }
-        },
         drawerPaper: {
             marginTop: '60px',
             width: drawerWidth,
@@ -101,19 +74,6 @@ const useStyles = makeStyles((theme: Theme) =>
         contentContainer: {
             margin: `${theme.spacing(3)}px 0`,
         },
-        header: {
-            height: '60px',
-            backgroundColor: theme.palette.secondary.dark,
-            zIndex: theme.zIndex.drawer + 1,
-        },
-        enabled: {
-            backgroundColor: '#539e3e',
-        },
-        enableControl: {
-            '& .MuiFormControlLabel-label': {
-                ...theme.typography.h6,
-            },
-        },
     }),
 );
 
@@ -125,14 +85,10 @@ export const Authorized: React.FC = () => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [saveMessageShows, setSaveMessageShows] = React.useState(false);
     const [selectedMenuItem, setSelectMenuItem] = React.useState<MenuCategories>('Main Options');
-    const enabled = configState.state.enabled;
+
     const isAllMenuLoaded = React.useMemo(() => {
         return Object.values(menuState).every(menuData => menuData.loadStatus !== 'not-loaded');
     }, [menuState]);
-
-    const toggleEnabled = React.useCallback(() => {
-        configState.updateState({ enabled: !enabled });
-    }, [configState, enabled]);
 
     const toggleMenuOnMobile = React.useCallback(() => setMobileOpen(!mobileOpen), [mobileOpen]);
     const closeSaveMessage = React.useCallback(() => setSaveMessageShows(false), []);
@@ -191,32 +147,9 @@ export const Authorized: React.FC = () => {
 
     return (
         <div className="page-container">
-            <AppBar position="sticky" className={cn(classes.header, { [classes.enabled]: enabled })}>
-                <Toolbar className={classes.toolbar}>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        edge="start"
-                        onClick={toggleMenuOnMobile}
-                        className={classes.menuButton}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <FormControlLabel
-                        label="Auto order enabled: "
-                        labelPlacement="start"
-                        className={classes.enableControl}
-                        control={
-                            <Switch
-                                color="primary"
-                                size="medium"
-                                checked={enabled}
-                                onChange={toggleEnabled}
-                            />
-                        }
-                    />
-                </Toolbar>
-            </AppBar>
+            <Header
+                toggleMenu={toggleMenuOnMobile}
+            />
             <div className="page-layout">
                 <nav className={classes.drawer} aria-label="mailbox folders">
                     <Hidden smUp implementation="css">

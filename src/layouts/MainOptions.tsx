@@ -50,6 +50,14 @@ const useStyles = makeStyles((theme: Theme) =>
             marginLeft: theme.spacing(2),
             marginRight: theme.spacing(3),
         },
+        mainSwitch: {
+            '& .MuiIconButton-label': {
+                color: '#FB5E5E',
+            },
+            '& .Mui-checked .MuiIconButton-label': {
+                color: '#009FFF',
+            },
+        },
     }),
 );
 
@@ -79,14 +87,17 @@ export const MainOptions: React.FC = () => {
                     <span className={classes.timeUponLabel}>
                         Time until the next order:
                     </span>
-                    <TimeUntilNextOrder />
+                    {enabled
+                        ? <TimeUntilNextOrder />
+                        : <span>--------</span>
+                    }
                 </>
             ),
             icon: <div />,
             severity: 'info',
         });
         return () => pushNotification(null);
-    }, [pushNotification, classes.timeUponLabel]);
+    }, [pushNotification, enabled, classes.timeUponLabel]);
 
     const toggleEnabled = React.useCallback(() => {
         configState.updateState({ enabled: !enabled });
@@ -144,6 +155,7 @@ export const MainOptions: React.FC = () => {
                         className={classes.labelSwitch}
                         control={
                             <Switch
+                                className={classes.mainSwitch}
                                 color="primary"
                                 size="medium"
                                 checked={enabled}

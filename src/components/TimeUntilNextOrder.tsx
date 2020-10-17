@@ -18,22 +18,25 @@ const durationToReadable = (duration: Duration) => {
 	}, []).join(', ');
 };
 
+export const getNextOrderDateTime = (): DateTime => {
+    const today = DateTime.local().setZone('Europe/Moscow');
+    let orderDay = today;
+    if (today.hour >= orderTime.hour && today.minute >= orderTime.minute) {
+        orderDay = orderDay.plus({days: 1});
+    }
+    while (!orderWeekdays.includes(orderDay.weekday)) {
+        orderDay = orderDay.plus({days: 1});
+    }
+    return orderDay.set(orderTime);
+};
+
 export const TimeUntilNextOrder: React.FC = () => {
 
     const [timeLeft, setTimeLeft] = React.useState('');
     const [resetter, setResetter] = React.useState(0);
 
-    const orderDateTime = React.useMemo(() => {
-        const today = DateTime.local().setZone('Europe/Moscow');
-        let orderDay = today;
-        if (today.hour >= orderTime.hour && today.minute >= orderTime.minute) {
-            orderDay = orderDay.plus({days: 1});
-        }
-        while (!orderWeekdays.includes(orderDay.weekday)) {
-            orderDay = orderDay.plus({days: 1});
-        }
-        return orderDay.set(orderTime);
-    }, [resetter]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const orderDateTime = React.useMemo(getNextOrderDateTime, [resetter]);
 
     const calculateLeftTime = React.useCallback(() => {
         const now = DateTime.local().setZone('Europe/Moscow');
