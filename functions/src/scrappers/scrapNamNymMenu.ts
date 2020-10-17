@@ -3,8 +3,7 @@ import cheerio from 'cheerio';
 import { DateTime } from 'luxon';
 import got from 'got';
 
-import { customDateFormat } from '../getUpdatedMenu';
-import { log, throwError } from '../utils';
+import { customDateFormat, log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
 const namNymBaseUrl = 'https://www.nam-nyam.ru';
@@ -37,8 +36,9 @@ export const scrapNamNymMenu = async (forDate: string): Promise<ScrapedMenu> => 
                 const description = $(el2).find('meta[itemprop="description"]').attr("content")!.trim();
                 const weight = $(el2).find('a[title] .catering_item_weight').text().trim();
                 const priceStr = $(el2).find('.catering_item_price > span.price').text().trim();
+                const name = $(el2).find('meta[itemprop="name"]').attr("content")!.trim();
                 return {
-                    name: $(el2).find('meta[itemprop="name"]').attr("content")!.trim(),
+                    name: name.startsWith('.') ? name.slice(1) : name,
                     additional: weight + '. Состав: ' + description,
                     price: Number(priceStr.slice(0, priceStr.length - ' руб.'.length)),
                     imageUrl: imageUrl ? namNymBaseUrl + imageUrl : null,

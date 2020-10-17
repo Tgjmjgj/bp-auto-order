@@ -3,8 +3,7 @@ import cheerio from 'cheerio';
 import { DateTime } from 'luxon';
 import got from 'got';
 
-import { customDateFormat } from '../getUpdatedMenu';
-import { log, throwError } from '../utils';
+import { customDateFormat, log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
 const kumirBaseUrl = 'https://ku-mir.ru';
