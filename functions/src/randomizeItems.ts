@@ -145,7 +145,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
                 selectionStep: ['init'],
             };
         });
-
+        log('@1');
         const orderItemsMap: OrderItemsMap = {};
         orderItems.forEach(item => incrementOrderItemsMap(orderItemsMap, item.id));
 
@@ -171,10 +171,12 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
             return all;
         }, []);
 
+        log('@2');
         const priorityItemGroups = partition(requiredItemsPool, item => (
             requiredCategoriesMap[item.targetId][item.category]
         ));
 
+        log('@3');
         // Required - Step 1. Choose from required items within required categories
         // Required - Step 2. Choose from all left required items not within required category
 
@@ -197,6 +199,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
             }
         }
 
+        log('@4');
         // Required - Step 3. Choose items for left required categories
 
         let requiredCategoriesItemsPool = conf.selectFromTargets.reduce<AnyMenuItem[]>((all, targetId) => {
@@ -204,7 +207,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
                 const itemWeight = get(conf.targetsData[targetId].items[item.id], 'weight') as number | undefined;
                 const itemMaxItems = get(conf.targetsData[targetId].items[item.id], 'maxItems') as number | undefined;
                 const sameItemsInOrder = orderItemsMap[item.id] || 0;
-                const sameCategoriesInOrder = orderCategoriesMap[targetId][item.category] || 0;
+                const sameCategoriesInOrder = get(orderCategoriesMap[item.targetId], `[${item.category}]`, 0);
                 const needMoreOfThisCategory = (requiredCategoriesMap[targetId][item.category] || 0) - sameCategoriesInOrder;
                 if (
                     item.enabled &&
@@ -219,6 +222,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
             return all;
         }, []);
 
+        log('@5');
         while (requiredCategoriesItemsPool.length && totalCost <= midCost) {
             const itemIndex = Math.floor(Math.random() * requiredCategoriesItemsPool.length);
             const nextItem = requiredCategoriesItemsPool[itemIndex];
@@ -226,7 +230,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
 
             const nextItemsPool = requiredCategoriesItemsPool.filter(item => {
                 if (item.category === nextItem.category) {
-                    const sameCategoriesInOrder = (orderCategoriesMap[item.targetId][item.category] || 0) + 1;
+                    const sameCategoriesInOrder = get(orderCategoriesMap[item.targetId], `[${item.category}]`, 0) + 1;
                     const wouldNeedMoreOfThisCategory = (requiredCategoriesMap[item.targetId][item.category] || 0) - sameCategoriesInOrder;
                     return nextCost + item.price < maxCost && wouldNeedMoreOfThisCategory;
                 }
@@ -241,13 +245,14 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
             requiredCategoriesItemsPool = nextItemsPool;
         }
 
+        log('@6');
         const initialRandomItemsPool = conf.selectFromTargets.reduce<AnyMenuItem[]>((all, targetId) => {
             targetMenus[targetId].forEach(item => {
                 const categoryWeight = get(conf.targetsData[targetId].categories[item.category], 'weight') as number | undefined;
                 const itemWeight = get(conf.targetsData[targetId].items[item.id], 'weight') as number | undefined;
                 const categoryMaxItems = get(conf.targetsData[targetId].categories[item.category], 'maxItems') as number | undefined;
                 const itemMaxItems = get(conf.targetsData[targetId].items[item.id], 'maxItems') as number | undefined;
-                const sameCategoriesInOrder = get(orderCategoriesMap[item.targetId], `[${item.category}]`) || 0;
+                const sameCategoriesInOrder = get(orderCategoriesMap[item.targetId], `[${item.category}]`, 0);
                 const sameItemsInOrder = orderItemsMap[item.id] || 0;
                 if (
                     item.enabled &&
@@ -265,6 +270,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
             return all;
         }, []);
 
+        log('@7');
         if (!initialRandomItemsPool.length) {
             return prepareResult(orderItems);
         }
@@ -283,7 +289,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
             const nextAttemptItemsPool = attemptItemsPool.filter(item => {
                 const categoryMaxItems = get(conf.targetsData[item.targetId].categories[item.category], 'maxItems') as number | undefined;
                 const itemMaxItems = get(conf.targetsData[item.targetId].items[item.id], 'maxItems') as number | undefined;
-                const sameCategoryInOrder = (get(attemptOrderCategoriesMap[item.targetId], `[${item.category}]`) || 0) +
+                const sameCategoryInOrder = get(orderCategoriesMap[item.targetId], `[${item.category}]`, 0) +
                     ((item.targetId === nextItem.targetId && item.category === nextItem.category) ? 1 : 0);
                 const sameItemInOrder = (attemptOrderItemsMap[item.id] || 0) + (item.id === nextItem.id ? 1 : 0);
                 return (
