@@ -5,8 +5,8 @@ import { DateTime } from 'luxon';
 import { firestore } from './firebase';
 import { placeOrder } from './placeOrder';
 import { randomizeItems } from './randomizeItems';
-import { customDateFormat, getAllUpdatedMenus } from './getUpdatedMenu';
-import { log } from './utils';
+import { getAllUpdatedMenus } from './getUpdatedMenu';
+import { customDateFormat, log } from './utils';
 
 import { ConfigState } from '../../types/autoOrderConfigs';
 

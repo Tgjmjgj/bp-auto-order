@@ -44,13 +44,15 @@ export type MenuItemConfig = {
     minItems?: number
 };
 
+export type Costs = {
+    min: number
+    mid: number
+    max: number
+};
+
 export type RandomConfigData = {
     total: {
-        cost: {
-            min: number
-            mid: number
-            max: number
-        }
+        cost: Costs
         minItems: number
         maxItems: number
     }
