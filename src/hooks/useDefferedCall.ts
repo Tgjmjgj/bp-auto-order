@@ -11,7 +11,6 @@ export const useDefferedCall = (timeout: number, fn: () => void, deps: any[] = [
 
     React.useEffect(() => {
         return () => {
-            console.log('@Deffered update on unmount');
             if (isDirtyRef.current) {
                 fnRef.current();
             }
@@ -20,7 +19,6 @@ export const useDefferedCall = (timeout: number, fn: () => void, deps: any[] = [
 
     React.useEffect(() => {
         return () => {
-            console.log('@Deffered update on before dependency change');
             if (isDirtyRef.current) {
                 fnRef.current();
             }
@@ -31,7 +29,6 @@ export const useDefferedCall = (timeout: number, fn: () => void, deps: any[] = [
         isDirtyRef.current = true;
         const timeoutId = setTimeout(() => {
             fn();
-            console.log('@Deffered update on timeout');
             isDirtyRef.current = false;
         }, timeout);
         return () => clearTimeout(timeoutId);

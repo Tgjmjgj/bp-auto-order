@@ -47,7 +47,10 @@ export const CostSlider: React.FC = () => {
 
     const updateCost = React.useCallback(() => {
         updateConfig(oldState => produce(oldState, state => {
-            const cfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
+            if (selectedConfigIndex === -1) {
+                return;
+            }
+            const cfg = state.randomConfigs[selectedConfigIndex];
             if (
                 !cfg || (
                     cfg.config.total.cost.min === costValues[0] &&
@@ -63,7 +66,7 @@ export const CostSlider: React.FC = () => {
                 max: costValues[2],
             };
         }));
-    }, [costValues, updateConfig]);
+    }, [costValues, updateConfig, selectedConfigIndex]);
 
     useDefferedCall(defferedUpdateTimeout, updateCost, [selectedConfigIndex]);
 
