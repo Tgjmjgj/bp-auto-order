@@ -4,7 +4,7 @@ import 'firebase/firestore';
 import produce from 'immer';
 
 import { AutoAuthContext } from './AutoAuthProvider';
-import { ConfigStateContext } from './ConfigStateProvider';
+import { ConfigUpdateContext } from './ConfigStateProvider';
 import { DateForContext } from './DateForProvider';
 import { getUpdatedMenu } from '../service/functions';
 import { defaultConfigState, pseudoIdPrefix } from '../initData'
@@ -35,7 +35,7 @@ export const MenuContext = React.createContext<AllMenus>(defaultMenus);
 export const MenuProvider: React.FC = ({ children }) => {
 
     const authContext = React.useContext(AutoAuthContext);
-    const configState = React.useContext(ConfigStateContext);
+    const updateConfig = React.useContext(ConfigUpdateContext);
     const { dateFor } = React.useContext(DateForContext);
     const [menusState, setMenusState] = React.useState<AllMenus>(defaultMenus);
     const availabilityDataRef = React.useRef<AvailabilityData>({});
@@ -177,7 +177,7 @@ export const MenuProvider: React.FC = ({ children }) => {
             if (!targetMenu.length) {
                 return;
             }
-            configState.updateState(produce(configState.state, state => {
+            updateConfig(oldState => produce(oldState, state => {
                 state.randomConfigs.forEach(rndCfg => {
                     const targetCfg = rndCfg.config.targetsData[target];
                     if (!targetCfg) {
@@ -199,7 +199,7 @@ export const MenuProvider: React.FC = ({ children }) => {
             }));
             checkedMenuTargetsRef.current.push(target);
         });
-    }, [menusState, configState]);
+    }, [menusState, updateConfig]);
 
     return (
         <MenuContext.Provider value={ menusState }>

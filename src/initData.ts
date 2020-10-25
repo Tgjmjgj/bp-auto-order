@@ -59,8 +59,6 @@ const defaultRandomConfig: RandomOrderConfig = {
 };
 
 export const defaultConfigState: LocalConfigState = {
-    saveOnServer: false,
-
     enabled: false,
     spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
     mode: 'preset',

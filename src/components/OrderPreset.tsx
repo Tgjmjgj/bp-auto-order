@@ -9,7 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 
-import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { ConfigStateContext, ConfigUpdateContext } from '../providers/ConfigStateProvider';
 import { OrderItemCard } from './OrderItemCard';
 import { randomId, getI } from '../utils';
 import { OrderItem as OrderItemData, OrderTarget } from '../../types/autoOrderConfigs';
@@ -69,66 +69,71 @@ const newOrderItem = (): OrderItemData => ({
 export const OrderPreset: React.FC<Props> = ({presetId, allowDelete, deletePreset}) => {
     const classes = useStyles();
     const configState = React.useContext(ConfigStateContext);
-
+    const updateConfig = React.useContext(ConfigUpdateContext);
     const preset = configState.state.presets.find(preset => preset.id === presetId);
     const presetIndex = getI(configState.state.presets, presetId);
     const savedTargets = configState.state.savedTargets;
 
     const onChangePresetName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.value) {
-            return null;
+        if (!e.target.value || presetIndex === -1) {
+            return;
         }
-        configState.updateState(produce(configState.state, state => {
-            if (presetIndex !== -1) {
-                state.presets[presetIndex].name = e.target.value;
-            }
+        updateConfig(oldState => produce(oldState, state => {
+            state.presets[presetIndex].name = e.target.value;
         }));
-    }, [presetIndex, configState]);
+    }, [presetIndex, updateConfig]);
 
     const addOrderItem = React.useCallback(() => {
-        if (presetIndex !== -1) {
-            configState.updateState(produce(configState.state, state => {
-                state.presets[presetIndex].items.push(newOrderItem());
-            }));
+        if (presetIndex === -1) {
+            return;
         }
-    }, [presetIndex, configState]);
+        updateConfig(oldState => produce(oldState, state => {
+            state.presets[presetIndex].items.push(newOrderItem());
+        }));
+    }, [presetIndex, updateConfig]);
 
     const deleteOrderItem = React.useCallback((orderItemId: string) => {
-        if (presetIndex !== -1) {
-            const presetItems = configState.state.presets[presetIndex].items;
-            const delIndex = getI(presetItems, orderItemId);
-            if (delIndex !== -1) {
-                configState.updateState(produce(configState.state, state => {
-                    state.presets[presetIndex].items.splice(delIndex, 1);
-                }));
-            }
+        if (presetIndex === -1) {
+            return;
         }
-    }, [presetIndex, configState]);
+        updateConfig(oldState => produce(oldState, state => {
+            const presetItems = state.presets[presetIndex].items;
+            const delIndex = getI(presetItems, orderItemId);
+            if (delIndex === -1) {
+                return;
+            }
+            state.presets[presetIndex].items.splice(delIndex, 1);
+        }));
+    }, [presetIndex, updateConfig]);
 
     const changeOrderItem = React.useCallback((updatedItem: OrderItemData) => {
-        if (presetIndex !== -1 ) {
-            const presetItems = configState.state.presets[presetIndex].items;
-            const itemIndex = getI(presetItems, updatedItem.id);
-            if (itemIndex !== - 1) {
-                configState.updateState(produce(configState.state, state => {
-                    state.presets[presetIndex].items[itemIndex] = updatedItem;
-                }));
-            }
+        if (presetIndex === -1 ) {
+            return;
         }
-    }, [presetIndex, configState]);
+        updateConfig(oldState => produce(oldState, state => {
+            const presetItems = state.presets[presetIndex].items;
+            const itemIndex = getI(presetItems, updatedItem.id);
+            if (itemIndex === -1) {
+                return;
+            }
+            state.presets[presetIndex].items[itemIndex] = updatedItem;
+        }));
+    }, [presetIndex, updateConfig]);
 
     const addNewTargetAndChangeItem = React.useCallback((newTarget: OrderTarget, updatedItem: OrderItemData) => {
-        if (presetIndex !== -1) {
-            const presetItems = configState.state.presets[presetIndex].items;
-            const itemIndex = getI(presetItems, updatedItem.id);
-            if (itemIndex !== - 1) {
-                configState.updateState(produce(configState.state, state => {
-                    state.savedTargets.push(newTarget);
-                    state.presets[presetIndex].items[itemIndex] = updatedItem;
-                }));
-            }
+        if (presetIndex === -1) {
+            return;
         }
-    }, [presetIndex, configState]);
+        updateConfig(oldState => produce(oldState, state => {
+            const presetItems = state.presets[presetIndex].items;
+            const itemIndex = getI(presetItems, updatedItem.id);
+            if (itemIndex === - 1) {
+                return;
+            }
+            state.savedTargets.push(newTarget);
+            state.presets[presetIndex].items[itemIndex] = updatedItem;
+        }));
+    }, [presetIndex, updateConfig]);
 
     console.log(`## Preset ${presetId} Items: `, preset ? preset.items : '');
 

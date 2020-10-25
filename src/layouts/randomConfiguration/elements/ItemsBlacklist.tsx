@@ -9,7 +9,7 @@ import { EditItemsList } from '../../../components/list/EditItemsList';
 
 type Props = {
     className?: string
-}
+};
 
 export const ItemsBlacklist: React.FC<Props> = props => {
     const { className = '' } = props;

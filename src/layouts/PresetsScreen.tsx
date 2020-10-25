@@ -9,10 +9,10 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 
-import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { ConfigStateContext, ConfigUpdateContext } from '../providers/ConfigStateProvider';
 import { OrderPreset } from '../components/OrderPreset';
-import { OrderPreset as OrderPresetData } from '../../types/autoOrderConfigs';
 import { randomId, getI } from '../utils';
+import produce from 'immer';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -36,57 +36,49 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export const PresetsScreen: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
+    const updateConfig = React.useContext(ConfigUpdateContext);
     // also used to determine when to show "Delete preset" dialog
     const [presetIdForDeletion, setPresetIdForDeletion] = React.useState<string | null>(null);
     const uniqDialogIdRef = React.useRef('delete-preset-dialog-' + randomId())
     const classes = useStyles();
     const presets = configState.state.presets;
 
-    const getNewEmptyPreset = React.useCallback((): OrderPresetData => {
-        const nameIndex = 1 + Math.max(
-            0,
-            ...(presets
-                .map(preset => preset.name)
-                .filter(name => name.match(/^New Preset \d+$/))
-                .map(name => Number(name.match(/^New Preset (\d+)$/)![1])))
-        );
-        return {
-            id: randomId(),
-            name: 'New Preset ' + nameIndex,
-            items: [
-                { id: randomId(), name: '', quantity: 1, price: 0, targetId: '' },
-            ],
-        };
-    }, [presets]);
-
     const addPreset = React.useCallback(() => {
-        configState.updateState({
-            presets: [
-                ...presets,
-                getNewEmptyPreset(),
-            ],
-        });
-    }, [presets, getNewEmptyPreset, configState]);
+        updateConfig(oldState => produce(oldState, state => {
+            const nameIndex = 1 + Math.max(
+                0,
+                ...(state.presets
+                    .map(preset => preset.name)
+                    .filter(name => name.match(/^New Preset \d+$/))
+                    .map(name => Number(name.match(/^New Preset (\d+)$/)![1])))
+            );
+            const newPreset = {
+                id: randomId(),
+                name: 'New Preset ' + nameIndex,
+                items: [
+                    { id: randomId(), name: '', quantity: 1, price: 0, targetId: '' },
+                ],
+            }
+            state.presets.push(newPreset);
+        }));
+    }, [updateConfig]);
 
     const deletePreset = React.useCallback(() => {
-        if (presetIdForDeletion !== null) {
-            const delIndex = getI(configState.state.presets, presetIdForDeletion);
-            if (delIndex !== -1) {
-                const updatedPresets = [
-                    ...configState.state.presets.slice(0, delIndex),
-                    ...configState.state.presets.slice(delIndex + 1, configState.state.presets.length),
-                ];
-                const updatedSelectedPresets = configState.state.selectedPresets.filter(presetId => presetId !== presetIdForDeletion);
-                if (!updatedSelectedPresets.length) {
-                    updatedSelectedPresets.push(updatedPresets[0].id);
-                }
-                configState.updateState({
-                    presets: updatedPresets,
-                    selectedPresets: updatedSelectedPresets,
-                });
-            }
+        if (presetIdForDeletion === null) {
+            return;
         }
-    }, [presetIdForDeletion, configState]);
+        updateConfig(oldState => produce(oldState, state => {
+            const delIndex = getI(state.presets, presetIdForDeletion);
+            if (delIndex === -1) {
+                return;
+            }
+            state.presets.splice(delIndex, 1);
+            state.selectedPresets = state.selectedPresets.filter(presetId => presetId !== presetIdForDeletion);
+            if (!state.selectedPresets.length) {
+                state.selectedPresets.push(state.presets[0].id);
+            }
+        }));
+    }, [presetIdForDeletion, updateConfig]);
 
     const deletingPresetName = React.useMemo(() => {
         const preset = configState.state.presets.find(preset => preset.id === presetIdForDeletion);

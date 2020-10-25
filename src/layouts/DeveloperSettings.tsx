@@ -12,7 +12,7 @@ import Paper from '@material-ui/core/Paper';
 import LockIcon from '@material-ui/icons/Lock';
 import LockOpenIcon from '@material-ui/icons/LockOpen';
 
-import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { ConfigStateContext, ConfigUpdateContext } from '../providers/ConfigStateProvider';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -44,14 +44,15 @@ export const DeveloperSettings: React.FC = () => {
     const [correctClicks, setCorrectClicks] = React.useState(0);
     const [sheetIdDisabled, setSheetIdDisabled] = React.useState(true);
     const configState = React.useContext(ConfigStateContext);
+    const updateConfig = React.useContext(ConfigUpdateContext);
     const classes = useStyles();
     const spreadsheetId = configState.state.spreadsheetId;
     const alwaysOverwrite = configState.state.overwriteAlways;
     const allowMultipleOrders = configState.state.allowMultipleOrders;
 
     const changeSpreadsheetId = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        configState.updateState({ spreadsheetId: e.target.value });
-    }, [configState]);
+        updateConfig({ spreadsheetId: e.target.value });
+    }, [updateConfig]);
 
     const onLockClick = React.useCallback((num: number) => {
         const nextCorrectClicks = correctClicks < rightOrderRef.current.length && num === rightOrderRef.current[correctClicks] ? correctClicks + 1 : 0;
@@ -70,18 +71,12 @@ export const DeveloperSettings: React.FC = () => {
     );
 
     const onChangeOverwrite = React.useCallback(() => {
-        configState.updateState({
-            ...configState.state,
-            overwriteAlways: !alwaysOverwrite,
-        });
-    }, [configState, alwaysOverwrite]);
+        updateConfig({ overwriteAlways: !alwaysOverwrite });
+    }, [updateConfig, alwaysOverwrite]);
 
     const onChangeAllowMultiple = React.useCallback(() => {
-        configState.updateState({
-            ...configState.state,
-            allowMultipleOrders: !allowMultipleOrders,
-        })
-    }, [configState, allowMultipleOrders]);
+        updateConfig({ allowMultipleOrders: !allowMultipleOrders });
+    }, [updateConfig, allowMultipleOrders]);
 
     return (
         <Grid container spacing={4} direction="column">

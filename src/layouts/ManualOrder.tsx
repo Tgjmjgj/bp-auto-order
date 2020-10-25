@@ -25,7 +25,7 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 
-import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { ConfigStateContext, ConfigUpdateContext } from '../providers/ConfigStateProvider';
 import { DateForContext } from '../providers/DateForProvider';
 import { getRandomOrder, placeOrder as placeOrderCall } from '../service/functions';
 import { OrderItemCard } from '../components/OrderItemCard';
@@ -136,6 +136,7 @@ type PlaceOrderStep = typeof placeOrderSteps[number];
 export const ManualOrder: React.FC = () => {
 
     const configState = React.useContext(ConfigStateContext);
+    const updateConfig = React.useContext(ConfigUpdateContext);
     const { dateFor } = React.useContext(DateForContext);
     const [selectedPreset, setSelectedPreset] = React.useState('');
     const [items, setItems] = React.useState<OrderItemData[]>([]);
@@ -260,13 +261,13 @@ export const ManualOrder: React.FC = () => {
         const name = get(e, 'target.elements.presetName.value');
         if (name) {
             const id = randomId();
-            configState.updateState(produce(configState.state, state => {
+            updateConfig(oldState => produce(oldState, state => {
                 state.presets.push({ id, name, items });
             }));
             setSelectedPreset(id);
         }
         setShowPresetDialog(false);
-    }, [items, configState]);
+    }, [items, updateConfig]);
 
     const onPresetNameChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setPresetName(e.target.value);

@@ -3,7 +3,7 @@ import produce from 'immer';
 import isEqual from 'lodash/isEqual';
 import groupBy from 'lodash/groupBy';
 
-import { ConfigStateContext } from '../../../providers/ConfigStateProvider';
+import { ConfigUpdateContext } from '../../../providers/ConfigStateProvider';
 import { pseudoIdPrefix } from '../../../initData';
 
 const defaultItemConfig = {
@@ -13,18 +13,15 @@ const defaultItemConfig = {
 };
 
 export const useSetBlackList = <T extends { id: string, name: string }>(variant: 'categories' | 'items') => {
-    const configState = React.useContext(ConfigStateContext);
-    const config = configState.state.randomConfigs.find(cfg => cfg.id === configState.state.selectedConfig);
+    const updateConfig = React.useContext(ConfigUpdateContext);
+
     return React.useCallback((selection: T[]) => {
-        if (!config) {
-            return;
-        }
-        configState.updateState(produce(configState.state, state => {
+        updateConfig(oldState => produce(oldState, state => {
             const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
             if (selectedCfg) {
                 // remove all blacklist items
                 Object.entries(selectedCfg.config.targetsData).forEach(([targetId, targetCfg]) => {
-                    if (!config.config.selectFromTargets.includes(targetId)) {
+                    if (!selectedCfg.config.selectFromTargets.includes(targetId)) {
                         return;
                     }
                     Object.entries(targetCfg[variant]).forEach(([key, itemsCfg]) => {
@@ -63,5 +60,5 @@ export const useSetBlackList = <T extends { id: string, name: string }>(variant:
                 });
             }
         }));
-    }, [configState, config, variant]);
+    }, [updateConfig, variant]);
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
+import produce from 'immer';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -12,7 +13,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-import { ConfigStateContext } from '../providers/ConfigStateProvider';
+import { ConfigStateContext, ConfigUpdateContext } from '../providers/ConfigStateProvider';
 import { NotificationContext } from '../providers/NotificationProvider';
 import { TimeUntilNextOrder } from '../components/TimeUntilNextOrder';
 import { AutoOrderMode } from '../../types/autoOrderConfigs';
@@ -69,6 +70,7 @@ const autoOrderModeOptions: AutoOrderOption[] = [
 export const MainOptions: React.FC = () => {
     const classes = useStyles();
     const configState = React.useContext(ConfigStateContext);
+    const updateConfig = React.useContext(ConfigUpdateContext);
     const { pushNotification } = React.useContext(NotificationContext);
     const [selectedPresets, setSelectedPresets] = React.useState<PresetOption[]>(() => {
         return configState.state.selectedPresets.map(presetId => {
@@ -100,18 +102,19 @@ export const MainOptions: React.FC = () => {
     }, [pushNotification, enabled, classes.timeUponLabel]);
 
     const toggleEnabled = React.useCallback(() => {
-        configState.updateState({ enabled: !enabled });
-    }, [configState, enabled]);
+        updateConfig({ enabled: !enabled });
+    }, [updateConfig, enabled]);
 
     React.useEffect(() => {
-        const realPresetIds = configState.state.presets.map(preset => preset.id);
-        const goodIds = configState.state.selectedPresets.filter(presetId => realPresetIds.includes(presetId));
-        if (goodIds.length < configState.state.selectedPresets.length) {
-            configState.updateState({
-                selectedPresets: goodIds,
-            });
-        }
-    }, []); // eslint-disable-line
+        updateConfig(oldState => produce(oldState, state => {
+            const realPresetIds = state.presets.map(preset => preset.id);
+            const goodIds = state.selectedPresets.filter(presetId => realPresetIds.includes(presetId));
+            if (goodIds.length === state.selectedPresets.length) {
+                return;
+            }
+            state.selectedPresets = goodIds;
+        }));
+    }, [updateConfig]);
 
     const presetsOptions = React.useMemo<PresetOption[]>(() => configState.state.presets.map(preset => {
         return {
@@ -121,21 +124,21 @@ export const MainOptions: React.FC = () => {
     }), [configState]);
 
     const changeCustomName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        configState.updateState({customName: e.target.value});
-    }, [configState]);
+        updateConfig({ customName: e.target.value });
+    }, [updateConfig]);
 
     const changeMode = React.useCallback((e: React.ChangeEvent<{ name?: string | undefined; value: unknown }>) => {
-        configState.updateState({mode: e.target.value as AutoOrderMode});
-    }, [configState]);
+        updateConfig({ mode: e.target.value as AutoOrderMode });
+    }, [updateConfig]);
 
     const onSelectedPresetsChange = React.useCallback((e: React.ChangeEvent<{}>, value: PresetOption[]) => {
         if (value.length) {
             setSelectedPresets(value);
-            configState.updateState({
+            updateConfig({
                 selectedPresets: value.map(option => option.key),
             });
         }
-    }, [configState]);
+    }, [updateConfig]);
 
     const modeOptions = React.useMemo(() => autoOrderModeOptions.map(option => {
         return (

@@ -20,14 +20,14 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-import { ConfigStateContext } from '../../providers/ConfigStateProvider';
-import { ThreeValuesSlider } from '../../components/ThreeValueSlider';
+import { ConfigStateContext, ConfigUpdateContext } from '../../providers/ConfigStateProvider';
 import { NumberTextField } from '../../components/NumberTextField';
 import { CategoriesBlacklist } from './elements/CategoriesBlacklist';
 import { ItemsBlacklist } from './elements/ItemsBlacklist';
 import { CategoriesIndividualConfig } from './elements/CategoriesIndividualConfig';
 import { ItemsIndividualConfig } from './elements/ItemsIndividualConfig';
 import { NewConfigData, NewConfigDialog } from './elements/NewConfigDialog';
+import { CostSlider } from './elements/CostSlider';
 
 import { defaultEmptyRandomConfigData } from '../../initData';
 import { getI, randomId } from '../../utils';
@@ -77,10 +77,6 @@ const useStyles = makeStyles((theme: Theme) =>
         selectedTargets: {
             minWidth: 300,
         },
-        costSlider: {
-            marginTop: theme.spacing(4),
-            marginBottom: theme.spacing(2),
-        },
         headerRowTitle: {
             marginRight: theme.spacing(5),
         },
@@ -102,8 +98,8 @@ const useStyles = makeStyles((theme: Theme) =>
 export const RandomConfiguration: React.FC = () => {
     const classes = useStyles();
     const configState = useContext(ConfigStateContext);
-    const config = configState.state.randomConfigs.find(cfg => cfg.id === configState.state.selectedConfig);
-    const [costValues, setCostValues] = React.useState<[number, number, number]>([270, 300, 340]);
+    const updateConfig = useContext(ConfigUpdateContext);
+    const selectedConfigIndex = configState.state.randomConfigs.findIndex(cfg => cfg.id === configState.state.selectedConfig);
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
     const uniqDialogIdRef = React.useRef('random-configuration-dialog-' + randomId());
@@ -117,7 +113,7 @@ export const RandomConfiguration: React.FC = () => {
         if (!newConfigData) {
             return;
         }
-        configState.updateState(produce(configState.state, state => {
+        updateConfig(oldState => produce(oldState, state => {
             const newConfigId = randomId();
             const currentlySelectedConfig = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
             if (newConfigData.useCurrentAsTemplate && currentlySelectedConfig) {
@@ -135,7 +131,7 @@ export const RandomConfiguration: React.FC = () => {
             }
             state.selectedConfig = newConfigId;
         }));
-    }, [configState]);
+    }, [updateConfig]);
 
     const onDeleteConfigClick = React.useCallback(() => setShowDeleteDialog(true), []);
 
@@ -144,21 +140,22 @@ export const RandomConfiguration: React.FC = () => {
     const onDeleteDialogSubmit = React.useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setShowDeleteDialog(false);
-        if (configState.state.randomConfigs.length < 2 && config) {
-            return;
-        }
-        configState.updateState(produce(configState.state, state => {
+        updateConfig(oldConfig => produce(oldConfig, state => {
+            const configIndex = getI(state.randomConfigs, state.selectedConfig);
+            if (state.randomConfigs.length < 2 && configIndex !== -1) {
+                return;
+            }
             const delIndex = state.randomConfigs.findIndex(cfg => cfg.id === state.selectedConfig);
             state.randomConfigs.splice(delIndex, 1);
             state.selectedConfig = state.randomConfigs[state.randomConfigs.length - 1].id;
         }));
-    }, [configState, config]);
+    }, [updateConfig]);
 
     const onSelectRandomConfig = React.useCallback((e: React.ChangeEvent<{ name?: string | undefined; value: unknown }>) => {
-        configState.updateState(produce(configState.state, state => {
+        updateConfig(oldState => produce(oldState, state => {
             state.selectedConfig = e.target.value as string;
         }));
-    }, [configState]);
+    }, [updateConfig]);
 
     const configOptions = React.useMemo(() => {
         return configState.state.randomConfigs.map(randomConfig => {
@@ -180,44 +177,48 @@ export const RandomConfiguration: React.FC = () => {
     }, [configState]);
 
     const selectedTargetOptions = React.useMemo<TargetOption[]>(() => {
-        if (!config) {
+        if (selectedConfigIndex === -1) {
             return [];
         }
+        const config = configState.state.randomConfigs[selectedConfigIndex];
         return config.config.selectFromTargets
         .map(targetId => targetsOptions.find(option => option.key === targetId)!);
-    }, [config, targetsOptions]);
+    }, [configState, selectedConfigIndex, targetsOptions]);
 
     const onChangeTotalMinItems = React.useCallback((value: number) => {
-        if (!config) {
-            return;
-        }
-        configState.updateState(produce(configState.state, state => {
-            const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
+        updateConfig(oldState => produce(oldState, state => {
+            const configIndex = getI(state.randomConfigs, state.selectedConfig);
+            if (configIndex === -1) {
+                return;
+            }
+            const selectedCfg = state.randomConfigs[configIndex];
             selectedCfg.config.total.minItems = value;
         }));
-    }, [configState, config]);
+    }, [updateConfig]);
 
     const onSelectedTargetsChange = React.useCallback((e: React.ChangeEvent<{}>, value: TargetOption[]) => {
         if (!value.length) {
             return;
         }
-        const configIndex = getI(configState.state.randomConfigs, configState.state.selectedConfig);
-        if (configIndex !== -1) {
-            configState.updateState(produce(configState.state, state => {
-                state.randomConfigs[configIndex].config.selectFromTargets = value.map(option => option.key);
-            }));
-        }
-    }, [configState]);
+        updateConfig(oldState => produce(oldState, state => {
+            const configIndex = getI(state.randomConfigs, state.selectedConfig);
+            if (configIndex === -1) {
+                return;
+            }
+            state.randomConfigs[configIndex].config.selectFromTargets = value.map(option => option.key);
+        }));
+    }, [updateConfig]);
 
     const onChangeTotalMaxItems = React.useCallback((value: number) => {
-        if (!config) {
-            return;
-        }
-        configState.updateState(produce(configState.state, state => {
-            const selectedCfg = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig)!;
+        updateConfig(oldState => produce(oldState, state => {
+            const configIndex = getI(state.randomConfigs, state.selectedConfig);
+            if (configIndex === -1) {
+                return;
+            }
+            const selectedCfg = state.randomConfigs[configIndex];
             selectedCfg.config.total.maxItems = value;
         }));
-    }, [configState, config]);
+    }, [updateConfig]);
 
     return (
         <>
@@ -252,7 +253,7 @@ export const RandomConfiguration: React.FC = () => {
                     </div>
                 </Grid>
                 <Divider />
-                {config && (
+                {selectedConfigIndex !== -1 && (
                     <>
                         <Grid item className={classes.gridRow}>
                             <Typography className={classes.label}>
@@ -286,16 +287,7 @@ export const RandomConfiguration: React.FC = () => {
                             />
                         </Grid>
                         <Grid item>
-                            <ThreeValuesSlider
-                                className={classes.costSlider}
-                                values={costValues}
-                                setValues={setCostValues}
-                                start={0}
-                                end={500}
-                            />
-                            <Typography align="center">
-                                Acceptable cost
-                            </Typography>
+                            <CostSlider />
                         </Grid>
                         <Grid item className={cn(classes.gridRow, classes.sectionContainer)}>
                             <div className={classes.gridRow}>
@@ -308,7 +300,7 @@ export const RandomConfiguration: React.FC = () => {
                                     from
                                 </Typography>
                                 <NumberTextField
-                                    value={config.config.total.minItems}
+                                    value={configState.state.randomConfigs[selectedConfigIndex].config.total.minItems}
                                     onChange={onChangeTotalMinItems}
                                     className={classes.rowTextField}
                                     size="small"
@@ -320,7 +312,7 @@ export const RandomConfiguration: React.FC = () => {
                                     up to
                                 </Typography>
                                 <NumberTextField
-                                    value={config.config.total.maxItems}
+                                    value={configState.state.randomConfigs[selectedConfigIndex].config.total.maxItems}
                                     onChange={onChangeTotalMaxItems}
                                     className={classes.rowTextField}
                                     size="small"
@@ -352,11 +344,11 @@ export const RandomConfiguration: React.FC = () => {
                 />
             )}
             
-            { config && (
+            { selectedConfigIndex !== -1 && (
                 <Dialog open={showDeleteDialog} onClose={onCloseDeleteConfigDialog} aria-labelledby={uniqDialogIdRef.current}>
                     <form onSubmit={onDeleteDialogSubmit}>
                         <DialogTitle id={uniqDialogIdRef.current}>
-                            {`Delete "${config.name}" random config?`}
+                            {`Delete "${configState.state.randomConfigs[selectedConfigIndex].name}" random config?`}
                         </DialogTitle>
                         <DialogActions>
                             <Button onClick={onCloseDeleteConfigDialog}>

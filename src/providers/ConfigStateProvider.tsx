@@ -3,6 +3,7 @@ import * as firebase from 'firebase/app';
 import 'firebase/firestore';
 import pickBy from 'lodash/pickBy';
 import isEqual from 'lodash/isEqual';
+import isFunction from 'lodash/isFunction';
 
 import { AutoAuthContext } from './AutoAuthProvider';
 import { defaultConfigState } from '../initData';
@@ -15,30 +16,32 @@ export type OrderTarget = {
 
 export type ConfigContextData = {
     state: LocalConfigState
-    updateState: (stateUpdate: Partial<ConfigState>) => void
     saved: number                   // value changes when config successfully saved on server
     dataLoaded: boolean
 };
 
 export type LocalConfigState = ConfigState & {
-    saveOnServer: boolean           // indicates does we need to initiate saving operation or not
+    dontSaveOnServer?: boolean           // indicates does we need to initiate saving operation or not
 };
 
-const omitProperties = ['saveOnServer'];
+export type ConfigUpdateStateMethod = (stateUpdate: Partial<ConfigState> | ((oldState: ConfigState) => ConfigState)) => void;
+
+const omitProperties = ['dontSaveOnServer'];
 const prepareConfigForServer = (conf: LocalConfigState) => {
     return pickBy(conf, (val, key) => !omitProperties.includes(key)) as ConfigState;
 };
 
 const defaultConfigContextData = {
     state: defaultConfigState,
-    updateState: () => {},
     saved: 0,
     dataLoaded: false,
 };
+const defaultConfigUpdateStateContextData = () => {};
 
 const saveConfigInactivityTimeout = 3000;
 
 export const ConfigStateContext = React.createContext<ConfigContextData>(defaultConfigContextData);
+export const ConfigUpdateContext = React.createContext<ConfigUpdateStateMethod>(defaultConfigUpdateStateContextData);
 
 export const ConfigStateProvider: React.FC = ({ children }) => {
 
@@ -49,22 +52,27 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
     const serverConfigStateRef = React.useRef<ConfigState>(defaultConfigState);
     const timerIdRef = React.useRef(0);
 
-    const updateState = React.useCallback((stateUpdate: Partial<ConfigState>) => {
-        setConfigState(state => ({
-            ...state,
-            ...stateUpdate,
-            saveOnServer: true,
-        }));
+    const updateState = React.useCallback((stateUpdate: Partial<ConfigState> | ((oldState: ConfigState) => ConfigState)) => {
+        if (isFunction(stateUpdate)) {
+            setConfigState(oldState => {
+                return stateUpdate(oldState);
+            });
+        } else {
+            setConfigState(oldState => ({
+                ...oldState,
+                ...stateUpdate,
+                dontSaveOnServer: true,
+            }));
+        }
     }, []);
 
     const configContextValue = React.useMemo(() => {
         return {
             state: configState,
-            updateState,
             saved,
             dataLoaded,
         };
-    }, [configState, updateState, saved, dataLoaded]);
+    }, [configState, saved, dataLoaded]);
 
     React.useEffect(() => {
         console.log('@ new state: ', configState);
@@ -97,7 +105,6 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
                     systemName: authContext.displayName || '',
                     customName: authContext.displayName || '',
                     ...(data.exists ? data.data() : undefined),
-                    saveOnServer: false,
                 };
                 setConfigState(initialConfigState);
                 serverConfigStateRef.current = initialConfigState;
@@ -108,7 +115,7 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
 
     useEffect(() => {
         if (authContext.uid && dataLoaded) {
-            if (configState.saveOnServer) {
+            if (!configState.dontSaveOnServer) {
                 clearTimeout(timerIdRef.current);
 
                 timerIdRef.current = window.setTimeout(() => {
@@ -135,7 +142,9 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
 
     return (
         <ConfigStateContext.Provider value={ configContextValue }>
-            { children }
+            <ConfigUpdateContext.Provider value={ updateState }>
+                { children }
+            </ConfigUpdateContext.Provider>
         </ConfigStateContext.Provider>
     );
 };
