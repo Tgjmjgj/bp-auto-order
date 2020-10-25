@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme: Theme) =>
             '& .MuiSlider-track': {
                 height: 0,
                 color: 'transparent',
-                border: '4px dashed #2d3f9e',
+                border: '4px solid #2d3f9e',
                 // transform: 'skewX(45deg)',
             },
             '& .MuiSlider-mark': {
@@ -67,6 +67,7 @@ const useThumbStyles = makeStyles((theme: Theme) =>
             position: 'absolute',
             boxSizing: 'border-box',
             backgroundColor: '#fff',
+            zIndex: 5,
             outline: 0,
             '&:hover': {
                 transform: 'scale(1.2)',
@@ -88,11 +89,13 @@ const CustomThumb = React.forwardRef((props: any, ref: React.Ref<any>) => {
     }
 });
 
+const minSpanVariation = 10;
+
 export const ThreeValuesSlider: React.FC<Props> = props => {
     const { values, start, end, setValues, className } = props;
     const classes = useStyles();
-    const [leftDiff, setLeftDiff] = React.useState(values[1] - values[0]);
-    const [rightDiff, setRightDiff] = React.useState(values[2] - values[1]);
+    const leftDiffRef = React.useRef(values[1] - values[0]);
+    const rightDiffRef = React.useRef(values[2] - values[1]);
 
     const marks = React.useMemo(() => {
         const marks = [
@@ -115,25 +118,33 @@ export const ThreeValuesSlider: React.FC<Props> = props => {
             return;
         }
         if (newValues[1] !== values[1]) {
-            let newValue0 = newValues[1] - leftDiff;
+            let newValue0 = newValues[1] - leftDiffRef.current;
             if (newValue0 < start) {
                 newValue0 = start
+            } else {
+                newValue0 = Math.min(newValue0, newValues[1] - minSpanVariation);
             }
-            let newValue2 = newValues[1] + rightDiff;
+            let newValue2 = newValues[1] + rightDiffRef.current;
             if (newValue2 > end) {
                 newValue2 = end;
+            } else {
+                newValue2 = Math.max(newValue2, newValues[1] + minSpanVariation);
             }
             if (newValue0 < values[1] && values[1] < newValue2) {
                 setValues([newValue0, newValues[1], newValue2]);
             }
         } else {
             if (newValues[0] < values[1] && values[1] < newValues[2]) {
-                setValues(newValues);
-                setLeftDiff(newValues[1] - newValues[0]);
-                setRightDiff(newValues[2] - newValues[1]);
+                setValues([
+                    Math.min(newValues[0], newValues[1] - minSpanVariation),
+                    newValues[1],
+                    Math.max(newValues[2], newValues[1] + minSpanVariation),
+                ]);
+                leftDiffRef.current = newValues[1] - newValues[0];
+                rightDiffRef.current = newValues[2] - newValues[1];
             }
         }
-    }, [setValues, values, start, end, leftDiff, rightDiff]);
+    }, [setValues, values, start, end]);
 
     const formatValueLabel = React.useCallback((value: number, index: number) => {
         switch (index) {
@@ -152,7 +163,6 @@ export const ThreeValuesSlider: React.FC<Props> = props => {
             value={values}
             min={start}
             max={end}
-            step={10}
             className={cn(classes.sliderRoot, className)}
             onChange={onChangeValues}
             valueLabelDisplay="on"
