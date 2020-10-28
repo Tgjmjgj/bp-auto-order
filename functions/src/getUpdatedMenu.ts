@@ -1,14 +1,16 @@
 import { firestore } from './firebase';
-import { scrapKumirMenu } from './scrappers/scrapKumirMenu';
-import { scrapNamNymMenu } from './scrappers/scrapNamNymMenu';
+import { scrapKumirMenu } from './scrappers/kumir';
+import { scrapNamNymMenu } from './scrappers/namNym';
+import { scrapElunchMenu } from './scrappers/elunch';
 import { randomId, log, throwError, checkDate } from './utils';
 import { UpdatedMenu, MenuItem, MenuItemsTable, ScrapedMenu } from '../../types/autoOrderMenus';
 
-const menuTargets = [ 'kumir', 'namnym' ];
+const menuTargets = [ 'kumir', 'namnym', 'elunch' ];
 
 export const targetScrappers: Record<string, (date: string) => Promise<ScrapedMenu>> = {
     'kumir': scrapKumirMenu,
     'namnym': scrapNamNymMenu,
+    'elunch': scrapElunchMenu,
 };
 
 export const getAllUpdatedMenus = async (forDate: string) => {

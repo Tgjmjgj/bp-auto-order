@@ -7,7 +7,7 @@ import isFunction from 'lodash/isFunction';
 
 import { AutoAuthContext } from './AutoAuthProvider';
 import { defaultConfigState } from '../initData';
-import { ConfigState } from '../../types/autoOrderConfigs';
+import { ConfigState, ConfigTargetsData } from '../../types/autoOrderConfigs';
 
 export type OrderTarget = {
     key: string
@@ -82,32 +82,55 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
         if (authContext.uid) {
             const docRef = firebase.firestore().collection('auto-order-user-configs').doc(authContext.uid);
             docRef.get().then(data => {
+                let initConfState: ConfigState | null = null;
                 if (!data.exists) {
-                    docRef.set(prepareConfigForServer({
+                    initConfState = prepareConfigForServer({
                         ...defaultConfigState,
                         systemName: authContext.displayName || '',
                         customName: authContext.displayName || '',
-                    }));
+                    });
+                    docRef.set(initConfState);
                 } else {
+                    const confData = data.data()! as ConfigState;
                     const newKeys = prepareConfigForServer(
-                        pickBy(defaultConfigState, (val, key) => !(key in data.data()!)) as LocalConfigState
+                        pickBy(defaultConfigState, (val, key) => !(key in confData)) as LocalConfigState
                     );
-                    if (Object.keys(newKeys).length) {
-                        docRef.update({
-                            ...data.data(),
+                    const systemTargets = defaultConfigState.savedTargets.filter(target => target.isSystem);
+                    const savedTargets = confData.savedTargets.filter(target => target.isSystem);
+                    const newSystemTargets = systemTargets.filter(target => !savedTargets.find(tr => tr.id === target.id))
+                    if (Object.keys(newKeys).length || newSystemTargets.length) {
+                        initConfState = {
+                            ...confData,
                             ...newKeys,
-                        });
+                            savedTargets: [
+                                ...confData.savedTargets,
+                                ...newSystemTargets,
+                            ],
+                            randomConfigs: confData.randomConfigs.map(cfg => ({
+                                ...cfg,
+                                config: {
+                                    ...cfg.config,
+                                    targetsData: {
+                                        ...cfg.config.targetsData,
+                                        ...(newSystemTargets.reduce<ConfigTargetsData>((obj, target) => {
+                                            obj[target.id] = {
+                                                categories: {},
+                                                items: {},
+                                            }
+                                            return obj
+                                        }, {})),
+                                    },
+                                },
+                            })),
+                        };
+                        docRef.update(initConfState);
+                    } else {
+                        initConfState = confData;
                     }
                 }
-                console.log('@initial Configuration: ', data.data());
-                const initialConfigState = {
-                    ...defaultConfigState,
-                    systemName: authContext.displayName || '',
-                    customName: authContext.displayName || '',
-                    ...(data.exists ? data.data() : undefined),
-                };
-                setConfigState(initialConfigState);
-                serverConfigStateRef.current = initialConfigState;
+                console.log('@initial Configuration: ', initConfState);
+                setConfigState(initConfState);
+                serverConfigStateRef.current = initConfState;
                 setDataLoaded(true);
             });
         }

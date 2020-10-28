@@ -50,6 +50,11 @@ export type Costs = {
     max: number
 };
 
+export type ConfigTargetsData = Record<string, {
+    categories: Record<string, MenuItemConfig>
+    items: Record<string, MenuItemConfig>
+}>;
+
 export type RandomConfigData = {
     total: {
         cost: Costs
@@ -57,10 +62,7 @@ export type RandomConfigData = {
         maxItems: number
     }
     selectFromTargets: string[]
-    targetsData: Record<string, {
-        categories: Record<string, MenuItemConfig>
-        items: Record<string, MenuItemConfig>
-    }>
+    targetsData: ConfigTargetsData
 };
 
 export type RandomOrderConfig = {

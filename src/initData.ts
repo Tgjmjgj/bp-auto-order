@@ -9,6 +9,7 @@ export const defaultMenuItemConfig: MenuItemConfig = {
 const defaultKumirTarget = { id: 'kumir', displayName: 'Ку-мир', isSystem: true };
 const defaultChanakhiTarget = { id: 'chanakhi', displayName: 'Чанахи', isSystem: false };
 const defaultNamNymTarget = { id: 'namnym', displayName: 'Нам-ням', isSystem: true };
+const defaultElunchTarget = { id: 'elunch', displayName: 'Е-ланч', isSystem: true };
 
 const defaultPreset = {
     id: randomId(),
@@ -54,6 +55,10 @@ const defaultRandomConfig: RandomOrderConfig = {
                 categories: {},
                 items: {},
             },
+            [defaultElunchTarget.id]: {
+                categories: {},
+                items: {},
+            },
         },
     },
 };
@@ -64,7 +69,12 @@ export const defaultConfigState: LocalConfigState = {
     mode: 'preset',
     selectedPresets: [ defaultPreset.id ],
     presets: [ defaultPreset ],
-    savedTargets: [ defaultKumirTarget, defaultChanakhiTarget, defaultNamNymTarget ],
+    savedTargets: [
+        defaultKumirTarget,
+        defaultChanakhiTarget,
+        defaultNamNymTarget,
+        defaultElunchTarget,
+    ],
     randomConfigs: [ defaultRandomConfig ],
     selectedConfig: defaultRandomConfig.id,
     overwriteAlways: false,
@@ -84,6 +94,10 @@ export const defaultEmptyRandomConfigData: RandomConfigData = {
             items: {},
         },
         [defaultNamNymTarget.id]: {
+            categories: {},
+            items: {},
+        },
+        [defaultElunchTarget.id]: {
             categories: {},
             items: {},
         },

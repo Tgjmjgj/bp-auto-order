@@ -9,15 +9,11 @@ import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 
 import { ConfigItemData } from './list/items/ConfigItem';
+import { targetAvatar, targetPalette } from '../cosmetic/targets';
 
 type Props = {
     item: ConfigItemData
     onClick?: (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => void
-};
-
-const targetAvatar: Record<string, string> = {
-    'kumir': 'K',
-    'namnym': 'H',
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -71,22 +67,6 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-type TargetColors = Record<string, {
-    background: string
-    divider: string
-}>;
-
-const targetColors: TargetColors = {
-    'kumir': {
-        background: '#7bb21f',
-        divider: '#dacbcb',
-    },
-    'namnym': {
-        background: '#ffad01',
-        divider: '#dacbcb',
-    },
-};
-
 export const ItemConfigChip: React.FC<Props> = React.memo(({ item, onClick }) => {
     const classes = useStyles();
 
@@ -94,7 +74,7 @@ export const ItemConfigChip: React.FC<Props> = React.memo(({ item, onClick }) =>
         <ListItem
             key={item.id}
             className={classes.item}
-            style={{backgroundColor: targetColors[item.targetId].background}}
+            style={{backgroundColor: targetPalette[item.targetId].primary}}
             onClick={onClick}
         >
             <ListItemAvatar className={classes.targetAvatarWrapper}>

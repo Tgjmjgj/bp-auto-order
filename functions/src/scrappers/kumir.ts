@@ -6,14 +6,14 @@ import got from 'got';
 import { customDateFormat, log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
-const kumirBaseUrl = 'https://ku-mir.ru';
-const kumirMenuUrl = kumirBaseUrl + '/menu/?date=';
+const baseUrl = 'https://ku-mir.ru';
+const menuUrl = baseUrl + '/menu/?date=';
 
 export const scrapKumirMenu = async (forDate: string): Promise<ScrapedMenu> => {
     log(`#Call: scrapKumirMenu(forDate = ${forDate})`);
     try {
         const formattedDate = DateTime.fromFormat(forDate, customDateFormat).toFormat('dd-MM-yyyy');
-        const response = await got(kumirMenuUrl + formattedDate);
+        const response = await got(menuUrl + formattedDate);
         const $ = cheerio.load(response.body);
 
         const menu: ScrapedMenu = flatten($('.table-menu-items tbody').map((i1, el1) => {
@@ -24,7 +24,7 @@ export const scrapKumirMenu = async (forDate: string): Promise<ScrapedMenu> => {
                     name: $(el2).find('.name-dish').text().trim(),
                     additional: '',
                     price: Number($(el2).find('.nb-price.tr-item-price').text()),
-                    imageUrl: imageUrl ? kumirBaseUrl + imageUrl : null,
+                    imageUrl: imageUrl ? baseUrl + imageUrl : null,
                     category,
                 };
             }).get();

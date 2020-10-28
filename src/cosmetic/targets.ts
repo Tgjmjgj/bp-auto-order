@@ -7,6 +7,7 @@ type TargetPalette = Record<string, {
 export const targetAvatar: Record<string, string> = {
     'kumir': 'K',
     'namnym': 'H',
+    'elunch': 'E',
 };
 
 export const targetPalette: TargetPalette = {
@@ -17,5 +18,9 @@ export const targetPalette: TargetPalette = {
     'namnym': {
         primary: '#ffad01',
         secondary: '#dacbcb',
+    },
+    'elunch': {
+        primary: '#f04e45',
+        secondary: '#fff',
     },
 };

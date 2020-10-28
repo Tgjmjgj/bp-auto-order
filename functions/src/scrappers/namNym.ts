@@ -6,14 +6,14 @@ import got from 'got';
 import { customDateFormat, log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
-const namNymBaseUrl = 'https://www.nam-nyam.ru';
-const namNymMenuUrl = namNymBaseUrl + '/catering/?curDay=';
+const baseUrl = 'https://www.nam-nyam.ru';
+const menuUrl = baseUrl + '/catering/?curDay=';
 
 export const scrapNamNymMenu = async (forDate: string): Promise<ScrapedMenu> => {
     log(`#Call: scrapNamNymMenu(forDate = ${forDate})`);
     try {
         const formattedDate = DateTime.fromFormat(forDate, customDateFormat).toFormat('dd.MM.yyyy');
-        const response = await got(namNymMenuUrl + formattedDate);
+        const response = await got(menuUrl + formattedDate);
         const $ = cheerio.load(response.body);
 
         const menu: ScrapedMenu = flatten($('.goods_tbl.cataringForm > div').map((i1, el1) => {
@@ -41,7 +41,7 @@ export const scrapNamNymMenu = async (forDate: string): Promise<ScrapedMenu> => 
                     name: name.startsWith('.') ? name.slice(1) : name,
                     additional: weight + '. Состав: ' + description,
                     price: Number(priceStr.slice(0, priceStr.length - ' руб.'.length)),
-                    imageUrl: imageUrl ? namNymBaseUrl + imageUrl : null,
+                    imageUrl: imageUrl ? baseUrl + imageUrl : null,
                     category,
                 };
             }).get();
