@@ -26,7 +26,7 @@ export const scrapLunchTimeMenu = async (forDate: string): Promise<ScrapedMenu> 
 
         const categories: string[] = $('#catalog-ajax > .h2-h2').map((i, el) => {
             return upperFirst($(el).text().trim().toLowerCase());
-        }).get()
+        }).get();
         const menu: ScrapedMenu = flatten($('#catalog-ajax > .h2-h2 + .item-list').map((i1, el1) => {
             const category = categories[i1];
             return $(el1).find('div[itemtype="http://schema.org/Product"]').map((i2, el2): ScrapedMenuItem => {
