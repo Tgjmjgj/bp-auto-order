@@ -2,6 +2,7 @@ import { firestore } from './firebase';
 import { scrapKumirMenu } from './scrappers/kumir';
 import { scrapNamNymMenu } from './scrappers/namNym';
 import { scrapElunchMenu } from './scrappers/elunch';
+import { scrapLunchTimeMenu } from './scrappers/lunchTime';
 import { randomId, log, throwError, checkDate } from './utils';
 import { UpdatedMenu, MenuItem, MenuItemsTable, ScrapedMenu } from '../../types/autoOrderMenus';
 
@@ -11,6 +12,7 @@ export const targetScrappers: Record<string, (date: string) => Promise<ScrapedMe
     'kumir': scrapKumirMenu,
     'namnym': scrapNamNymMenu,
     'elunch': scrapElunchMenu,
+    'lunchtime': scrapLunchTimeMenu,
 };
 
 export const getAllUpdatedMenus = async (forDate: string) => {

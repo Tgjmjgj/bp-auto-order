@@ -10,6 +10,7 @@ const defaultKumirTarget = { id: 'kumir', displayName: 'Ку-мир', isSystem: 
 const defaultChanakhiTarget = { id: 'chanakhi', displayName: 'Чанахи', isSystem: false };
 const defaultNamNymTarget = { id: 'namnym', displayName: 'Нам-ням', isSystem: true };
 const defaultElunchTarget = { id: 'elunch', displayName: 'Е-ланч', isSystem: true };
+const defaultLunchTimeTarget = { id: 'lunchtime', displayName: 'LunchTime', isSystem: true };
 
 const defaultPreset = {
     id: randomId(),
@@ -59,6 +60,10 @@ const defaultRandomConfig: RandomOrderConfig = {
                 categories: {},
                 items: {},
             },
+            [defaultLunchTimeTarget.id]: {
+                categories: {},
+                items: {},
+            },
         },
     },
 };
@@ -74,6 +79,7 @@ export const defaultConfigState: LocalConfigState = {
         defaultChanakhiTarget,
         defaultNamNymTarget,
         defaultElunchTarget,
+        defaultLunchTimeTarget,
     ],
     randomConfigs: [ defaultRandomConfig ],
     selectedConfig: defaultRandomConfig.id,
@@ -98,6 +104,10 @@ export const defaultEmptyRandomConfigData: RandomConfigData = {
             items: {},
         },
         [defaultElunchTarget.id]: {
+            categories: {},
+            items: {},
+        },
+        [defaultLunchTimeTarget.id]: {
             categories: {},
             items: {},
         },

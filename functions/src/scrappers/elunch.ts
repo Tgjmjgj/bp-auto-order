@@ -5,13 +5,14 @@ import got from 'got';
 import { customDateFormat, log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
+const dateFormat = 'dd-MM-yyyy';
 const baseUrl = 'https://e-lunch.ru';
 const menuUrl = baseUrl + '/menu/?date=';
 
 export const scrapElunchMenu = async (forDate: string): Promise<ScrapedMenu> => {
     log(`#Call: scrapElunchMenu(forDate = ${forDate})`);
     try {
-        const formattedDate = DateTime.fromFormat(forDate, customDateFormat).toFormat('dd-MM-yyyy');
+        const formattedDate = DateTime.fromFormat(forDate, customDateFormat).toFormat(dateFormat);
         const response = await got(menuUrl + formattedDate);
         const $ = cheerio.load(response.body);
 

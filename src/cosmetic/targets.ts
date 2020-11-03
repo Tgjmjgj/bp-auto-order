@@ -8,6 +8,7 @@ export const targetAvatar: Record<string, string> = {
     'kumir': 'K',
     'namnym': 'H',
     'elunch': 'E',
+    'lunchtime': 'L',
 };
 
 export const targetPalette: TargetPalette = {
@@ -21,6 +22,10 @@ export const targetPalette: TargetPalette = {
     },
     'elunch': {
         primary: '#f04e45',
+        secondary: '#fff',
+    },
+    'lunchtime': {
+        primary: '#63b030',
         secondary: '#fff',
     },
 };
