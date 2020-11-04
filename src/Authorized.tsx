@@ -58,6 +58,8 @@ const useStyles = makeStyles((theme: Theme) =>
         contentWrapper: {
             position: 'relative',
             flexGrow: 1,
+            height: 'calc(100% - 64px)',
+            overflow: 'auto',
             [theme.breakpoints.up('sm')]: {
                 marginLeft: drawerWidth,
             },

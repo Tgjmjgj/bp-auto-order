@@ -2,9 +2,17 @@ import React from 'react';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogActions from '@material-ui/core/DialogActions';
+import Button from '@material-ui/core/Button';
+
+import { randomId } from '../utils';
+
 export type AuthData = {
     authInProcess: boolean
     authWithGoogle: () => void
+    logout: (force?: boolean) => void
     uid?: string
     email?: string | null
     displayName?: string | null
@@ -23,14 +31,26 @@ const firebaseConfig = {
 
 const defaultAuthData = {
     authInProcess: true,
-    authWithGoogle: () => {}
+    authWithGoogle: () => {},
+    logout: () => {},
 };
+
 
 export const AutoAuthContext = React.createContext<AuthData>(defaultAuthData);
 
 export const AuthAuthProvider: React.FC = ({ children }) => {
 
     const [authState, setAuthState] = React.useState<AuthData>(defaultAuthData);
+    const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+    const uniqDialogIdRef = React.useRef('logout-dialog-' + randomId())
+
+    const logout = React.useCallback((force = false) => {
+        if (force) {
+            firebase.auth().signOut();
+        } else {
+            setShowLogoutDialog(true);
+        }
+    }, []);
 
     const authWithGoogle = React.useCallback(() => {
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -41,30 +61,35 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
             setAuthState({
                 authWithGoogle,
                 authInProcess: true,
+                logout,
             });
+            firebase.auth().signOut()
             firebase.auth().signInWithPopup(provider)
             .catch(() => {
                 setAuthState({
                     authWithGoogle,
                     authInProcess: false,
+                    logout,
                 });
             });
             console.log('Google Sign In');
         } catch (error) {
             console.log(error);
         }
-    }, []);
+    }, [logout]);
 
     React.useEffect(() => {
         setAuthState({
             authInProcess: true,
             authWithGoogle,
+            logout,
         });
         firebase.initializeApp(firebaseConfig).auth()
         .onAuthStateChanged(user => {
             if (user) {
                 setAuthState({
                     authWithGoogle,
+                    logout,
                     authInProcess: false,
                     uid: user.uid,
                     email: user.email,
@@ -75,16 +100,42 @@ export const AuthAuthProvider: React.FC = ({ children }) => {
             } else {
                 setAuthState({
                     authWithGoogle,
+                    logout,
                     authInProcess: false,
                 });
                 console.log('User is not logged in');
             }
         });
-    }, [authWithGoogle]);
+    }, [authWithGoogle, logout]);
+
+    const onCloseDialog = React.useCallback(() => {
+        setShowLogoutDialog(false);
+    }, []);
+
+    const onSubmitDialog = React.useCallback(() => {
+        firebase.auth().signOut();
+    }, []);
 
     return (
-        <AutoAuthContext.Provider value={ authState }>
-            { children }
-        </AutoAuthContext.Provider>
+        <>
+            <AutoAuthContext.Provider value={ authState }>
+                { children }
+            </AutoAuthContext.Provider>
+            <Dialog open={showLogoutDialog} onClose={onCloseDialog} aria-labelledby={uniqDialogIdRef.current}>
+                <form onSubmit={onSubmitDialog}>
+                    <DialogTitle id={uniqDialogIdRef.current}>
+                        Confirm Logout?
+                    </DialogTitle>
+                    <DialogActions>
+                        <Button onClick={onCloseDialog}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" color="secondary">
+                            Logout
+                        </Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
+        </>
     );
 };
