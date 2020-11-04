@@ -58,7 +58,9 @@ export const getUpdatedMenu = async (targetId: string, forDate: string): Promise
 
             const menuDataForDate = await targetScrappers[targetId](forDate);
             availableMenuForDate = menuDataForDate.map(item => {
-                const sameNameItem = allMenuItems.find(oldItem => oldItem.name === item.name);
+                const sameNameItem = allMenuItems.find(oldItem => {
+                    return (oldItem.name === item.name && oldItem.additional === item.additional);
+                });
                 let itemId;
                 if (sameNameItem) {
                     sameNameItem.additional = item.additional;

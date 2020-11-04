@@ -66,7 +66,9 @@ const addItem = (
 ) => {
     incrementOrderItemsMap(orderItemsMap, newItem.id);
     incrementOrderCategoriesMap(orderCategoriesMap, newItem.targetId, newItem.category);
-    const foundItem = orderItems.find(item => item.name === newItem.name);
+    const foundItem = orderItems.find(item => {
+        return (item.name === newItem.name && item.category === newItem.category);
+    });
     if (foundItem) {
         foundItem.quantity++;
         foundItem.selectionStep.push(selectionStep);
