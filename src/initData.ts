@@ -32,6 +32,7 @@ const defaultRandomConfig: RandomOrderConfig = {
             maxItems: 10,
         },
         selectFromTargets: [ defaultKumirTarget.id ],
+        autoDetectTarget: false,
         targetsData: {
             [defaultKumirTarget.id]: {
                 categories: {
@@ -94,6 +95,7 @@ export const defaultEmptyRandomConfigData: RandomConfigData = {
         maxItems: 10,
     },
     selectFromTargets: [ defaultNamNymTarget.id ],
+    autoDetectTarget: true,
     targetsData: {
         [defaultKumirTarget.id]: {
             categories: {},

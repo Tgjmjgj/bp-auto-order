@@ -31,6 +31,8 @@ import { CostSlider } from './elements/CostSlider';
 
 import { defaultEmptyRandomConfigData } from '../../initData';
 import { getI, randomId } from '../../utils';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
 type TargetOption = {
     value: string
@@ -92,6 +94,9 @@ const useStyles = makeStyles((theme: Theme) =>
             height: 400,
             maxWidth: 600,
         },
+        labelSwitch: {
+            marginLeft: 0,
+        },
     }),
 );
 
@@ -99,10 +104,23 @@ export const RandomConfiguration: React.FC = () => {
     const classes = useStyles();
     const configState = useContext(ConfigStateContext);
     const updateConfig = useContext(ConfigUpdateContext);
-    const selectedConfigIndex = configState.state.randomConfigs.findIndex(cfg => cfg.id === configState.state.selectedConfig);
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
     const uniqDialogIdRef = React.useRef('random-configuration-dialog-' + randomId());
+
+    const selectedConfigIndex = getI(configState.state.randomConfigs, configState.state.selectedConfig);
+    const detectTargetAuto = selectedConfigIndex !== -1 &&
+        configState.state.randomConfigs[selectedConfigIndex].config.autoDetectTarget
+
+    const toggleDetectTargetAuto = React.useCallback(() => {
+        if (selectedConfigIndex === -1) {
+            return
+        }
+        updateConfig(oldState => produce(oldState, state => {
+            state.randomConfigs[selectedConfigIndex].config.autoDetectTarget = 
+                !state.randomConfigs[selectedConfigIndex].config.autoDetectTarget
+        }))
+    }, [selectedConfigIndex, updateConfig])
 
     const allowDelete = React.useMemo(() => configState.state.randomConfigs.length > 1, [configState]);
 
@@ -110,12 +128,12 @@ export const RandomConfiguration: React.FC = () => {
 
     const onCloseNewConfigDialog = React.useCallback((newConfigData: NewConfigData | null) => {
         setDialogOpen(false);
-        if (!newConfigData) {
+        if (!newConfigData || selectedConfigIndex === -1) {
             return;
         }
         updateConfig(oldState => produce(oldState, state => {
             const newConfigId = randomId();
-            const currentlySelectedConfig = state.randomConfigs.find(cfg => cfg.id === state.selectedConfig);
+            const currentlySelectedConfig = state.randomConfigs[selectedConfigIndex]
             if (newConfigData.useCurrentAsTemplate && currentlySelectedConfig) {
                 state.randomConfigs.push({
                     id: newConfigId,
@@ -131,7 +149,7 @@ export const RandomConfiguration: React.FC = () => {
             }
             state.selectedConfig = newConfigId;
         }));
-    }, [updateConfig]);
+    }, [selectedConfigIndex, updateConfig]);
 
     const onDeleteConfigClick = React.useCallback(() => setShowDeleteDialog(true), []);
 
@@ -140,16 +158,17 @@ export const RandomConfiguration: React.FC = () => {
     const onDeleteDialogSubmit = React.useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setShowDeleteDialog(false);
+        if (selectedConfigIndex === -1) {
+            return
+        }
         updateConfig(oldConfig => produce(oldConfig, state => {
-            const configIndex = getI(state.randomConfigs, state.selectedConfig);
-            if (state.randomConfigs.length < 2 && configIndex !== -1) {
+            if (state.randomConfigs.length < 2) {
                 return;
             }
-            const delIndex = state.randomConfigs.findIndex(cfg => cfg.id === state.selectedConfig);
-            state.randomConfigs.splice(delIndex, 1);
+            state.randomConfigs.splice(selectedConfigIndex, 1);
             state.selectedConfig = state.randomConfigs[state.randomConfigs.length - 1].id;
         }));
-    }, [updateConfig]);
+    }, [selectedConfigIndex, updateConfig]);
 
     const onSelectRandomConfig = React.useCallback((e: React.ChangeEvent<{ name?: string | undefined; value: unknown }>) => {
         updateConfig(oldState => produce(oldState, state => {
@@ -186,39 +205,32 @@ export const RandomConfiguration: React.FC = () => {
     }, [configState, selectedConfigIndex, targetsOptions]);
 
     const onChangeTotalMinItems = React.useCallback((value: number) => {
+        if (selectedConfigIndex === -1) {
+            return
+        }
         updateConfig(oldState => produce(oldState, state => {
-            const configIndex = getI(state.randomConfigs, state.selectedConfig);
-            if (configIndex === -1) {
-                return;
-            }
-            const selectedCfg = state.randomConfigs[configIndex];
+            const selectedCfg = state.randomConfigs[selectedConfigIndex];
             selectedCfg.config.total.minItems = value;
         }));
-    }, [updateConfig]);
+    }, [selectedConfigIndex, updateConfig]);
 
     const onSelectedTargetsChange = React.useCallback((e: React.ChangeEvent<{}>, value: TargetOption[]) => {
-        if (!value.length) {
+        if (!value.length || selectedConfigIndex === -1) {
             return;
         }
         updateConfig(oldState => produce(oldState, state => {
-            const configIndex = getI(state.randomConfigs, state.selectedConfig);
-            if (configIndex === -1) {
-                return;
-            }
-            state.randomConfigs[configIndex].config.selectFromTargets = value.map(option => option.key);
+            state.randomConfigs[selectedConfigIndex].config.selectFromTargets = value.map(option => option.key);
         }));
-    }, [updateConfig]);
+    }, [selectedConfigIndex, updateConfig]);
 
     const onChangeTotalMaxItems = React.useCallback((value: number) => {
+        if (selectedConfigIndex === -1) {
+            return
+        }
         updateConfig(oldState => produce(oldState, state => {
-            const configIndex = getI(state.randomConfigs, state.selectedConfig);
-            if (configIndex === -1) {
-                return;
-            }
-            const selectedCfg = state.randomConfigs[configIndex];
-            selectedCfg.config.total.maxItems = value;
+            state.randomConfigs[selectedConfigIndex].config.total.maxItems = value;
         }));
-    }, [updateConfig]);
+    }, [selectedConfigIndex, updateConfig]);
 
     return (
         <>
@@ -256,35 +268,52 @@ export const RandomConfiguration: React.FC = () => {
                 {selectedConfigIndex !== -1 && (
                     <>
                         <Grid item className={classes.gridRow}>
-                            <Typography className={classes.label}>
-                                Mix from these menus:
-                            </Typography>
-                            <Autocomplete
-                                multiple
-                                disableClearable={true}
-                                value={selectedTargetOptions}
-                                onChange={onSelectedTargetsChange}
-                                className={classes.selectedTargets}
-                                options={targetsOptions}
-                                getOptionLabel={preset => preset.value}
-                                getOptionSelected={(opt1, opt2) => opt1.key === opt2.key}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        variant="standard"
-                                        placeholder="Menus"
+                            <FormControlLabel
+                                label="Detect target automatically: "
+                                labelPlacement="start"
+                                className={classes.labelSwitch}
+                                control={
+                                    <Switch
+                                        color="primary"
+                                        size="medium"
+                                        checked={detectTargetAuto}
+                                        onChange={toggleDetectTargetAuto}
                                     />
-                                )}
-                                renderTags={(options, getTagProps) =>
-                                    options.map((option, i) => (
-                                        <Chip
-                                            label={option.value}
-                                            {...getTagProps({ index: i })}
-                                            {...(options.length > 1 ? undefined : { onDelete: undefined })}
-                                        />
-                                    ))
                                 }
                             />
+                            {!detectTargetAuto && (
+                                <>
+                                    <Typography className={classes.label}>
+                                        Mix from these menus:
+                                    </Typography>
+                                    <Autocomplete
+                                        multiple
+                                        disableClearable={true}
+                                        value={selectedTargetOptions}
+                                        onChange={onSelectedTargetsChange}
+                                        className={classes.selectedTargets}
+                                        options={targetsOptions}
+                                        getOptionLabel={preset => preset.value}
+                                        getOptionSelected={(opt1, opt2) => opt1.key === opt2.key}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                variant="standard"
+                                                placeholder="Menus"
+                                            />
+                                        )}
+                                        renderTags={(options, getTagProps) =>
+                                            options.map((option, i) => (
+                                                <Chip
+                                                    label={option.value}
+                                                    {...getTagProps({ index: i })}
+                                                    {...(options.length > 1 ? undefined : { onDelete: undefined })}
+                                                />
+                                            ))
+                                        }
+                                    />
+                                </>
+                            )}
                         </Grid>
                         <Grid item>
                             <CostSlider />
