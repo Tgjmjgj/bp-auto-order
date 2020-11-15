@@ -62,6 +62,7 @@ export type RandomConfigData = {
         maxItems: number
     }
     selectFromTargets: string[]
+    autoDetectTarget: boolean
     targetsData: ConfigTargetsData
 };
 
