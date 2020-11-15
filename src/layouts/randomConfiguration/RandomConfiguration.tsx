@@ -45,10 +45,17 @@ const useStyles = makeStyles((theme: Theme) =>
             display: 'flex',
             justifyContent: 'space-between',
         },
+        wrapRow: {
+            display: 'flex',
+            flexFlow: 'row wrap',
+            marginTop: -theme.spacing(2),
+            '& > *': {
+                marginTop: theme.spacing(2),
+            },
+        },
         gridRow: {
             display: 'flex',
             alignItems: 'flex-end',
-            height: 80,
         },
         newConfigButton: {
             transition: 'color .2s ease-out, border-color .2s ease-out, background-color .2s ease-out',
@@ -94,8 +101,13 @@ const useStyles = makeStyles((theme: Theme) =>
             height: 400,
             maxWidth: 600,
         },
-        labelSwitch: {
+        autoDetectLabel: {
             marginLeft: 0,
+            marginRight: theme.spacing(2),
+            alignItems: 'flex-end',
+        },
+        autoDetectSwitch: {
+            marginBottom: '-6px',
         },
     }),
 );
@@ -235,7 +247,7 @@ export const RandomConfiguration: React.FC = () => {
     return (
         <>
             <Grid container spacing={4} direction="column">
-                <Grid item className={classes.controlRow}>
+                <Grid item className={cn(classes.controlRow, classes.wrapRow)}>
                     <div className={classes.gridRow}>
                         <Typography className={classes.label}>
                             Selected Configuration:
@@ -267,22 +279,23 @@ export const RandomConfiguration: React.FC = () => {
                 <Divider />
                 {selectedConfigIndex !== -1 && (
                     <>
-                        <Grid item className={classes.gridRow}>
+                        <Grid item className={classes.wrapRow}>
                             <FormControlLabel
                                 label="Detect target automatically: "
                                 labelPlacement="start"
-                                className={classes.labelSwitch}
+                                className={cn(classes.autoDetectLabel, classes.gridRow)}
                                 control={
                                     <Switch
                                         color="primary"
                                         size="medium"
                                         checked={detectTargetAuto}
+                                        className={classes.autoDetectSwitch}
                                         onChange={toggleDetectTargetAuto}
                                     />
                                 }
                             />
                             {!detectTargetAuto && (
-                                <>
+                                <div className={cn(classes.gridRow, classes.wrapRow)}>
                                     <Typography className={classes.label}>
                                         Mix from these menus:
                                     </Typography>
@@ -312,7 +325,7 @@ export const RandomConfiguration: React.FC = () => {
                                             ))
                                         }
                                     />
-                                </>
+                                </div>
                             )}
                         </Grid>
                         <Grid item>

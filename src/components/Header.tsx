@@ -66,6 +66,12 @@ const useStyles = makeStyles((theme: Theme) =>
         logoutButton: {
             marginLeft: theme.spacing(2),
         },
+        userName: {
+            display: 'none',
+            [theme.breakpoints.up('sm')]: {
+                display: 'block',
+            },
+        },
     }),
 );
 
@@ -138,6 +144,7 @@ export const Header: React.FC<Props> = props => {
                         placement="bottom"
                         title={authState.email || ''}
                         aria-label={authState.email || ''}
+                        className={classes.userName}
                     >
                         <Typography>
                             {authState.displayName}

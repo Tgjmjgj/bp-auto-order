@@ -20,6 +20,14 @@ const useStyles = makeStyles((theme: Theme) =>
             display: 'flex',
             alignItems: 'center',
         },
+        wrapRow: {
+            display: 'flex',
+            flexFlow: 'row wrap',
+            marginTop: -theme.spacing(2),
+            '& > *': {
+                marginTop: theme.spacing(2),
+            },
+        },
         label: {
             marginRight: '20px',
         },
@@ -81,19 +89,21 @@ export const DeveloperSettings: React.FC = () => {
     return (
         <Grid container spacing={4} direction="column">
             <Grid item>
-                <div className={classes.gridRow}>
-                    <Typography className={classes.label}>
-                        Spreadsheet Id:
-                    </Typography>
-                    <TextField
-                        required
-                        size="small"
-                        label="Spreadsheet Id"
-                        disabled={sheetIdDisabled}
-                        variant={sheetIdDisabled ? 'filled' : 'outlined' as any}
-                        value={spreadsheetId}
-                        onChange={changeSpreadsheetId}
-                    />
+                <div className={classes.wrapRow}>
+                    <div className={classes.gridRow}>
+                        <Typography className={classes.label}>
+                            Spreadsheet Id:
+                        </Typography>
+                        <TextField
+                            required
+                            size="small"
+                            label="Spreadsheet Id"
+                            disabled={sheetIdDisabled}
+                            variant={sheetIdDisabled ? 'filled' : 'outlined' as any}
+                            value={spreadsheetId}
+                            onChange={changeSpreadsheetId}
+                        />
+                    </div>
                     {lockPuzzle}
                 </div>
                 {!sheetIdDisabled && (

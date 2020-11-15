@@ -33,7 +33,9 @@ const useStyles = makeStyles((theme: Theme) =>
         gridRow: {
             display: 'flex',
             alignItems: 'flex-end',
-            height: 80,
+            '&:first-child': {
+                paddingTop: theme.spacing(4),
+            },
         },
         gridRowSwitch: {
             paddingBottom: '4px !important',
