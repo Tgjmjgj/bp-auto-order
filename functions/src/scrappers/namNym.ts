@@ -7,7 +7,7 @@ import { customDateFormat, log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
 const dateFormat = 'dd.MM.yyyy';
-const baseUrl = 'https://www.nam-nyam.ru';
+export const baseUrl = 'https://www.nam-nyam.ru';
 const menuUrl = baseUrl + '/catering/?curDay=';
 
 export const scrapNamNymMenu = async (forDate: string): Promise<ScrapedMenu> => {

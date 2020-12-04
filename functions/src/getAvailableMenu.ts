@@ -1,5 +1,5 @@
 import { firestore } from './firebase';
-import { targetScrappers } from './getUpdatedMenu';
+import { targetScrappers } from './scrappers';
 import { log, checkDate, throwError, randomId } from './utils';
 import { MenuItemsTable } from '../../types/autoOrderMenus';
 

@@ -1,23 +1,9 @@
 import { firestore } from './firebase';
-import { scrapKumirMenu } from './scrappers/kumir';
-import { scrapNamNymMenu } from './scrappers/namNym';
-import { scrapElunchMenu } from './scrappers/elunch';
-import { scrapChanakhiMenu } from './scrappers/chanakhi';
-import { scrapLunchTimeMenu } from './scrappers/lunchTime';
+import { targetScrappers } from './scrappers';
 import { randomId, log, throwError, checkDate } from './utils';
-import { UpdatedMenu, MenuItem, MenuItemsTable, ScrapedMenu } from '../../types/autoOrderMenus';
+import { UpdatedMenu, MenuItem, MenuItemsTable } from '../../types/autoOrderMenus';
 
-const menuTargets = [ 'kumir', 'namnym', 'elunch', 'chanakhi' ];
-
-export const targetScrappers: Record<string, (date: string) => Promise<ScrapedMenu>> = {
-    'kumir': scrapKumirMenu,
-    'namnym': scrapNamNymMenu,
-    'elunch': scrapElunchMenu,
-    'lunchtime': scrapLunchTimeMenu,
-    'chanakhi': scrapChanakhiMenu,
-};
-
-export const getAllUpdatedMenus = async (forDate: string) => {
+export const getAllUpdatedMenus = async (forDate: string, menuTargets = Object.keys(targetScrappers)) => {
     log(`#Call: getAllUpdatedMenus(forDate = ${forDate})`);
     checkDate(forDate);
     const result = await Promise.allSettled(menuTargets.map(target => {

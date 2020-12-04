@@ -3,7 +3,7 @@ import sample from 'lodash/sample';
 import { DateTime } from 'luxon';
 
 import { firestore } from './firebase';
-import { placeOrder } from './placeOrder';
+import { placeOrder } from './spreadsheets/placeOrder';
 import { randomizeItems } from './randomizeItems';
 import { getAllUpdatedMenus } from './getUpdatedMenu';
 import { customDateFormat, log } from './utils';
@@ -17,7 +17,7 @@ export const scheduledPlacement = async () => {
         getAllUpdatedMenus(tomorrow),
         firestore.collection('auto-order-user-configs').get(),
     ]);
-    const operations: Array<() => Promise<void>> = []
+    const operations: Array<() => Promise<void>> = [];
     allUserConfigs.forEach(entry => {
         operations.push(async () => {
             const data = entry.data() as ConfigState;
@@ -28,7 +28,7 @@ export const scheduledPlacement = async () => {
                     try {
                         const userRndConfig = data.randomConfigs.find(cfg => cfg.id === data.selectedConfig);
                         if (userRndConfig) {
-                            const items = await randomizeItems(targetMenus, userRndConfig.config);
+                            const items = await randomizeItems(targetMenus, userRndConfig.config, userRndConfig.config.selectFromTargets);
                             if (items) {
                                 result = await placeOrder(entry.id, {
                                     spreadsheetId: data.spreadsheetId,
@@ -70,6 +70,6 @@ export const scheduledPlacement = async () => {
     });
 
     await operations.reduce((chain: Promise<void>, next: () => Promise<void>) => {
-        return chain.then(next)
-    }, Promise.resolve())
+        return chain.then(next);
+    }, Promise.resolve());
 };

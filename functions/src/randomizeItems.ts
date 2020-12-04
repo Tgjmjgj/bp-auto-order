@@ -86,8 +86,8 @@ const addItem = (
     }
 };
 
-const buildRequiredCategoriesMap = (conf: RandomConfigData): OrderCategoriesMap => {
-    return conf.selectFromTargets.reduce<OrderCategoriesMap>((obj, targetId) => {
+const buildRequiredCategoriesMap = (conf: RandomConfigData, targets: string[]): OrderCategoriesMap => {
+    return targets.reduce<OrderCategoriesMap>((obj, targetId) => {
         obj[targetId] = {};
         Object.entries(conf.targetsData[targetId].categories).forEach(([categoryName, categoryConf]) => {
             if (
@@ -105,8 +105,8 @@ const buildRequiredCategoriesMap = (conf: RandomConfigData): OrderCategoriesMap 
     }, {});
 };
 
-const buildRequiredItemsMap = (conf: RandomConfigData): OrderItemsMap => {
-    return conf.selectFromTargets.reduce<OrderItemsMap>((obj, targetId) => {
+const buildRequiredItemsMap = (conf: RandomConfigData, targets: string[]): OrderItemsMap => {
+    return targets.reduce<OrderItemsMap>((obj, targetId) => {
         Object.entries(conf.targetsData[targetId].items).forEach(([menuItemId, itemConf]) => {
             if (
                 itemConf.weight !== 0 &&
@@ -129,8 +129,8 @@ const buildRequiredItemsMap = (conf: RandomConfigData): OrderItemsMap => {
  * @param conf Random algorithm configuration
  * @param items If there are items - function will add only 1 new item to them
  */
-export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf: RandomConfigData, initialItems?: OrderItem[]): OrderItem[] => {
-    log(`#Call: randomizeItems(targetMenus, conf, items = ${JSON.stringify(initialItems)})`);
+export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf: RandomConfigData, targets: string[], initialItems?: OrderItem[]): OrderItem[] => {
+    log(`#Call: randomizeItems(targetMenus, conf, trargets = ${JSON.stringify(targets)}, items = ${JSON.stringify(initialItems)})`);
     try {
         const minCost = conf.total.cost.min;
         const midCost = conf.total.cost.mid;
@@ -154,10 +154,10 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
         const orderCategoriesMap: OrderCategoriesMap = {};
         orderItems.forEach(item => incrementOrderCategoriesMap(orderCategoriesMap, item.targetId, item.category));
 
-        const requiredCategoriesMap = buildRequiredCategoriesMap(conf);
-        const requiredItemsMap = buildRequiredItemsMap(conf);
+        const requiredCategoriesMap = buildRequiredCategoriesMap(conf, targets);
+        const requiredItemsMap = buildRequiredItemsMap(conf, targets);
 
-        const requiredItemsPool = conf.selectFromTargets.reduce<AnyMenuItem[]>((all, targetId) => {
+        const requiredItemsPool = targets.reduce<AnyMenuItem[]>((all, targetId) => {
             targetMenus[targetId].forEach(item => {
                 const needMoreOfThisItem = (requiredItemsMap[item.id] || 0) - (orderItemsMap[item.id] || 0);
                 if (
@@ -204,7 +204,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
         log('@4');
         // Required - Step 3. Choose items for left required categories
 
-        let requiredCategoriesItemsPool = conf.selectFromTargets.reduce<AnyMenuItem[]>((all, targetId) => {
+        let requiredCategoriesItemsPool = targets.reduce<AnyMenuItem[]>((all, targetId) => {
             targetMenus[targetId].forEach(item => {
                 const itemWeight = get(conf.targetsData[targetId].items[item.id], 'weight') as number | undefined;
                 const itemMaxItems = get(conf.targetsData[targetId].items[item.id], 'maxItems') as number | undefined;
@@ -248,7 +248,7 @@ export const randomizeItems = (targetMenus: Record<string, AnyMenuItem[]>, conf:
         }
 
         log('@6');
-        const initialRandomItemsPool = conf.selectFromTargets.reduce<AnyMenuItem[]>((all, targetId) => {
+        const initialRandomItemsPool = targets.reduce<AnyMenuItem[]>((all, targetId) => {
             targetMenus[targetId].forEach(item => {
                 const categoryWeight = get(conf.targetsData[targetId].categories[item.category], 'weight') as number | undefined;
                 const itemWeight = get(conf.targetsData[targetId].items[item.id], 'weight') as number | undefined;

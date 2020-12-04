@@ -3,6 +3,7 @@ import { getAllUpdatedMenus } from './getUpdatedMenu';
 import { randomizeItems } from './randomizeItems';
 import { firestore } from './firebase';
 import { log, throwError } from './utils';
+import { autoDetectTarget } from './spreadsheets/autoDetectTarget';
 
 export type GetRandomOrderResult = {
     success: boolean
@@ -20,6 +21,11 @@ export const getRandomOrder = async (userId: string, target: string, date: strin
     if (!randomConfig) {
         throwError('not-found', `User selected random configuration doesn't found!`);
     }
-    const allMenus = await getAllUpdatedMenus(date);
-    return randomizeItems(allMenus, randomConfig!.config, items);
+    let foundTarget: string | null = null;
+    if (randomConfig!.config.autoDetectTarget) {
+        foundTarget = await autoDetectTarget(configState.spreadsheetId);
+    }
+    const selectFromTargets = foundTarget ? [ foundTarget ] : randomConfig!.config.selectFromTargets;
+    const allMenus = await getAllUpdatedMenus(date, selectFromTargets);
+    return randomizeItems(allMenus, randomConfig!.config, selectFromTargets, items);
 }

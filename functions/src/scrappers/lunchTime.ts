@@ -8,7 +8,7 @@ import { customDateFormat, log, throwError } from '../utils';
 import { ScrapedMenu, ScrapedMenuItem } from '../../../types/autoOrderMenus';
 
 const dateFormat = 'dd.MM.yyyy';
-const baseUrl = 'https://obed-office.ru';
+export const baseUrl = 'https://obed-office.ru';
 const itemsMenuUrlCurrentWeek = baseUrl + '/catalog/tekushchaya-nedelya/?day=';
 const itemsMenuUrlNextWeek = baseUrl + '/catalog/sleduyushchaya-nedelya/?day=';
 const complexMenuUrlCurrentWeek = baseUrl + '/catalog/kompleks-menu-tekushchaya/?day=';
