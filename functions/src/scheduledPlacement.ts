@@ -9,11 +9,23 @@ import { getAllUpdatedMenus } from './getUpdatedMenu';
 import { customDateFormat, log } from './utils';
 
 import { ConfigState } from '../../types/autoOrderConfigs';
+import { autoDetectTarget } from './spreadsheets/autoDetectTarget';
+
+const spreadsheetCache: Record<string, string | null> = {};
+
+const getSpreadsheetTarget = async (spreadsheetId: string) => {
+    if (spreadsheetCache[spreadsheetId]) {
+        return spreadsheetCache[spreadsheetId];
+    }
+    const target = await autoDetectTarget(spreadsheetId);
+    spreadsheetCache[spreadsheetId] = target;
+    return target;
+};
 
 export const scheduledPlacement = async () => {
     log(`#Call: scheduledPlacement()`);
     const tomorrow = DateTime.local().plus({ day: 1 }).setZone('Europe/Moscow').toFormat(customDateFormat);
-    const [targetMenus, allUserConfigs] = await Promise.all([
+    const [allMenu, allUserConfigs] = await Promise.all([
         getAllUpdatedMenus(tomorrow),
         firestore.collection('auto-order-user-configs').get(),
     ]);
@@ -28,7 +40,13 @@ export const scheduledPlacement = async () => {
                     try {
                         const userRndConfig = data.randomConfigs.find(cfg => cfg.id === data.selectedConfig);
                         if (userRndConfig) {
-                            const items = await randomizeItems(targetMenus, userRndConfig.config, userRndConfig.config.selectFromTargets);
+
+                            let foundTarget: string | null = null;
+                            if (userRndConfig.config.autoDetectTarget) {
+                                foundTarget = await getSpreadsheetTarget(data.spreadsheetId);
+                            }
+                            const selectFromTargets = foundTarget ? [ foundTarget ] : userRndConfig.config.selectFromTargets;
+                            const items = await randomizeItems(allMenu, userRndConfig.config, selectFromTargets);
                             if (items) {
                                 result = await placeOrder(entry.id, {
                                     spreadsheetId: data.spreadsheetId,

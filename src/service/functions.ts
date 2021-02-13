@@ -1,7 +1,8 @@
 import * as firebase from 'firebase/app';
 import 'firebase/functions';
-import { OrderItem, PlaceOrderData } from '../../types/autoOrderConfigs';
+import { OrderItem } from '../../types/autoOrderConfigs';
 import { AnyMenuItem } from '../../types/autoOrderMenus';
+import { PlaceOrderData } from '../../types/autoOrderHistory';
 
 export const placeOrder = (payload: PlaceOrderData): Promise<{ data: number }> =>
     firebase.app().functions('europe-west1').httpsCallable('placeOrder')(payload);

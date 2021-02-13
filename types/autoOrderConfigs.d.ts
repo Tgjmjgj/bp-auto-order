@@ -1,7 +1,12 @@
 
+type OrderItemId = string;
+type MenuItemId = string;
+type TargetId = string;
+type PresetId = string;
+type RandomConfigId = string;
 
 export type OrderTarget = {
-    id: string
+    id: TargetId
     displayName: string
     isSystem: boolean
 };
@@ -13,10 +18,10 @@ export type ConfigState = {
     spreadsheetId: string
     mode: AutoOrderMode
     presets: OrderPreset[]
-    selectedPresets: string[]
+    selectedPresets: PresetId[]
     savedTargets: OrderTarget[]
     randomConfigs: RandomOrderConfig[]
-    selectedConfig: string
+    selectedConfig: RandomConfigId
     overwriteAlways: boolean
     allowMultipleOrders: boolean
     systemName?: string
@@ -24,18 +29,18 @@ export type ConfigState = {
 };
 
 export type OrderPreset = {
-    id: string
+    id: PresetId
     name: string
     items: OrderItem[]
 };
 
 export type OrderItem = {
-    id: string
+    id: OrderItemId
     name: string
     price: number
     quantity: number
-    targetId: string
-    menuItemId?: string
+    targetId: TargetId
+    menuItemId?: MenuItemId
 };
 
 export type MenuItemConfig = {
@@ -50,9 +55,9 @@ export type Costs = {
     max: number
 };
 
-export type ConfigTargetsData = Record<string, {
+export type ConfigTargetsData = Record<TargetId, {
     categories: Record<string, MenuItemConfig>
-    items: Record<string, MenuItemConfig>
+    items: Record<MenuItemId, MenuItemConfig>
 }>;
 
 export type RandomConfigData = {
@@ -61,52 +66,13 @@ export type RandomConfigData = {
         minItems: number
         maxItems: number
     }
-    selectFromTargets: string[]
+    selectFromTargets: TargetId[]
     autoDetectTarget: boolean
     targetsData: ConfigTargetsData
 };
 
 export type RandomOrderConfig = {
-    id: string
+    id: RandomConfigId
     name: string
     config: RandomConfigData
 };
-
-export interface PlaceOrderData {
-    spreadsheetId: string
-    forDate: string
-    items: OrderItem[]
-    targets: OrderTarget[]
-    systemName?: string
-    customName?: string
-    overwrite?: boolean
-    allowMultiple?: boolean
-}
-
-export interface Rate {
-    total: number
-}
-
-export interface MenuItemRating {
-    id: string
-    itemId: string
-    targetId: string
-    userId: string
-    rate: Rate
-    comment: string
-}
-
-type MenuItemId = string;
-export type TargetRatings = Record<MenuItemId, MenuItemRating>;
-
-export interface OrderHistoryItem {
-    id: string
-    datetime: UTC_ISO_Date
-    orderData: PlaceOrderData
-    row: number
-    itemsRatings: string[] // id[] of MenuItemRating
-    orderRate?: Rate
-}
-
-type UTC_ISO_Date = string; // DateTime.local().toUTC().toISO({suppressMilliseconds: true, suppressSeconds: true})
-export type OrderHistory = Record<UTC_ISO_Date, OrderHistoryItem>;

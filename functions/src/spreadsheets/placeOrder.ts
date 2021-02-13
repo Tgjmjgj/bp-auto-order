@@ -13,7 +13,7 @@ import get from 'lodash/get';
 import { firestore } from '../firebase';
 import { getLastFilledRow } from './getLastFilledRow';
 import { log, randomId, throwError } from '../utils';
-import { OrderHistory, OrderHistoryItem, PlaceOrderData } from '../../../types/autoOrderConfigs';
+import { OrderHistory, OrderHistoryItem, PlaceOrderData } from '../../../types/autoOrderHistory';
 
 const randomName = () => `${capitalize(faker.hacker.adjective())} ${capitalize(faker.hacker.noun())}`;
 
@@ -232,11 +232,11 @@ const saveOrderToHistory = async (userId: string, orderData: PlaceOrderData, ins
     try {
         const historyTableRef = firestore.collection('auto-order-history').doc(userId);
         const historyData = await historyTableRef.get();
-        const datetime = DateTime.local().toUTC().toISO({suppressMilliseconds: true, suppressSeconds: true});
+        const datetime = DateTime.local().toMillis();
         const newHistoryItem: OrderHistoryItem = {
             id: randomId(),
             datetime,
-            itemsRatings: [],
+            itemsRates: {},
             orderData,
             row: insertionRow,
         };
