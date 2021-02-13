@@ -357,7 +357,7 @@ export const ManualOrder: React.FC = () => {
                         >
                             Randomize
                         </Button>
-                        <Typography className={classes.fromText}>
+                        {/* <Typography className={classes.fromText}>
                             from
                         </Typography>
                         <Select
@@ -366,7 +366,7 @@ export const ManualOrder: React.FC = () => {
                             disabled={loading || itemLoading}
                         >
                             {targetOptionsForRandom}
-                        </Select>
+                        </Select> */}
                     </Box>
                 </Grid>
                 <Divider  />

@@ -61,7 +61,6 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
             setConfigState(oldState => ({
                 ...oldState,
                 ...stateUpdate,
-                dontSaveOnServer: true,
             }));
         }
     }, []);
@@ -137,7 +136,9 @@ export const ConfigStateProvider: React.FC = ({ children }) => {
     }, [authContext.uid, authContext.displayName]);
 
     useEffect(() => {
+        console.log('!!! authContext.uid: ', authContext.uid, ', dataLoaded: ', dataLoaded)
         if (authContext.uid && dataLoaded) {
+            console.log('!!! configState.dontSaveOnServer: ', configState.dontSaveOnServer)
             if (!configState.dontSaveOnServer) {
                 clearTimeout(timerIdRef.current);
 
