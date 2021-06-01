@@ -7,7 +7,9 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import { DatePicker } from '@material-ui/pickers';
-import { OrderHistoryStateContext } from '../providers/OrderHistoryProvider';
+
+import { OrderHistoryStateContext } from '../../providers/OrderHistoryProvider';
+import { HistoryList } from './elements/HistoryList';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -31,6 +33,9 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         divider: {
             marginTop: 8,
+        },
+        historyList: {
+            height: '100%',
         },
     }),
 );
@@ -97,6 +102,7 @@ export const OrderHistory: React.FC = () => {
                 </div>
             </Grid>
             <Divider className={classes.divider} />
+            <HistoryList className={classes.historyList} />
         </Grid>
     );
 };

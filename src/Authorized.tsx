@@ -24,7 +24,7 @@ import { DeveloperSettings } from './layouts/DeveloperSettings';
 import { PresetsScreen } from './layouts/PresetsScreen';
 import { RandomConfiguration } from './layouts/randomConfiguration/RandomConfiguration';
 import { ManualOrder } from './layouts/ManualOrder';
-import { OrderHistory } from './layouts/OrderHistory';
+import { OrderHistory } from './layouts/orderHistory/OrderHistory';
 import { MenuLoader } from './components/MenuLoader';
 import { NotificationBar } from './components/NotificationBar';
 import { Header } from './components/Header';
