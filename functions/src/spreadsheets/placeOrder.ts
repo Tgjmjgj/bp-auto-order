@@ -236,7 +236,6 @@ const saveOrderToHistory = async (userId: string, orderData: PlaceOrderData, ins
     try {
         const historyTableRef = firestore.collection('auto-order-history').doc(userId);
         const historyData = await historyTableRef.get();
-        log('@@@ 1');
         const now = DateTime.local();
         const datetime = now.toMillis();
         const withoutTime = now.set({hour: 0, minute: 0, second: 0, millisecond: 0});
@@ -249,32 +248,21 @@ const saveOrderToHistory = async (userId: string, orderData: PlaceOrderData, ins
             row: insertionRow,
         };
         if (historyData.exists) {
-            log('@@@ 2');
             const existingHistory = historyData.data() as OrderHistory;
-            log('@@@ 2.5');
             log(existingHistory);
             if (dateOnly in existingHistory) {
-                log('2.5.1');
-                log(existingHistory[dateOnly] instanceof Array);
                 existingHistory[dateOnly] = [
                     ...existingHistory[dateOnly],
                     newHistoryItem,
                 ];
             } else {
-                log('2.5.2');
                 existingHistory[dateOnly] = [newHistoryItem];
             }
-            log('@@@ 3');
             await historyTableRef.update(existingHistory);
-            log('@@@ 4');
         } else {
-            log('@@@ 5');
             await historyTableRef.set({ [dateOnly]: [newHistoryItem] });
-            log('@@@ 6');
         }
     } catch (e) {
-        log('@@@ 7');
-        log(e);
         throwError('unknown', 'Something went wrong with updating the orders history');
     }
 };
