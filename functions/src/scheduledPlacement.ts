@@ -8,17 +8,17 @@ import { randomizeItems } from './randomizeItems';
 import { getAllUpdatedMenus } from './getUpdatedMenu';
 import { customDateFormat, log } from './utils';
 
-import { ConfigState } from '../../types/autoOrderConfigs';
+import { ConfigState, SpreadsheetData } from '../../types/autoOrderConfigs';
 import { autoDetectTarget } from './spreadsheets/autoDetectTarget';
 
 const spreadsheetCache: Record<string, string | null> = {};
 
-const getSpreadsheetTarget = async (spreadsheetId: string) => {
-    if (spreadsheetCache[spreadsheetId]) {
-        return spreadsheetCache[spreadsheetId];
+const getSpreadsheetTarget = async (spreadsheet: SpreadsheetData) => {
+    if (spreadsheetCache[spreadsheet.id]) {
+        return spreadsheetCache[spreadsheet.id];
     }
-    const target = await autoDetectTarget(spreadsheetId);
-    spreadsheetCache[spreadsheetId] = target;
+    const target = await autoDetectTarget(spreadsheet);
+    spreadsheetCache[spreadsheet.id] = target;
     return target;
 };
 
@@ -43,13 +43,13 @@ export const scheduledPlacement = async () => {
 
                             let foundTarget: string | null = null;
                             if (userRndConfig.config.autoDetectTarget) {
-                                foundTarget = await getSpreadsheetTarget(data.spreadsheetId);
+                                foundTarget = await getSpreadsheetTarget(data.spreadsheet);
                             }
                             const selectFromTargets = foundTarget ? [ foundTarget ] : userRndConfig.config.selectFromTargets;
                             const items = await randomizeItems(allMenu, userRndConfig.config, selectFromTargets);
                             if (items) {
                                 result = await placeOrder(entry.id, {
-                                    spreadsheetId: data.spreadsheetId,
+                                    spreadsheet: data.spreadsheet,
                                     forDate: tomorrow,
                                     systemName: data.systemName,
                                     customName: data.customName,
@@ -69,7 +69,7 @@ export const scheduledPlacement = async () => {
                         const presetId = sample(data.selectedPresets);
                         const chosenPreset = data.presets.find(preset => preset.id === presetId)!;
                         result = await placeOrder(entry.id, {
-                            spreadsheetId: data.spreadsheetId,
+                            spreadsheet: data.spreadsheet,
                             forDate: tomorrow,
                             systemName: data.systemName,
                             customName: data.customName,

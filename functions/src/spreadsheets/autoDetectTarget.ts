@@ -3,6 +3,7 @@ import get from 'lodash/get';
 import { getLastFilledRow } from './getLastFilledRow';
 import { targetScrappersBaseUrls } from '../scrappers';
 import { log, throwError } from '../utils';
+import { SpreadsheetData } from '../../../types/autoOrderConfigs';
 
 const initApi = async (): Promise<sheets_v4.Sheets> => {
     const auth = await google.auth.getClient({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
@@ -10,24 +11,24 @@ const initApi = async (): Promise<sheets_v4.Sheets> => {
     return api;
 };
 
-export const autoDetectTarget = async (spreadsheetId: string, apiArg?: sheets_v4.Sheets, lastFilledRowArg?: number): Promise<string | null> => {
-    log(`#Call: autoDetectTarget(spreadsheetId = ${spreadsheetId}, api, lastFilledRow = ${lastFilledRowArg})`);
-    if (!spreadsheetId) {
+export const autoDetectTarget = async (spreadsheet: SpreadsheetData, apiArg?: sheets_v4.Sheets, lastFilledRowArg?: number): Promise<string | null> => {
+    log(`#Call: autoDetectTarget(spreadsheetId = ${spreadsheet.id}, api, lastFilledRow = ${lastFilledRowArg})`);
+    if (!spreadsheet.id) {
         throwError('invalid-argument', 'No spreadsheetId in the request');
     }
     const api = apiArg ? apiArg : await initApi();
-    const lastFilledRow = lastFilledRowArg !== undefined ? lastFilledRowArg : await getLastFilledRow(api, spreadsheetId);
+    const lastFilledRow = lastFilledRowArg !== undefined ? lastFilledRowArg : await getLastFilledRow(api, spreadsheet);
+    const rangeTabPrefix = spreadsheet.tabHeading ? `'${spreadsheet.tabHeading}'!` : '';
 
     try {
         const {data} = await api.spreadsheets.get({
-            spreadsheetId,
+            spreadsheetId: spreadsheet.id,
             includeGridData: true,
             ranges: [
-                `B${lastFilledRow - 100}:B${lastFilledRow}`,
+                `${rangeTabPrefix}B${lastFilledRow - 100}:B${lastFilledRow}`,
             ],
         });
         const columnDataB = get(data, 'sheets[0].data[0].rowData');
-        log(columnDataB);
 
         let i = columnDataB.length - 1;
         let targetLink: string | null = null;

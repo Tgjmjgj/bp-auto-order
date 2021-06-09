@@ -1,12 +1,13 @@
-import { OrderItem, OrderTarget } from './autoOrderConfigs';
+import { OrderItem, OrderTarget, SpreadsheetData } from './autoOrderConfigs';
 import { Rate } from './autoOrderRatings';
 
 type OrderItemId = string;
 type OrderId = string;
 type DatetimeNum = number;
+type DateNum = number;
 
 export interface PlaceOrderData {
-    spreadsheetId: string
+    spreadsheet: SpreadsheetData
     forDate: string
     items: OrderItem[]
     targets: OrderTarget[]
@@ -25,4 +26,4 @@ export interface OrderHistoryItem {
     orderRate?: Rate
 }
 
-export type OrderHistory = Record<DatetimeNum, OrderHistoryItem[]>;
+export type OrderHistory = Record<DateNum, OrderHistoryItem[]>;

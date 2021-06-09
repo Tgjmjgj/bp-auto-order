@@ -75,7 +75,10 @@ const defaultRandomConfig: RandomOrderConfig = {
 
 export const defaultConfigState: LocalConfigState = {
     enabled: false,
-    spreadsheetId: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
+    spreadsheet: {
+        id: '16A8ybyTrCyH6L3okYUgZW-GpYYPqttLj4PhSDYBPlYA',
+        tabHeading: 'Sheet1',
+    },
     mode: 'preset',
     selectedPresets: [ defaultPreset.id ],
     presets: [ defaultPreset ],

@@ -1,31 +1,36 @@
 import * as functions from 'firebase-functions';
 import { sheets_v4 } from 'googleapis';
 import get from 'lodash/get';
+import { SpreadsheetData } from '../../../types/autoOrderConfigs';
 import { log, throwError } from '../utils';
+import { getSheet } from './getSheet';
 
-export const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: string): Promise<number> => {
-    log(`#Call: getLastFilledRow(spreadsheetId = ${spreadsheetId})`);
+export const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheet: SpreadsheetData): Promise<number> => {
+    log(`#Call: getLastFilledRow(spreadsheetId = ${spreadsheet.id})`);
     try {
         const bulkSize = 300;
         let foundRow = 0;
-        const sheetData = await api.spreadsheets.get({ spreadsheetId });
-        const maxRow = get(sheetData, 'data.sheets[0].properties.gridProperties.rowCount');
-        console.log('@maxRow: ', maxRow);
+        const spreadsheetData = await api.spreadsheets.get({ spreadsheetId: spreadsheet.id });
+        const sheetData = getSheet(spreadsheetData.data, spreadsheet.tabHeading); 
+        const maxRow = get(sheetData, 'properties.gridProperties.rowCount');
+        const rangeTabPrefix = spreadsheet.tabHeading ? `'${spreadsheet.tabHeading}'!` : '';
+        log('@maxRow: ', maxRow);
         let fromRow, iter = 0;
         do {
             fromRow = maxRow - (bulkSize * (iter + 1));
             fromRow = fromRow < 1 ? 1 : fromRow;
             const toRow = maxRow - (bulkSize * iter);
-            const range = `D${fromRow}:D${toRow}`;
-            console.log('Range: ', range);
+            const range = `${rangeTabPrefix}D${fromRow}:D${toRow}`;
+            log('Range: ', range);
             const {data} = await api.spreadsheets.get({
-                spreadsheetId,
+                spreadsheetId: spreadsheet.id,
                 includeGridData: true,
                 ranges: [range],
             });
-            if (data.sheets && data.sheets.length) {
-                if (data.sheets[0].data && data.sheets[0].data.length) {
-                    const rowData = data.sheets[0].data[0].rowData;
+            const sheetData2 = getSheet(data, spreadsheet.tabHeading);
+            if (sheetData2) {
+                if (sheetData2.data && sheetData2.data.length) {
+                    const rowData = sheetData2.data[0].rowData;
                     if (rowData) {
                         let value = null;
                         let i = rowData.length - 1;
@@ -44,10 +49,10 @@ export const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: str
                         }
                     }
                 } else {
-                    throwError('not-found', `Cannot retreive spreadsheet ${spreadsheetId} range data ${range}`);
+                    throwError('not-found', `Cannot retreive spreadsheet ${spreadsheet.id} range data ${range}`);
                 }
             } else {
-                throwError('not-found', `Cannot find spreadsheet pages in the document with id ${spreadsheetId}`);
+                throwError('not-found', `Cannot find spreadsheet pages in the document with id ${spreadsheet.id}`);
             }
             iter++;
         } while (fromRow !== 1 && !foundRow);
@@ -59,18 +64,22 @@ export const getLastFilledRow = async (api: sheets_v4.Sheets, spreadsheetId: str
             foundRow += rowShift;
             rowShift = 0;
             const getResult = await api.spreadsheets.get({
-                spreadsheetId,
+                spreadsheetId: spreadsheet.id,
                 includeGridData: true,
-                ranges: [`B${foundRow}:M${foundRow + packSize}`],
+                ranges: [
+                    `${rangeTabPrefix}B${foundRow}:M${foundRow + packSize}`,
+                ],
             });
-            const rowData = get(getResult.data, 'sheets[0].data[0].rowData');
-
-            for (let i = rowData.length - 1; i >= 0; --i) {
-                if (rowData[i].values && rowData[i].values.length) {
-                    const filledRowsNumber = rowData[i].values.filter((cell: sheets_v4.Schema$CellData) => cell.userEnteredValue).length;
-                    if (filledRowsNumber !== 0) {
-                        rowShift = i + 1;
-                        break;
+            const sheetData3 = getSheet(getResult.data, spreadsheet.tabHeading); 
+            const rowData = get(sheetData3, 'data[0].rowData');
+            if (rowData) {
+                for (let i = rowData.length - 1; i >= 0; --i) {
+                    if (rowData[i].values && rowData[i].values.length) {
+                        const filledRowsNumber = rowData[i].values.filter((cell: sheets_v4.Schema$CellData) => cell.userEnteredValue).length;
+                        if (filledRowsNumber !== 0) {
+                            rowShift = i + 1;
+                            break;
+                        }
                     }
                 }
             }

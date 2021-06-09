@@ -14,6 +14,7 @@ import { firestore } from '../firebase';
 import { getLastFilledRow } from './getLastFilledRow';
 import { log, randomId, throwError } from '../utils';
 import { OrderHistory, OrderHistoryItem, PlaceOrderData } from '../../../types/autoOrderHistory';
+import { SpreadsheetData } from '../../../types/autoOrderConfigs';
 
 const randomName = () => `${capitalize(faker.hacker.adjective())} ${capitalize(faker.hacker.noun())}`;
 
@@ -27,16 +28,17 @@ type RowNames = {
 const maxNamesAllowed = 40;
 const ijColumnTargets = ['всего', 'total'];
 
-const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], lastRowNumber: number, spreadsheetId: string): Promise<RowNames | null> => {
-    log(`#Call: checkExistedOrder(names = ${names}, lastRowNumber = ${lastRowNumber}, spreadsheetId = ${spreadsheetId})`);
+const checkExistedOrder = async (api: sheets_v4.Sheets, names: string[], lastRowNumber: number, spreadsheet: SpreadsheetData): Promise<RowNames | null> => {
+    log(`#Call: checkExistedOrder(names = ${names}, lastRowNumber = ${lastRowNumber}, spreadsheetId = ${spreadsheet.id})`);
+    const rangeTabPrefix = spreadsheet.tabHeading ? `'${spreadsheet.tabHeading}'!` : '';
     try {
         const {data} = await api.spreadsheets.get({
-            spreadsheetId,
+            spreadsheetId: spreadsheet.id,
             includeGridData: true,
             ranges: [
-                `D${lastRowNumber - 100}:D${lastRowNumber}`,
-                `I${lastRowNumber - 100}:I${lastRowNumber}`,
-                `J${lastRowNumber - 100}:J${lastRowNumber}`,
+                `${rangeTabPrefix}D${lastRowNumber - 100}:D${lastRowNumber}`,
+                `${rangeTabPrefix}I${lastRowNumber - 100}:I${lastRowNumber}`,
+                `${rangeTabPrefix}J${lastRowNumber - 100}:J${lastRowNumber}`,
             ],
         });
         const namesDataD = get(data, 'sheets[0].data[0].rowData');
@@ -160,11 +162,12 @@ const transformRawDataToTableRows = (order: PlaceOrderData): string[][] => {
         return [];
 };
 
-const writeTableRows = async (api: sheets_v4.Sheets, spreadsheetId: string, tableRows: string[][], rowNumber: number) => {
-    log(`#Call: writeTableRows(spreadsheetId = ${spreadsheetId}, tableRows = ${JSON.stringify(tableRows)}, rowNumber = ${rowNumber})`);
-    const range = `B${rowNumber}:M${rowNumber + tableRows.length - 1}`;
+const writeTableRows = async (api: sheets_v4.Sheets, spreadsheet: SpreadsheetData, tableRows: string[][], rowNumber: number) => {
+    log(`#Call: writeTableRows(spreadsheetId = ${spreadsheet.id}, tableRows = ${JSON.stringify(tableRows)}, rowNumber = ${rowNumber})`);
+    const rangeTabPrefix = spreadsheet.tabHeading ? `'${spreadsheet.tabHeading}'!` : '';
+    const range = `${rangeTabPrefix}B${rowNumber}:M${rowNumber + tableRows.length - 1}`;
     const res = await api.spreadsheets.values.update({
-        spreadsheetId,
+        spreadsheetId: spreadsheet.id,
         range,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
@@ -183,19 +186,20 @@ const writeOrderToLastRow = async (api: sheets_v4.Sheets, orderData: PlaceOrderD
     log(`#Call: writeOrderToLastRow(orderData = ${JSON.stringify(orderData)}, lastRowNumber = ${lastRowNumber})`);
     try {
         const tableRows = transformRawDataToTableRows(orderData);
-        await writeTableRows(api, orderData.spreadsheetId, tableRows, lastRowNumber);
+        await writeTableRows(api, orderData.spreadsheet, tableRows, lastRowNumber);
     } catch (e) {
         throwError('unknown', 'Unknown Error in writing order into the spreadsheet', e);
     }
     return null;
 };
 
-const clearRows = async (api: sheets_v4.Sheets, spreadsheetId: string, fromRow: number, toRow: number) => {
-    log(`#Call: clearRows(spreadsheetId = ${spreadsheetId}, fromRow = ${fromRow}, toRow = ${toRow})`);
-    const range = `B${fromRow}:M${toRow}`;
+const clearRows = async (api: sheets_v4.Sheets, spreadsheet: SpreadsheetData, fromRow: number, toRow: number) => {
+    log(`#Call: clearRows(spreadsheetId = ${spreadsheet.id}, fromRow = ${fromRow}, toRow = ${toRow})`);
+    const rangeTabPrefix = spreadsheet.tabHeading ? `'${spreadsheet.tabHeading}'!` : '';
+    const range = `${rangeTabPrefix}B${fromRow}:M${toRow}`;
     console.log(`Cleare rows on range ${range}`);
     const res = await api.spreadsheets.values.update({
-        spreadsheetId: spreadsheetId,
+        spreadsheetId: spreadsheet.id,
         range,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
@@ -213,12 +217,12 @@ const overwriteOrderToRow = async (api: sheets_v4.Sheets, orderData: PlaceOrderD
     log(`#Call: clearRows(orderData = ${JSON.stringify(orderData)}, foundRow = ${foundRow}, lastRowNumber = ${lastRowNumber})`);
     try {
         const tableRows = transformRawDataToTableRows(orderData);
-        await clearRows(api, orderData.spreadsheetId, foundRow.row, foundRow.row + foundRow.lines);
+        await clearRows(api, orderData.spreadsheet, foundRow.row, foundRow.row + foundRow.lines);
         if (tableRows.length > foundRow.lines) {
-            await writeTableRows(api, orderData.spreadsheetId, tableRows, lastRowNumber);
+            await writeTableRows(api, orderData.spreadsheet, tableRows, lastRowNumber);
             return lastRowNumber;
         } else {
-            await writeTableRows(api, orderData.spreadsheetId, tableRows, foundRow.row);
+            await writeTableRows(api, orderData.spreadsheet, tableRows, foundRow.row);
             return foundRow.row;
         }
     } catch (e) {
@@ -232,7 +236,11 @@ const saveOrderToHistory = async (userId: string, orderData: PlaceOrderData, ins
     try {
         const historyTableRef = firestore.collection('auto-order-history').doc(userId);
         const historyData = await historyTableRef.get();
-        const datetime = DateTime.local().toMillis();
+        log('@@@ 1');
+        const now = DateTime.local();
+        const datetime = now.toMillis();
+        const withoutTime = now.set({hour: 0, minute: 0, second: 0, millisecond: 0});
+        const dateOnly = withoutTime.toMillis();
         const newHistoryItem: OrderHistoryItem = {
             id: randomId(),
             datetime,
@@ -241,21 +249,39 @@ const saveOrderToHistory = async (userId: string, orderData: PlaceOrderData, ins
             row: insertionRow,
         };
         if (historyData.exists) {
+            log('@@@ 2');
             const existingHistory = historyData.data() as OrderHistory;
-            existingHistory[datetime] = newHistoryItem;
+            log('@@@ 2.5');
+            log(existingHistory);
+            if (dateOnly in existingHistory) {
+                log('2.5.1');
+                log(existingHistory[dateOnly] instanceof Array);
+                existingHistory[dateOnly] = [
+                    ...existingHistory[dateOnly],
+                    newHistoryItem,
+                ];
+            } else {
+                log('2.5.2');
+                existingHistory[dateOnly] = [newHistoryItem];
+            }
+            log('@@@ 3');
             await historyTableRef.update(existingHistory);
+            log('@@@ 4');
         } else {
-            await historyTableRef.set({ datetime: newHistoryItem });
+            log('@@@ 5');
+            await historyTableRef.set({ [dateOnly]: [newHistoryItem] });
+            log('@@@ 6');
         }
     } catch (e) {
+        log('@@@ 7');
+        log(e);
         throwError('unknown', 'Something went wrong with updating the orders history');
     }
 };
 
 export const placeOrder = async (userId: string, data: PlaceOrderData): Promise<number> => {
     log(`#Call: placeOrder(data = ${JSON.stringify(data)})`);
-    const spreadsheetId = data.spreadsheetId;
-    if (!spreadsheetId) {
+    if (!data.spreadsheet.id) {
         throwError('invalid-argument', 'No spreadsheetId in the request');
         return -1;
     }
@@ -265,12 +291,12 @@ export const placeOrder = async (userId: string, data: PlaceOrderData): Promise<
     }
     const auth = await google.auth.getClient({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
     const api = google.sheets({ version: 'v4', auth });
-    const lastRow = await getLastFilledRow(api, spreadsheetId);
+    const lastRow = await getLastFilledRow(api, data.spreadsheet);
     const names = [data.systemName, data.customName].filter(name => name) as string[];
     let writtenToRow = -1;
     let foundRowName = null;
     if (!data.allowMultiple) {
-        foundRowName = await checkExistedOrder(api, names, lastRow, spreadsheetId);
+        foundRowName = await checkExistedOrder(api, names, lastRow, data.spreadsheet);
     }
     if (foundRowName) {
         if (data.overwrite) {

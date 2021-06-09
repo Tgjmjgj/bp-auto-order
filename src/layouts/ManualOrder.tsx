@@ -279,7 +279,7 @@ export const ManualOrder: React.FC = () => {
             await placeOrderCall({
                 items,
                 forDate: dateFor,
-                spreadsheetId: configState.state.spreadsheetId,
+                spreadsheet: configState.state.spreadsheet,
                 targets: configState.state.savedTargets,
                 customName: configState.state.customName,
                 systemName: configState.state.systemName,

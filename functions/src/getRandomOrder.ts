@@ -23,7 +23,7 @@ export const getRandomOrder = async (userId: string, target: string, date: strin
     }
     let foundTarget: string | null = null;
     if (randomConfig!.config.autoDetectTarget) {
-        foundTarget = await autoDetectTarget(configState.spreadsheetId);
+        foundTarget = await autoDetectTarget(configState.spreadsheet);
     }
     const selectFromTargets = foundTarget ? [ foundTarget ] : randomConfig!.config.selectFromTargets;
     const allMenus = await getAllUpdatedMenus(date, selectFromTargets);

@@ -13,9 +13,14 @@ export type OrderTarget = {
 
 export type AutoOrderMode = 'preset' | 'random';
 
+export type SpreadsheetData = {
+    id: string
+    tabHeading?: string
+}
+
 export type ConfigState = {
     enabled: boolean
-    spreadsheetId: string
+    spreadsheet: SpreadsheetData
     mode: AutoOrderMode
     presets: OrderPreset[]
     selectedPresets: PresetId[]

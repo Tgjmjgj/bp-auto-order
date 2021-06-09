@@ -54,12 +54,29 @@ export const DeveloperSettings: React.FC = () => {
     const configState = React.useContext(ConfigStateContext);
     const updateConfig = React.useContext(ConfigUpdateContext);
     const classes = useStyles();
-    const spreadsheetId = configState.state.spreadsheetId;
+    const spreadsheetId = configState.state.spreadsheet.id;
+    const spreadsheetTab = configState.state.spreadsheet.tabHeading;
     const alwaysOverwrite = configState.state.overwriteAlways;
     const allowMultipleOrders = configState.state.allowMultipleOrders;
 
     const changeSpreadsheetId = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        updateConfig({ spreadsheetId: e.target.value });
+        updateConfig(state => ({
+            ...state,
+            spreadsheet: {
+                ...state.spreadsheet,
+                id: e.target.value,
+            },
+        }));
+    }, [updateConfig]);
+
+    const changeSpreadsheetTab = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        updateConfig(state => ({
+            ...state,
+            spreadsheet: {
+                ...state.spreadsheet,
+                tabHeading: e.target.value || undefined,
+            },
+        }));
     }, [updateConfig]);
 
     const onLockClick = React.useCallback((num: number) => {
@@ -102,6 +119,20 @@ export const DeveloperSettings: React.FC = () => {
                             variant={sheetIdDisabled ? 'filled' : 'outlined' as any}
                             value={spreadsheetId}
                             onChange={changeSpreadsheetId}
+                        />
+                    </div>
+                    <div className={classes.gridRow}>
+                        <Typography className={classes.label}>
+                            Spreadsheet Tab Heading:
+                        </Typography>
+                        <TextField
+                            required
+                            size="small"
+                            label="Spreadsheet Heading"
+                            disabled={sheetIdDisabled}
+                            variant={sheetIdDisabled ? 'filled' : 'outlined' as any}
+                            value={spreadsheetTab}
+                            onChange={changeSpreadsheetTab}
                         />
                     </div>
                     {lockPuzzle}
